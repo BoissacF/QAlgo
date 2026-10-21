@@ -251,10 +251,11 @@ globalThis.__qalgoRejoue = function (code) {
   demarrage = true;
   DeCodeStringEnGraph(code);
   G.calcul_LignesQuantiQues_nQbitsEntree_nQbitsSortie();
+  // le moteur range les amplitudes dans trois Float64Array (voir vecteur_etat)
   var sortie = G.n_Qbits_sortie || [];
   var amplitudes = [];
   for (var i = 0; i < sortie.length; i++) {
-    amplitudes.push([sortie[i].x, sortie[i].y, sortie[i].proba]);
+    amplitudes.push([sortie.re[i], sortie.im[i], sortie.pr[i]]);
   }
   return JSON.stringify({
     qubits: G.lignes_quantiques.length,

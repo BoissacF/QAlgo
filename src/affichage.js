@@ -1938,11 +1938,11 @@ function genere_matrice_et_porte_a_partir_circuit_affiche_a_lecran(){
     // on transforme  le nqbit d entree en mettant tout a 0
     for (let j = 0; j < n; j++) {
       
-      G.n_Qbits_sortie[j].coeff_complexe(0,0);
+      G.n_Qbits_sortie.ecrit(j,0,0);
     }
     //et l etat voulu numero i  a 1
     
-     G.n_Qbits_sortie[i].coeff_complexe(1,0);///on mets que cet etat à une probabilité de 1
+     G.n_Qbits_sortie.ecrit(i,1,0);///on mets que cet etat a une probabilite de 1
     
    
     
@@ -1955,8 +1955,8 @@ function genere_matrice_et_porte_a_partir_circuit_affiche_a_lecran(){
     //le nqbits de sortie que l'on vient de calculer correspond a la ieme colonne de la matrice
   //on copie dans la colonne i
     for (let ligne = 0; ligne < n; ligne++) {
-      let x=G.n_Qbits_sortie[ligne].x;
-      let y=G.n_Qbits_sortie[ligne].y;
+      let x=G.n_Qbits_sortie.re[ligne];
+      let y=G.n_Qbits_sortie.im[ligne];
       
      // print(ligne,i,x,y)
       matrice_generee[ligne][i].coeff_complexe(x,y);

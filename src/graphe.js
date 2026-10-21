@@ -837,7 +837,7 @@ class Graph {
     if (OnFaitLesMesures==1){//MESURE TOTALE apres recalcul, on fait ce qu il y a en dessous et on se casse
          this.Probas_mesure=[];
           for (let i = 0; i <this.n_Qbits_sortie.length; i++) {    
-            this.Probas_mesure.push(this.n_Qbits_sortie[i].proba);
+            this.Probas_mesure.push(this.n_Qbits_sortie.pr[i]);
     
             }
       
@@ -905,7 +905,7 @@ class Graph {
              
              this.Probas_mesure=[];
   for (let i = 0; i <this.n_Qbits_sortie.length; i++) {    
-    this.Probas_mesure.push(this.n_Qbits_sortie[i].proba);
+    this.Probas_mesure.push(this.n_Qbits_sortie.pr[i]);
     
   }
              
@@ -962,7 +962,7 @@ class Graph {
     this.n_Qbits_mesure=new vecteur_etat(this.n_Qbits_sortie.length);
   for (let i = 0; i <this.n_Qbits_sortie.length; i++) { 
     
-    this.n_Qbits_mesure.ecrit(i,this.n_Qbits_sortie[i].x,this.n_Qbits_sortie[i].y);
+    this.n_Qbits_mesure.ecrit(i,this.n_Qbits_sortie.re[i],this.n_Qbits_sortie.im[i]);
     
     
     
@@ -1056,9 +1056,7 @@ class Graph {
     // print("yo, voila le nqbits mesure",this.n_Qbits_mesure,"et sonvecteur proba",this.Probas_mesure);
     //ICI LE QNQBIT DE SORTIE MESURE EST CALCULEE
 
-    //TRANSITION : l effondrement est fini, tout ce qui suit lit encore un
-    //tableau de complexe
-    this.n_Qbits_mesure=convertit_vecteur_etat_en_complexes(this.n_Qbits_mesure);
+
     
     //3e etape 
     //on recalcule les probas des portes 64 et 65 pas mesurées
@@ -1085,13 +1083,22 @@ class Graph {
     
      //4e etape, on supprimme tous les états qui ne peuvent pas exists car on a deja fait une mesure dans this.n_Qbitsmesure qui sont a undefined
     
-    this.Qbits_pouraffichage_graphics=[];//meme chose que this.n_Qbits_mesure mais on a supprimé les etats mesurés, donc nqbit plus court
+     //les etats qui survivent a la mesure, dans un vecteur d etat plus court
+     let nbre_qui_restent=0;
+     for (let i = 0; i < this.n_Qbits_mesure.length; i++)
+       if (this.n_Qbits_mesure.est_vivant(i)) nbre_qui_restent=nbre_qui_restent+1;
+
+     this.Qbits_pouraffichage_graphics=new vecteur_etat(nbre_qui_restent);
+     let rang=0;
      for (let i = 0; i < this.n_Qbits_mesure.length; i++){
-       if (this.n_Qbits_mesure[i]==undefined){
-         // c est un etat supprimé
-         
-       } else {//c est un des états qui reste
-          this.Qbits_pouraffichage_graphics.push(this.n_Qbits_mesure[i]);
+       if (this.n_Qbits_mesure.est_vivant(i)==false){
+         // c est un etat supprime
+
+       } else {//c est un des etats qui reste
+          this.Qbits_pouraffichage_graphics.re[rang]=this.n_Qbits_mesure.re[i];
+          this.Qbits_pouraffichage_graphics.im[rang]=this.n_Qbits_mesure.im[i];
+          this.Qbits_pouraffichage_graphics.pr[rang]=this.n_Qbits_mesure.pr[i];
+          rang=rang+1;
      }
      }
     
@@ -1105,10 +1112,10 @@ class Graph {
    
     this.Probas_mesure=[];
   for (let i = 0; i <this.n_Qbits_mesure.length; i++) { 
-    if (this.n_Qbits_mesure[i]==undefined)
+    if (this.n_Qbits_mesure.est_vivant(i)==false)
       this.Probas_mesure.push(0);
-   
-     else this.Probas_mesure.push(this.n_Qbits_mesure[i].proba);
+
+     else this.Probas_mesure.push(this.n_Qbits_mesure.pr[i]);
     
   }
     
@@ -2740,25 +2747,7 @@ class Graph {
   //METHODE CLASSE
   //apres un changement : arete , modification parametres, supprimmer etc... on doit recalculer  tous les Qbits sauf ceux de type 0,1,2
 
-  /* TRANSITION : le moteur calcule sur un vecteur_etat -- trois tableaux de
-     flottants -- tandis que l affichage, l historique et la capture de circuit
-     lisent encore un tableau de complexe. On convertit donc de part et d autre
-     de la chaine de portes. L etape suivante portera les flottants jusqu a
-     l affichage et ces deux conversions disparaitront, avec les 51 Mo que
-     coute encore le vecteur reconstruit a 18 qbits. */
   calcul_les_Qbits_de_sorties_de_tous_les_elements() {
-
-    if ((this.n_Qbits_sortie instanceof vecteur_etat)==false)
-      this.n_Qbits_sortie=convertit_complexes_en_vecteur_etat(this.n_Qbits_sortie);
-
-    this.calcul_les_Qbits_de_sorties_sur_vecteur_de_flottants();
-
-    this.n_Qbits_sortie=convertit_vecteur_etat_en_complexes(this.n_Qbits_sortie);
-
-  }
-
-
-  calcul_les_Qbits_de_sorties_sur_vecteur_de_flottants() {
     //let t1=millis()
     
     //si il y a une seule porte controlée ou un controle dont le numero de ligne quantique est encore à -1 apres la formation des lignes quantiques, c est qu il y a une coupure, le graphe n est pas calculable, on s en va
@@ -2915,11 +2904,13 @@ class Graph {
       
       
      //if (n_Qbit_a_afficher[i] .proba==0) continue;
-      let proba=String(abs(roundToDecimals(100 * n_Qbit_a_afficher[i] .proba, precision_proba)));
-      
+      let proba=String(abs(roundToDecimals(100 * n_Qbit_a_afficher.pr[i], precision_proba)));
+
       if (proba==0) continue;
-      
-      let coeff =n_Qbit_a_afficher[i].texte_complexe(R.type_affichage_qBit,false); //roundToDecimals(abs(n_Qbit_a_afficher[i]), 2);
+
+      //complexe_au_rang rend un objet reutilise d un rang a l autre : on en lit
+      //le texte tout de suite, on ne le conserve pas
+      let coeff =n_Qbit_a_afficher.complexe_au_rang(i).texte_complexe(R.type_affichage_qBit,false);
 
       
       if (coeff=="") continue;
@@ -3099,11 +3090,13 @@ affiche_du_nQbit_de_sortie_et_des_probas() {
       
       
      //if (n_Qbit_a_afficher[i] .proba==0) continue;
-      let proba=String(abs(roundToDecimals(100 * n_Qbit_a_afficher[i] .proba, precision_proba)));
-      
+      let proba=String(abs(roundToDecimals(100 * n_Qbit_a_afficher.pr[i], precision_proba)));
+
       if (proba==0) continue;
-      
-      let coeff =n_Qbit_a_afficher[i].texte_complexe(R.type_affichage_qBit,false); //roundToDecimals(abs(n_Qbit_a_afficher[i]), 2);
+
+      //complexe_au_rang rend un objet reutilise d un rang a l autre : on en lit
+      //le texte tout de suite, on ne le conserve pas
+      let coeff =n_Qbit_a_afficher.complexe_au_rang(i).texte_complexe(R.type_affichage_qBit,false);
 
       
       if (coeff=="") continue;

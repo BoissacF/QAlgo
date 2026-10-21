@@ -124,24 +124,27 @@ calculType(){//le numerode type 1:phase 2 : proba 3 Re(amplitude) 4:Im(amplitude
  
 }
 
-valeur(Qbit){
+//la grandeur tracee pour l amplitude de rang i : phase, probabilite, partie
+//reelle ou partie imaginaire. Le vecteur et le rang sont passes plutot qu un
+//objet complexe, pour ne rien allouer le long du trace.
+valeur(n_Qbit,i){
   switch (this.type) {
          case 1:
-         
-          return Qbit.theta_deg;
+
+          return n_Qbit.complexe_au_rang(i).theta_deg;
      break;
-       case 2: 
-        return 100 * Qbit.proba;
+       case 2:
+        return 100 * n_Qbit.pr[i];
      break;
       case 3:
-        return Qbit.x;
+        return n_Qbit.re[i];
      break;
       case 4:
-      return Qbit.y;
+      return n_Qbit.im[i];
      break;
-  }  
-     
- return Qbit.theta_deg; 
+  }
+
+ return n_Qbit.complexe_au_rang(i).theta_deg;
 }
   
   
@@ -171,7 +174,7 @@ CalculLesEchellesPourTracerGraphe(){
   
    //CALCUL DE L ORDONNée max
   for (let i = 0; i < n_Qbit.length; i++) {
-      let val=this.valeur(n_Qbit[i]);
+      let val=this.valeur(n_Qbit,i);
     
     if (val<derniere_ordonnee_min) derniere_ordonnee_min=val;
     if (val>derniere_ordonnee_max)derniere_ordonnee_max=val;
@@ -461,7 +464,7 @@ affichevaleurpointeur(){
   
   
   //print("le numero de ket est",n, "  avec x=",X,"typ",this.type)
-  let val=roundToDecimals(this.valeur(n_Qbit[i]),precision);
+  let val=roundToDecimals(this.valeur(n_Qbit,i),precision);
   
   
  
@@ -472,14 +475,14 @@ affichevaleurpointeur(){
      for (let j = 1; j <= num_2px; j++) {
        
        if (((i-j)>=0) && ((i-j)<=(n_Qbit.length-1))){
-         let val1=roundToDecimals(this.valeur(n_Qbit[i-j]),precision);
+         let val1=roundToDecimals(this.valeur(n_Qbit,i-j),precision);
       
          if ((signe*val1)>(signe*val)){ val=val1;k=i-j;}
          
        }
   
       if (((i+j)>=0) && ((i+j)<=(n_Qbit.length-1))){
-        let val2=roundToDecimals(this.valeur(n_Qbit[i+j]),precision);
+        let val2=roundToDecimals(this.valeur(n_Qbit,i+j),precision);
        
        if ((signe*val2)>(signe*val)) { val=val2;k=i+j;}
       }
@@ -640,7 +643,7 @@ traceAxes(xA, yA, xB, yB, ArrowLength, ArrowWidth, couleur, epaisseur){
       
       
       
-        let val=this.valeur(n_Qbit[i]);
+        let val=this.valeur(n_Qbit,i);
       
       
 

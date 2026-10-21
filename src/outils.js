@@ -101,7 +101,7 @@ function debugage(){//se lance avec la touche d
   
   print("nQbits entree",n_Qbits);
   
-  let n_Qbits_sortie=Fourier(convertit_vecteur_etat_en_complexes(n_Qbits),true);
+  let n_Qbits_sortie=Fourier(n_Qbits,true);
   
   print("nQbits sortie",n_Qbits_sortie);
   
@@ -192,28 +192,22 @@ function debugage(){//se lance avec la touche d
 
 //fait une copie profonde de nQbitoriginal, mais attention les deux nqbits doivent avoir la même taille
 function copie_profonde_nqbit(nQbit_original,nQbit_copie){
-  
-  
-  for (let i = 0; i <nQbit_original.length; i++) { 
-    
-    nQbit_copie[i].coeff_complexe(nQbit_original[i].x,nQbit_original[i].y);
-  
-  
-}
+
+  nQbit_copie.re.set(nQbit_original.re);
+  nQbit_copie.im.set(nQbit_original.im);
+  nQbit_copie.pr.set(nQbit_original.pr);
+
+  if (nQbit_original.vivant===null) nQbit_copie.vivant=null;
+  else nQbit_copie.vivant=Uint8Array.from(nQbit_original.vivant);
 
 }
 
 
 //comme precedemment mais genere fait une copie profonde de nQbitoriginal, 
 function genere_copie_profonde_nqbit(nQbit_original){
-  
-  nQbit_copie=[];
-  for (let i = 0; i <nQbit_original.length; i++) { 
-    
-    nQbit_copie.push(new complexe(nQbit_original[i].x,nQbit_original[i].y));
-  
-  
-}
+
+  let nQbit_copie=new vecteur_etat(nQbit_original.length);
+  copie_profonde_nqbit(nQbit_original,nQbit_copie);
   return nQbit_copie;
 
 }
@@ -1094,12 +1088,12 @@ function CodeFonctionEtatEncsv(){
       
       
       
-       let x =String(roundToDecimals(n_Qbit_a_afficher[i].x,precision_coeff));
-      let y =String(roundToDecimals(n_Qbit_a_afficher[i].y,precision_coeff));
+       let x =String(roundToDecimals(n_Qbit_a_afficher.re[i],precision_coeff));
+      let y =String(roundToDecimals(n_Qbit_a_afficher.im[i],precision_coeff));
        
      // if ((x==0)&&(y==0))continue;
       
-      let proba=String(abs(roundToDecimals(100 * n_Qbit_a_afficher[i] .proba, precision_proba)));
+      let proba=String(abs(roundToDecimals(100 * n_Qbit_a_afficher.pr[i], precision_proba)));
       
      // if (proba==0)continue;
       

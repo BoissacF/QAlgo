@@ -317,8 +317,10 @@ affiche(){
     
    
    
-  let ket0=G.n_Qbits_sortie[0];
-  let ket1=G.n_Qbits_sortie[1];
+  //deux complexes distincts : convertit_complexe_Bloch les lit tous les deux
+  //a la fois, le jeton de complexe_au_rang ne conviendrait pas
+  let ket0=complexe_depuis_vecteur(G.n_Qbits_sortie.re[0],G.n_Qbits_sortie.im[0],G.n_Qbits_sortie.pr[0]);
+  let ket1=complexe_depuis_vecteur(G.n_Qbits_sortie.re[1],G.n_Qbits_sortie.im[1],G.n_Qbits_sortie.pr[1]);
     
     
     //retourne teta et phi [teta,phi] les coefficients de bloch

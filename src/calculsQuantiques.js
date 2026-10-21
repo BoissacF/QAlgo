@@ -141,6 +141,23 @@ class vecteur_etat {
     this.im=new Float64Array(taille);
     this.pr=new Float64Array(taille);
     this.vivant=null;//null = toutes les amplitudes sont vivantes
+    this.jeton=null;//complexe de pret-a-lire pour l affichage, voir plus bas
+  }
+
+  /* Un complexe portant l amplitude de rang i, pour l affichage.
+     ATTENTION : c est toujours le MEME objet qui est rendu, rempli a neuf a
+     chaque appel. C est ce qui evite 2^n allocations dans les boucles
+     d affichage, mais il ne faut ni le conserver ni en demander deux a la
+     fois : pour cela, passer par complexe_depuis_vecteur. */
+  complexe_au_rang(i){
+    if (this.jeton===null) this.jeton=new complexe(0,0);
+    let c=this.jeton;
+    c.xbrut=this.re[i];
+    c.ybrut=this.im[i];
+    c.x=this.re[i];
+    c.y=this.im[i];
+    c.proba=this.pr[i];
+    return c;
   }
 
   //ecrit l amplitude x+yi au rang k, exactement comme le faisait
@@ -1205,9 +1222,18 @@ function applique_Porte_H(n_Qbits,index,nbre_Qbits,L_aretes_controle){//applique
 
 
 //calcule le nQbit apres une mesure surun des qbit
-function applique_Porte_BitMesure(BitMesure,n_Qbits,index,nbre_Qbits){//applique le bit mesure
+/* Effondre le vecteur sur une valeur mesuree, DANS le vecteur recu.
 
-  let nouveau_n_Qbits=new vecteur_etat(n_Qbits.length);
+   Mesurer un circuit a 18 lignes enchaine 18 appels de cette fonction : en
+   allouant un vecteur neuf a chaque fois, c etaient 18 fois 6 Mo a reserver et
+   a mettre a zero, et le premier acces a chacune de ces pages coutait plus que
+   le calcul lui meme. Travailler sur place supprime tout cela.
+
+   Le seul appelant, calcul_nQbits_mesure_..., reaffecte le resultat a
+   this.n_Qbits_mesure : rendre le meme objet ne change rien pour lui. Et le
+   vecteur de sortie, this.n_Qbits_sortie, n est pas touche -- this.n_Qbits_mesure
+   en est une copie, pas une reference. */
+function applique_Porte_BitMesure(BitMesure,n_Qbits,index,nbre_Qbits){//applique le bit mesure
 
   let somme_carre=0;
   BitMesure=String(BitMesure);
@@ -1230,19 +1256,18 @@ function applique_Porte_BitMesure(BitMesure,n_Qbits,index,nbre_Qbits){//applique
   for (let i = 0; i <n_Qbits.length; i++)
   {
 
-    if (n_Qbits.est_vivant(i)==false) {
-      nouveau_n_Qbits.tue(i);//a deja ete supprime avant
-      continue;
-    }
+    if (n_Qbits.est_vivant(i)==false) continue;//a deja ete supprime avant
 
     let bit_de_letat=((masque_index_a_traiter&i)!=0)?1:0;
 
     if (bit_de_letat!=bit_voulu) {
-      nouveau_n_Qbits.tue(i);//on le supprimme
+      n_Qbits.tue(i);//on le supprimme
     }
     else{
-      nouveau_n_Qbits.ecrit(i,n_Qbits.re[i],n_Qbits.im[i]);
-      somme_carre=somme_carre+nouveau_n_Qbits.pr[i];
+      //la probabilite est recalculee sur les parties arrondies, comme le
+      //faisait le new complexe(x,y) de l ancienne version
+      n_Qbits.ecrit(i,n_Qbits.re[i],n_Qbits.im[i]);
+      somme_carre=somme_carre+n_Qbits.pr[i];
     }
 
   }
@@ -1250,13 +1275,13 @@ function applique_Porte_BitMesure(BitMesure,n_Qbits,index,nbre_Qbits){//applique
   //on normalise le nouveau Qbit
   let norme=sqrt(somme_carre);
    for (let i = 0; i <n_Qbits.length; i++) {
-     if (nouveau_n_Qbits.est_vivant(i))
-     if ((nouveau_n_Qbits.re[i]!=0)||(nouveau_n_Qbits.im[i]!=0))
+     if (n_Qbits.est_vivant(i))
+     if ((n_Qbits.re[i]!=0)||(n_Qbits.im[i]!=0))
 
-     nouveau_n_Qbits.ecrit(i,nouveau_n_Qbits.re[i]/norme,nouveau_n_Qbits.im[i]/norme);
+     n_Qbits.ecrit(i,n_Qbits.re[i]/norme,n_Qbits.im[i]/norme);
    }
 
- return nouveau_n_Qbits;
+ return n_Qbits;
 
 
 }
