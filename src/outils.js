@@ -1235,11 +1235,12 @@ function loadFileAsText() {
     
      //console.log(fileLoadedEvent.target);
    // print(textFromFileLoaded);
-    DeCodeStringEnGraph(textFromFileLoaded)
-    
-    
-    // Réinitialiser l'input pour pouvoir recharger le même fichier
+    // Réinitialiser l'input pour pouvoir recharger le même fichier. C'est fait
+    // AVANT le decodage, qui peut etre differe d'une image : le texte est deja
+    // lu, le vider ne change rien pour lui.
     document.getElementById("fileToLoad").value = ""; // Réinitialiser l'input
+
+    decode_circuit_avec_message_dattente(textFromFileLoaded)
 
   };
   fileReader.readAsText(fileToLoad, "UTF-8");
@@ -1871,9 +1872,66 @@ function CodeGraphEnString() {
 //charge le fichier et retourne le texte
 //attention pas de majuscules ni d espaces.
 //un fichier texte obligatoirement
+/* Nombre de qbits a partir duquel l ouverture d un circuit merite le message
+   d attente. En dessous le decodage est instantane et le message ne ferait que
+   clignoter. Parmi les exemples, seuls Shor pour 21 (18 qbits) et Shor pour 39
+   (22 qbits) depassent ce seuil. */
+const NOMBRE_QBITS_POUR_MESSAGE_DATTENTE=12;
+
+
+/* Compte les qbits d entree d un circuit sans le decoder : ce sont les sommets
+   de type 0, dont le champ commence par « 0; » ou « 0# ». */
+function compte_qbits_dun_circuit(code){
+  let nombre=0;
+  let objets=code.split("!");
+  for (let i = 0; i <objets.length; i++){
+    let objet=objets[i];
+    if ((objet.length>1)&&(objet[0]=="0")&&((objet[1]==";")||(objet[1]=="#")))
+      nombre=nombre+1;
+  }
+  return nombre;
+}
+
+
+/* Decode un circuit en laissant au navigateur le temps de peindre le message
+   d attente quand le calcul va etre long.
+
+   draw() affiche ce message tant que ouverture_de_fichier_en_cours est vrai,
+   mais il n avait jamais sa chance : le fichier arrive en quelques
+   millisecondes, souvent avant la premiere image, et DeCodeStringEnGraph est
+   ENSUITE synchrone -- une quinzaine de secondes a 22 qbits, pendant lesquelles
+   le navigateur ne repeint rien. On voyait donc le circuit apparaitre d un
+   coup, sans avoir ete averti, et c est pourtant la que l avertissement sert.
+
+   On peint donc le message soi-meme, puis on attend qu une image soit passee a
+   l ecran avant de bloquer : la fonction confiee a requestAnimationFrame court
+   juste avant le rendu de l image, et le setTimeout qu elle arme court juste
+   apres. */
+function decode_circuit_avec_message_dattente(code){
+
+  ouverture_de_fichier_en_cours=true;
+
+  if (compte_qbits_dun_circuit(code)<NOMBRE_QBITS_POUR_MESSAGE_DATTENTE){
+    DeCodeStringEnGraph(code);
+    return;
+  }
+
+  affichemessagedattente();
+
+  if (typeof requestAnimationFrame==="function")
+    requestAnimationFrame(function(){
+      setTimeout(function(){ DeCodeStringEnGraph(code); },0);
+    });
+  else
+    //sans requestAnimationFrame, une attente plus longue que l intervalle de
+    //draw() -- 100 ms a frameRate(10) -- fait aussi l affaire
+    setTimeout(function(){ DeCodeStringEnGraph(code); },150);
+}
+
+
 function chargeFichierExemple(element) {
-  
-  
+
+
   if (R.active_Bloch==true) simuleBloch();
  
   /*
@@ -1917,9 +1975,7 @@ function chargeFichierExemple(element) {
   //envoie une requete et recupere le texte
   fetch(url).then(function(response) {
     response.text().then(function(text) {
-      DeCodeStringEnGraph(text);
-       
-      
+      decode_circuit_avec_message_dattente(text);
     });
   });
    clignote=100;
@@ -1944,7 +2000,7 @@ function chargeFichierIntro() {
   //envoie une requete et recupere le texte
   fetch(url).then(function(response) {
     response.text().then(function(text) {
-      DeCodeStringEnGraph(text);
+      decode_circuit_avec_message_dattente(text);
        
       
     });
