@@ -555,36 +555,39 @@ let decimal_to_string=[];
 //let string_to_decimal={};trop long
 
 
+/* Les 2^n ecritures binaires des etats, gardees d avance pour que l affichage
+   n ait pas a les refabriquer a chaque redessin.
+
+   La table ne depasse plus TAILLE_MAX_TABLE_CONVERSIONS entrees : a 22 qbits
+   elle pesait 281 Mo, soit presque trois fois le vecteur d etat lui meme, pour
+   des chaines que seul l affichage lit. Au dela de la borne elle reste vide et
+   convertit_nombreDecimal_En_StringNombre_binaire fabrique la chaine a la
+   demande -- le resultat est le meme, au caractere pres. */
+const TAILLE_MAX_TABLE_CONVERSIONS=65536;//2^16, environ 4 Mo
+
 function initialise_tableaux_des_conversions(nbits){
   decimal_to_string=[];
-  //string_to_decimal={};
-  
-  for (let i = 0; i < 2**nbits; i++) {
+
+  let taille=2**nbits;
+  if (taille>TAILLE_MAX_TABLE_CONVERSIONS) return;//trop gros : on convertira a la demande
+
+  for (let i = 0; i < taille; i++) {
       let binaryString = i.toString(2).padStart(nbits, '0');
       decimal_to_string.push(binaryString);
   }
-  
+
 }
 
 
 
  function convertit_nombreDecimal_En_StringNombre_binaire(nombreDecimal,nbits){
-   
-   
-   if  (decimal_to_string[nombreDecimal].length==nbits)
-  return decimal_to_string[nombreDecimal];
- 
-  
-   
- 
-let binaryString = nombreDecimal.toString(2).padStart(nbits, '0'); // Ajoute des zéros à gauche pour avoir n bits
-//console.log(binaryString); // "00001010"
-  
- // decimal_to_string.push(binaryString);
-  //string_to_decimal[binaryString]=i;
-  
-  
-  return binaryString;
+
+   //la table peut etre vide, ou plus courte que l indice demande : elle n est
+   //gardee que pour les registres assez petits, voir ci dessus
+   let memorise=decimal_to_string[nombreDecimal];
+   if ((memorise!=undefined)&&(memorise.length==nbits)) return memorise;
+
+  return nombreDecimal.toString(2).padStart(nbits, '0'); // Ajoute des zeros a gauche pour avoir n bits
 }
 
 function convertit_StringNombre_binaire_En_nombreDecimal(binaryString){
