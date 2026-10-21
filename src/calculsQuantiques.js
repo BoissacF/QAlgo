@@ -1137,139 +1137,70 @@ function vieuxapplique_Porte_H(n_Qbits,index,nbre_Qbits,L_aretes_controle){//app
 
 
 
-function applique_Porte_H(n_Qbits,index,nbre_Qbits,L_aretes_controle){//applique une porte H au bit correspondant a l index et retourne un nouveau n_Qbits modifié
+function applique_Porte_H(n_Qbits,index,nbre_Qbits,L_aretes_controle){//applique une porte H au bit correspondant a l index et retourne un nouveau n_Qbits modifie
 
-  /* TRANSITION : cette porte travaille encore sur un tableau de complexe. Le
-     reste du moteur lui passe desormais un vecteur_etat, converti ici a
-     l entree et reconverti au retour. L etape suivante reecrira le corps en
-     tableaux de flottants et ces deux conversions disparaitront. */
-  n_Qbits=convertit_vecteur_etat_en_complexes(n_Qbits);
-  
-  
-  
    //Liste_controle=[[type_control1,num_bit_control1],[type_control2,num_bit_control2]] //renvoie la liste des controles sur la porte en indiquantb leur type (16 ou 17) et le numero de la ligne quntiqUE OU SEN TROUVE LE CONTROLE
-  let Liste_controle=calcul_Liste_controle(L_aretes_controle);  
-  
-  
-   //cree un masque 0001000000 ou 1 est la position du qbit qui passe dans la porte, donc celui a inversé ou a traitersi besoin, evite de creer etat=|0001100110> et de regarder si le bit numero i est a 1 ou 0 
+  let Liste_controle=calcul_Liste_controle(L_aretes_controle);
+
+   //cree un masque 0001000000 ou 1 est la position du qbit qui passe dans la porte
   let  masque_index_a_traiter = 2**(nbre_Qbits-1-index);
-  
-  
-  //cree le nouveau n_Qbit de même taille initailsé à 0
-  let nouveau_n_Qbits=[];
-  for (let i = 0; i <n_Qbits.length; i++) { 
-    nouveau_n_Qbits.push(new complexe(0,0));
-  }
-  
- //pas ici !!! let nouveau_n_Qbits=new Array(n_Qbits.length);
- 
-  
-  
+
+  //le vecteur de sortie part de zero : H accumule deux contributions par etat
+  let nouveau_n_Qbits=new vecteur_etat(n_Qbits.length);
+
+  let racine_de_deux=sqrt(2);
+
   //on parcourt chaque etat du n_qbit
   for (let i = 0; i <n_Qbits.length; i++) {
-    
-    //let etat=convertit_nombreDecimal_En_StringNombre_binaire(i,nbre_Qbits);
-    
-    //let etat="";
-     
-    
-    
-    
-    
-         
-    
-    
-    
-    
+
+    let x_entree=n_Qbits.re[i];
+    let y_entree=n_Qbits.im[i];
+
     if ((Liste_controle)&&(cette_porte_est_desactive_par_un_controle(i,Liste_controle,nbre_Qbits))){
-   //if ((Liste_controle)&&(cette_porte_est_desactive_par_un_controle(etat,Liste_controle))){   
-    //nouveau_n_Qbits[i]=n_Qbits[i];//desactivé par le bit de controle
-    // nouveau_n_Qbits[i].coeff_complexe(n_Qbits[i].x,n_Qbits[i].y); 
-     
-     
-     
-  nouveau_n_Qbits[i]=new complexe(n_Qbits[i].x,n_Qbits[i].y);
-      
-     
+      nouveau_n_Qbits.ecrit(i,x_entree,y_entree);//desactive par le bit de controle
     }
     else
-      {//Porte H activé
-    
-    
-    
-    let etat0;
-    let etat1;
+      {//Porte H activee
+
     let numero_etat0;
     let numero_etat1;
-    //let coeff=n_Qbits[i];
-    let x;
-    let y;
-     //   print( "etat",etat,"index",index,"etatindex",etat[index],"nbre", i&masque_index_a_traiter)
-      
+
     if ((masque_index_a_traiter&i)==0){
-    //if (etat[index]=="0") {//H : si 0 on transforme en (0+1)*racine 2
-       // etat0=etat;
-        //etat1=inverse_bit_a_index_pour_un_nbre_binaire(etat, index);
+    //H : si 0 on transforme en (0+1)/racine de 2
         numero_etat0=i;
-       // numero_etat1=convertit_StringNombre_binaire_En_nombreDecimal(etat1);
-       
-       //va plus vite que de convertir en string comme ci dessous
-         // Applique l'inversion du bit à l'index spécifié
-         numero_etat1= i ^  masque_index_a_traiter;
-      
-      //fait la correspondance en echangeant les amplitudes
-      
-       x=nouveau_n_Qbits[ numero_etat0].x+n_Qbits[i].x/sqrt(2);
-       y=nouveau_n_Qbits[ numero_etat0].y+n_Qbits[i].y/sqrt(2);
-      
-       nouveau_n_Qbits[numero_etat0].coeff_complexe(x,y);
-      
-      
-       x=nouveau_n_Qbits[ numero_etat1].x+n_Qbits[i].x/sqrt(2);
-       y=nouveau_n_Qbits[ numero_etat1].y+n_Qbits[i].y/sqrt(2);
-       nouveau_n_Qbits[numero_etat1].coeff_complexe(x,y);
-      
-      
-      
-      
-      
-      
-     // print("coeff",coeff,etat0,etat1,numero_etat0,numero_etat1,"nouvel valeur pour 0",nouveau_n_Qbits[ numero_etat0],"nouvel valeur pour 1",nouveau_n_Qbits[ numero_etat1],nouveau_n_Qbits)
-      
-    }else{//H : si 1 on transforme en (0-1)*racine 2
-      
-       // etat1=etat;
-        //etat0=inverse_bit_a_index_pour_un_nbre_binaire(etat, index);
+        //va plus vite que de convertir en string : inverse le bit a l index
+        numero_etat1= i ^  masque_index_a_traiter;
+
+      //l arrondi a lieu a chaque addition, comme le faisait coeff_complexe
+       nouveau_n_Qbits.ecrit(numero_etat0,
+                             nouveau_n_Qbits.re[numero_etat0]+x_entree/racine_de_deux,
+                             nouveau_n_Qbits.im[numero_etat0]+y_entree/racine_de_deux);
+
+       nouveau_n_Qbits.ecrit(numero_etat1,
+                             nouveau_n_Qbits.re[numero_etat1]+x_entree/racine_de_deux,
+                             nouveau_n_Qbits.im[numero_etat1]+y_entree/racine_de_deux);
+
+    }else{//H : si 1 on transforme en (0-1)/racine de 2
+
         numero_etat1=i;
-       // numero_etat0=convertit_StringNombre_binaire_En_nombreDecimal(etat0);
-      
-        //va plus vite que de convertir en string
-      numero_etat0= i ^  masque_index_a_traiter;
-      
-    
-      
-       x=nouveau_n_Qbits[ numero_etat0].x+n_Qbits[i].x/sqrt(2);
-       y=nouveau_n_Qbits[ numero_etat0].y+n_Qbits[i].y/sqrt(2);
-       nouveau_n_Qbits[numero_etat0].coeff_complexe(x,y);
-      
-      
-       x=nouveau_n_Qbits[ numero_etat1].x-n_Qbits[i].x/sqrt(2);
-       y=nouveau_n_Qbits[ numero_etat1].y-n_Qbits[i].y/sqrt(2);
-       nouveau_n_Qbits[numero_etat1].coeff_complexe(x,y);
-      
-      
-      
+        numero_etat0= i ^  masque_index_a_traiter;
+
+       nouveau_n_Qbits.ecrit(numero_etat0,
+                             nouveau_n_Qbits.re[numero_etat0]+x_entree/racine_de_deux,
+                             nouveau_n_Qbits.im[numero_etat0]+y_entree/racine_de_deux);
+
+       nouveau_n_Qbits.ecrit(numero_etat1,
+                             nouveau_n_Qbits.re[numero_etat1]-x_entree/racine_de_deux,
+                             nouveau_n_Qbits.im[numero_etat1]-y_entree/racine_de_deux);
+
     }
-    
-   
-    
+
   }
-  
+
   }
-  
- // print("nouveauqbit",nouveau_n_Qbits)
-  return convertit_complexes_en_vecteur_etat(nouveau_n_Qbits);
-  
+
+  return nouveau_n_Qbits;
+
 }
 
 
@@ -1470,138 +1401,84 @@ let L_pos = indexOfMinusOne !== -1 ? L_index.slice(0, indexOfMinusOne) : L_index
 
 
 function applique_Porte_Diffuseur_grover(n_Qbits,L_index,nbre_Qbits){
-
-  /* TRANSITION : cette porte travaille encore sur un tableau de complexe. Le
-     reste du moteur lui passe desormais un vecteur_etat, converti ici a
-     l entree et reconverti au retour. L etape suivante reecrira le corps en
-     tableaux de flottants et ces deux conversions disparaitront. */
-  n_Qbits=convertit_vecteur_etat_en_complexes(n_Qbits);
-  
-  //applique une porte Operateur de diffusion de Grover au bit correspondantaux positions dans L_index et retourne un nouveau n_Qbits modifié
+  //applique une porte Operateur de diffusion de Grover aux bits correspondant aux positions dans L_index et retourne un nouveau n_Qbits modifie
    // rappels :on a L_index= this.num_ligne = [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]; //numero de la ligne quantique a laquelle apparait ce sommet
-  
-  // JE FAIS LES CALCULS CI DESSOUS de façon indépendante POUR LA PARTIE RELLE Et IMAGINAIRE
-  // JE CALCUL DEUX MOYENNES
-  
-  
-  //ex ici la porte s applique sur les deux premiers qbit et f(x) = 1 siX =3
-  
- // |ψ⟩ =  + 0.25|0000⟩ - 0.25|0001⟩ + 0.25|0010⟩ - 0.25|0011⟩ + 0.25|0100⟩ - 0.25|0101⟩ - 0.25|0110⟩ + 0.25|0111⟩ + 0.25|1000⟩ - 0.25|1001⟩ + 0.25|1010⟩ - 0.25|1011⟩ + 0.25|1100⟩ - 0.25|1101⟩ + 0.25|1110⟩ - 0.25|1111⟩ 
-  
-  //1ere étape : 
- // on extrait les qbits qui ne passent pas par la porte, ici le dernier
-  //|ψ⟩ =  ( + 0.25|000⟩  + 0.25|001⟩  + 0.25|010⟩  - 0.25|011⟩ + 0.25|100⟩  + 0.25|101⟩  + 0.25|110⟩  + 0.25|111⟩  )*|0> 
-  //+ 
-   // (  - 0.25|000⟩  - 0.25|001⟩  - 0.25|010⟩  + 0.25|011⟩  - 0.25|100⟩ - 0.25|101⟩  - 0.25|110⟩  - 0.25|111⟩ )*|1>
-  
-  //2eme etape
- // on calcule les moyennes correspondant à chaque factorisation
- // moyenne_0 = (0.25*7-0.25)/8 = 0.1875
-  //moyenne_1  =(-0.25*7+0.25)/8 = -0.1875
-    
-  //3eme etape
-  //pour chaque coeff du qbit on applique la formule : 2*moyenne - coeff,
-   // ce qui inverse les valeurs par rapport a leur moyenne, on obtient
-    //|ψ⟩ =  ( + 0.125|000⟩  + 0.125|001⟩  + 0.125|010⟩  + 0.625|011⟩ + 0.125|100⟩  + 0.125|101⟩  + 0.125|110⟩  + 0.125|111⟩  )*|0> 
- // + 
-   // (  - 0.125|000⟩  - 0.125|001⟩  - 0.125|010⟩  - 0.125|011⟩  - 0.125|100⟩ - 0.125|101⟩  - 0.625|110⟩  - 0.125|111⟩ )*|1>
-    
-   // ce qui a augmenté relativement l amplitude des |110⟩ correspondant a f(3)
 
-    // 1ere Etape 
-    //on cree un masque pour trouver les qbits quine passent pas dans le grover
-    
-  //print("debut porte diffuseyur")
- // print("qbit",n_Qbits,"lindex=",L_index,"nbreqbits=",nbre_Qbits);
-  
-  
+  // JE FAIS LES CALCULS CI DESSOUS de façon independante POUR LA PARTIE REELLE Et IMAGINAIRE
+  // JE CALCULE DEUX MOYENNES
+
+  //on cree un masque pour trouver les qbits qui ne passent pas dans le grover
   let masque=0;
   let i=0;
   while  ((i<=14) &&(L_index[i]!=-1)){
     masque=masque+Math.pow(2,nbre_Qbits-1-L_index[i]);
     i=i+1;
   }
-  // print("masque negatif=",masque)
   let n= Math.pow(2, nbre_Qbits)-1;
 
   masque = masque^n;
-//  print("masque positif=",masque)
-  
-  //2eme etape on cree un dictionnaire de moyenne, dans lequel les clés seront les bits qui ne seront pas dans l 'état du qbits ( dans notre exemple |0> et |1>)'
+
+  //on cree un dictionnaire de moyennes, dont les cles sont les bits qui ne
+  //passent pas dans la porte
     let moyenne_reel = {};//partie reelle
     let moyenne_img = {};//partie imaginaire
-  
+
     for (let i = 0; i <n_Qbits.length; i++) {
        let Bits_en_dehors_porte=masque&i;
-     // print("i=",i,"bits en dehors=",Bits_en_dehors_porte,"val=", n_Qbits[i])
-      
+
+      /* Attention : le test porte sur la valeur et non sur sa presence. Quand
+         la somme courante retombe a zero, elle est donc REMISE a la valeur
+         lue au lieu d y etre ajoutee. C est ce que faisait l ancien code et
+         les resultats en dependent : ne pas corriger sans refaire les
+         references. */
       if (!moyenne_reel[Bits_en_dehors_porte]) {
-    moyenne_reel[Bits_en_dehors_porte] = n_Qbits[i].x; // Initialiser 
+    moyenne_reel[Bits_en_dehors_porte] = n_Qbits.re[i]; // Initialiser
   } else
-    moyenne_reel[Bits_en_dehors_porte] = n_Qbits[i].x+moyenne_reel[Bits_en_dehors_porte];
-      
-    
+    moyenne_reel[Bits_en_dehors_porte] = n_Qbits.re[i]+moyenne_reel[Bits_en_dehors_porte];
+
   if (!moyenne_img[Bits_en_dehors_porte]) {
-    moyenne_img[Bits_en_dehors_porte] = n_Qbits[i].y; // Initialiser 
+    moyenne_img[Bits_en_dehors_porte] = n_Qbits.im[i]; // Initialiser
   } else
-    moyenne_img[Bits_en_dehors_porte] = n_Qbits[i].y+moyenne_img[Bits_en_dehors_porte];
-      
+    moyenne_img[Bits_en_dehors_porte] = n_Qbits.im[i]+moyenne_img[Bits_en_dehors_porte];
+
     }
-    
- 
-  
+
   //calcul du nbre d element dans chaque cle du dictionnaire
   let nbre_reel=n_Qbits.length/Object.keys(moyenne_reel).length;
-    
+
  for (let key in moyenne_reel) {
-  moyenne_reel[key] = moyenne_reel[key]/nbre_reel; //on calcul la moyenne pour chaque etat
+  moyenne_reel[key] = moyenne_reel[key]/nbre_reel; //on calcule la moyenne pour chaque etat
 }
  let nbre_img=n_Qbits.length/Object.keys(moyenne_img).length;
-    
+
  for (let key in moyenne_img) {
-  moyenne_img[key] = moyenne_img[key]/nbre_img; //on calcul la moyenne pour chaque etat
+  moyenne_img[key] = moyenne_img[key]/nbre_img; //on calcule la moyenne pour chaque etat
 }
 
+  //application de la formule 2|psi><psi|-I pour chaque etat du dictionnaire :
+  //2*moyenne - valeur du coeff, ce qui inverse les valeurs autour de leur moyenne
 
-
-//print("moyenne",moyenne)
-  //3eme etape
-  //application de la formule 2⟨ψ|ψ⟩-I pour chaque etat du dictionnaire : 2* moyenne - valeur du ceff
- // on cree le nouveau n_Qbit ou on multuplie le rapport avec la nouvelle amplitude
- 
-  let nouveau_n_Qbits=[];
+  let nouveau_n_Qbits=new vecteur_etat(n_Qbits.length);
   let norme=0;
-  for (let i = 0; i <n_Qbits.length; i++) { 
+  for (let i = 0; i <n_Qbits.length; i++) {
     let Bits_en_dehors_porte=masque&i;
-    let calcul_reel=2*moyenne_reel[Bits_en_dehors_porte]-n_Qbits[i].x;
-    let calcul_img=2*moyenne_img[Bits_en_dehors_porte]-n_Qbits[i].y;
-        
-        
-   
-    
-    nouveau_n_Qbits.push(new complexe(calcul_reel,calcul_img));
-    //norme=norme+calcul*calcul;
-    norme=norme+nouveau_n_Qbits[nouveau_n_Qbits.length-1].proba;
-    
-    
-  
-    
+    let calcul_reel=2*moyenne_reel[Bits_en_dehors_porte]-n_Qbits.re[i];
+    let calcul_img=2*moyenne_img[Bits_en_dehors_porte]-n_Qbits.im[i];
+
+    nouveau_n_Qbits.ecrit(i,calcul_reel,calcul_img);
+    norme=norme+nouveau_n_Qbits.pr[i];
+
   }
-// print("nouveau qbit",nouveau_n_Qbits)
- //print("norme au carré",norme)
-  
+
   let nm=round(norme,3);
   if (nm!=1)
-  for (let i = 0; i <n_Qbits.length; i++) { 
-    //nouveau_n_Qbits[i]=nouveau_n_Qbits[i]/(sqrt(norme));
-    nouveau_n_Qbits[i].coeff_complexe(nouveau_n_Qbits[i].x/sqrt(norme),nouveau_n_Qbits[i].y/sqrt(norme));
-    
+  for (let i = 0; i <n_Qbits.length; i++) {
+    nouveau_n_Qbits.ecrit(i,nouveau_n_Qbits.re[i]/sqrt(norme),nouveau_n_Qbits.im[i]/sqrt(norme));
+
   }
-    
-    
-  
-  return convertit_complexes_en_vecteur_etat(nouveau_n_Qbits);
-  
+
+  return nouveau_n_Qbits;
+
 }
 
 
@@ -1771,143 +1648,66 @@ L_pos.splice(-nbre_registre2,nbre_registre2);
 
 
 function applique_Porte_Transformee_Fourier(n_Qbits,L_index,nbre_Qbits,inverse=false){
-
-  /* TRANSITION : cette porte travaille encore sur un tableau de complexe. Le
-     reste du moteur lui passe desormais un vecteur_etat, converti ici a
-     l entree et reconverti au retour. L etape suivante reecrira le corps en
-     tableaux de flottants et ces deux conversions disparaitront. */
-  n_Qbits=convertit_vecteur_etat_en_complexes(n_Qbits);
-  
-  //applique une porte Transformee de Fourier aux bits correspondant aux positions dans L_index et retourne un nouveau n_Qbits modifié
+  //applique une porte Transformee de Fourier aux bits correspondant aux positions dans L_index et retourne un nouveau n_Qbits modifie
    // rappels :on a L_index= this.num_ligne = [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]; //numero de la ligne quantique a laquelle apparait ce sommet
-  
-  
-  
-  //ex ici la porte s applique sur les deux premiers qbit et f(x) = 1 siX =3
-  
- // |ψ⟩ =  + 0.25|0000⟩ - 0.25|0001⟩ + 0.25|0010⟩ - 0.25|0011⟩ + 0.25|0100⟩ - 0.25|0101⟩ - 0.25|0110⟩ + 0.25|0111⟩ + 0.25|1000⟩ - 0.25|1001⟩ + 0.25|1010⟩ - 0.25|1011⟩ + 0.25|1100⟩ - 0.25|1101⟩ + 0.25|1110⟩ - 0.25|1111⟩ 
-  
-  //1ere étape : 
- // on extrait les qbits qui ne passent pas par la porte, ici le dernier
-  //|ψ⟩ =  ( + 0.25|000⟩  + 0.25|001⟩  + 0.25|010⟩  - 0.25|011⟩ + 0.25|100⟩  + 0.25|101⟩  + 0.25|110⟩  + 0.25|111⟩  )*|0> 
-  //+ 
-   // (  - 0.25|000⟩  - 0.25|001⟩  - 0.25|010⟩  + 0.25|011⟩  - 0.25|100⟩ - 0.25|101⟩  - 0.25|110⟩  - 0.25|111⟩ )*|1>
-  
-  
- 
-  
-  
-  
-  
+
   let masque=0;
   let i=0;
   while  ((i<=14) &&(L_index[i]!=-1)){
     masque=masque+Math.pow(2,nbre_Qbits-1-L_index[i]);
     i=i+1;
   }
-   //print("masque negatif=",masque)
   let n= Math.pow(2, nbre_Qbits)-1;
 
   masque = masque^n;
- // print("masque positif=",masque)
-  
-  //2eme etape on cree un dictionnaire de nQbits, dans lequel les clés seront les bits qui ne seront pas dans l 'état du qbits ( dans notre exemple |0> et |1>)
-  // les valeurs seront une liste dont
- // - le 1er element est la liste des indices dans le qbit de depart
-  // - le 2e element est la liste des coeffs du nqbit qui entre dans la porte F
-  // Dico_de_n_Qbits[Bits_en_dehors_porte] =[[i,....] , [n_Qbits[i],....]];
-   
-    let Dico_de_n_Qbits = {};
-    
-  
+
+  /* On regroupe les etats par la valeur des bits qui NE passent PAS dans la
+     porte : chaque groupe forme un petit vecteur d etat sur lequel la
+     transformee s applique. Le dictionnaire ne retient plus que les indices,
+     les amplitudes etant lues directement dans les tableaux de flottants. */
+    let Dico_indices = {};
+
     for (let i = 0; i <n_Qbits.length; i++) {
        let Bits_en_dehors_porte=masque&i;
-     // print("i=",i,"bits en dehors=",Bits_en_dehors_porte,"val=", n_Qbits[i])
-      
-      if ((Bits_en_dehors_porte in Dico_de_n_Qbits)==false){
-      
-      //if (!Dico_de_n_Qbits[Bits_en_dehors_porte]) {
-    Dico_de_n_Qbits[Bits_en_dehors_porte] =[[i] , [n_Qbits[i]]]; // Initialiser 
-  } else{
-      Dico_de_n_Qbits[Bits_en_dehors_porte][0].push(i);
-      Dico_de_n_Qbits[Bits_en_dehors_porte][1].push(n_Qbits[i]);
-  }
-     
-      
+
+      if ((Bits_en_dehors_porte in Dico_indices)==false)
+        Dico_indices[Bits_en_dehors_porte]=[i];
+      else
+        Dico_indices[Bits_en_dehors_porte].push(i);
+
     }
-    
- //
-  /*
-  for (let key in Dico_de_n_Qbits){
-    
-    let liste_indices=Dico_de_n_Qbits[key][0];
-    let Qbit_qui_sort_de_fourier=Dico_de_n_Qbits[key][1];
-    print("dico clé=",key,"  liste indices=",liste_indices)
-    print("dico clé=",key,"  qbit quientre=",Qbit_qui_sort_de_fourier)
-    print("  ")
-    
-  }
-  */
-  
-  //print("nqbit",n_Qbits)
-  //return n_Qbits;
-  
- //3e etape //on applique la transformee de fourier sur les nqbits de ce dictionnaire
-  
-  for (let key in Dico_de_n_Qbits){
-    
-    let Qbit_qui_entre_dans_fourier=Dico_de_n_Qbits[key][1];
-    Dico_de_n_Qbits[key][1]=Fourier(Qbit_qui_entre_dans_fourier,inverse);
-  }
-  /*
-  print("apres")
-for (let key in Dico_de_n_Qbits){
-    
-    let liste_indices=Dico_de_n_Qbits[key][0];
-    let Qbit_qui_sort_de_fourier=Dico_de_n_Qbits[key][1];
-    print("dico clé=",key,"  liste indices=",liste_indices)
-    print("dico clé=",key,"  qbit quientre=",Qbit_qui_sort_de_fourier)
-    print("  ")
-    
-  }
-  */
 
+  let nouveau_n_Qbits=new vecteur_etat(n_Qbits.length);
 
-  //4eme etape
-  
- // on recree le nouveau n_Qbit 
- 
- 
-  /*
-  let nouveau_n_Qbits=[];
-  for (let i = 0; i <n_Qbits.length; i++) { 
-    
-     nouveau_n_Qbits.push("");
+  for (let cle in Dico_indices){
+
+    let liste_indices=Dico_indices[cle];
+    let taille=liste_indices.length;
+
+    //le petit vecteur qui entre dans la transformee. On recopie aussi les
+    //probabilites : quand le vecteur est tout nul, Fourier le rend tel quel et
+    //ce sont alors ces probabilites d origine qui ressortent
+    let Qbit_qui_entre=new vecteur_etat(taille);
+    for (let t = 0; t <taille; t++) {
+      let rang=liste_indices[t];
+      Qbit_qui_entre.re[t]=n_Qbits.re[rang];
+      Qbit_qui_entre.im[t]=n_Qbits.im[rang];
+      Qbit_qui_entre.pr[t]=n_Qbits.pr[rang];
+    }
+
+    let Qbit_qui_sort=Fourier(Qbit_qui_entre,inverse);
+
+    for (let t = 0; t <taille; t++) {
+      let rang=liste_indices[t];
+      nouveau_n_Qbits.re[rang]=Qbit_qui_sort.re[t];
+      nouveau_n_Qbits.im[rang]=Qbit_qui_sort.im[t];
+      nouveau_n_Qbits.pr[rang]=Qbit_qui_sort.pr[t];
+    }
+
   }
-  */
-  
-  let nouveau_n_Qbits=new Array(n_Qbits.length);
-  
-  
-   for (let key in Dico_de_n_Qbits){
-    let liste_indices=Dico_de_n_Qbits[key][0];
-    let Qbit_qui_sort_de_fourier=Dico_de_n_Qbits[key][1];
-     
-     for (let i = 0; i <liste_indices.length; i++) { 
-       
-       nouveau_n_Qbits[liste_indices[i]]=Qbit_qui_sort_de_fourier[i];
-       
-     }
-     
-     
-    
-  }
-  
- 
-    
-  
-  return convertit_complexes_en_vecteur_etat(nouveau_n_Qbits);
-  
+
+  return nouveau_n_Qbits;
+
 }
 
 
@@ -1915,135 +1715,101 @@ for (let key in Dico_de_n_Qbits){
 //sur le vecteur (x0,x1,x2....xn-1) et retourne le vecteur  (y0,y1,y2....yn-1)
 function Fourier(n_Qbits,inverse=false){
   //voir calcul ici fr.wikipedia.org/wiki/Transform%C3%A9e_de_Fourier_quantique
- 
-  
+
   let N=n_Qbits.length;
   let racine_N=sqrt(N);
-  
-  let nouveau_n_Qbits=[];
+
+  let re=n_Qbits.re;
+  let im=n_Qbits.im;
+
+  let nouveau_n_Qbits=new vecteur_etat(N);
   let cst=2*Math.PI/N;
-  
- 
-  
+
   if (inverse==true) cst=-1*cst;
-  
- // print("cst=",cst)
-  
+
   let liste_des_n_pas_nuls=[];
-  
+
   for (let k = 0; k <N; k++){
-    
-    
-     
-    
+
      let  y_k_x=0;//partie reelle de y_k
      let  y_k_y=0;//partie imaginaire de y_k
-      
-     
-    
+
      if (k!=0){
-       
-       for (let i = 0; i <liste_des_n_pas_nuls.length; i++) { 
-       
-       let n= liste_des_n_pas_nuls[i];
-       
-       let x_n=n_Qbits[n];
-       
-       
-       
-       
-       
+
+       for (let t = 0; t <liste_des_n_pas_nuls.length; t++) {
+
+       let n= liste_des_n_pas_nuls[t];
+
+       let x_n_x=re[n];
+       let x_n_y=im[n];
+
        let alpha=cst*k*n;
-       
-       let w_N_kn_x=Math.cos(alpha);//partie relle de W_N_kn
+
+       let w_N_kn_x=Math.cos(alpha);//partie reelle de W_N_kn
        let w_N_kn_y=Math.sin(alpha);//partie imaginaire de W_N_kn
-       
+
        //yk = yk + xn*w_N_kn en tenant compte des complexes dont i*i = -1
-       
-        
-         // print("pour k=",k,"pour n",n, "coefx=",x_n.x*w_N_kn_x - x_n.y*w_N_kn_y," coefy=",x_n.x*w_N_kn_y + x_n.y*w_N_kn_x)
-        if (x_n.y==0){
-          
-           y_k_x=y_k_x + x_n.x*w_N_kn_x ;
-           y_k_y=y_k_y + x_n.x*w_N_kn_y ;
+
+        if (x_n_y==0){
+           y_k_x=y_k_x + x_n_x*w_N_kn_x ;
+           y_k_y=y_k_y + x_n_x*w_N_kn_y ;
         }else
-        if (x_n.x==0){
-             y_k_x=y_k_x  - x_n.y*w_N_kn_y;
-             y_k_y=y_k_y  + x_n.y*w_N_kn_x;
-          
+        if (x_n_x==0){
+             y_k_x=y_k_x  - x_n_y*w_N_kn_y;
+             y_k_y=y_k_y  + x_n_y*w_N_kn_x;
         }else{
-           y_k_x=y_k_x + x_n.x*w_N_kn_x - x_n.y*w_N_kn_y;
-           y_k_y=y_k_y + x_n.x*w_N_kn_y + x_n.y*w_N_kn_x;
+           y_k_x=y_k_x + x_n_x*w_N_kn_x - x_n_y*w_N_kn_y;
+           y_k_y=y_k_y + x_n_x*w_N_kn_y + x_n_y*w_N_kn_x;
         }
-       
-       
-       
-    
-  
+
       } //fin de boucle n
-       
-       
+
      }
-    
-   
+
      else//pour k= 0 on calcule apres on regarde seulement les valeurs de n pas nuls
-     for (let n = 0; n <N; n++) 
-     if ((n_Qbits[n].x!=0)||(n_Qbits[n].y!=0)){ //tester si = 0 gagne bcp de temps
-       
+     for (let n = 0; n <N; n++)
+     if ((re[n]!=0)||(im[n]!=0)){ //tester si = 0 gagne bcp de temps
+
        liste_des_n_pas_nuls.push(n);
-       
-       let x_n=n_Qbits[n];
-       
-       
-       
-       
-       
+
+       let x_n_x=re[n];
+       let x_n_y=im[n];
+
        let alpha=cst*k*n;
-       
-       let w_N_kn_x=Math.cos(alpha);//partie relle de W_N_kn
+
+       let w_N_kn_x=Math.cos(alpha);//partie reelle de W_N_kn
        let w_N_kn_y=Math.sin(alpha);//partie imaginaire de W_N_kn
-       
+
        //yk = yk + xn*w_N_kn en tenant compte des complexes dont i*i = -1
-       
-        
-         // print("pour k=",k,"pour n",n, "coefx=",x_n.x*w_N_kn_x - x_n.y*w_N_kn_y," coefy=",x_n.x*w_N_kn_y + x_n.y*w_N_kn_x)
-        if (x_n.y==0){
-          
-           y_k_x=y_k_x + x_n.x*w_N_kn_x ;
-           y_k_y=y_k_y + x_n.x*w_N_kn_y ;
+
+        if (x_n_y==0){
+           y_k_x=y_k_x + x_n_x*w_N_kn_x ;
+           y_k_y=y_k_y + x_n_x*w_N_kn_y ;
         }else
-        if (x_n.x==0){
-             y_k_x=y_k_x  - x_n.y*w_N_kn_y;
-             y_k_y=y_k_y  + x_n.y*w_N_kn_x;
-          
+        if (x_n_x==0){
+             y_k_x=y_k_x  - x_n_y*w_N_kn_y;
+             y_k_y=y_k_y  + x_n_y*w_N_kn_x;
         }else{
-           y_k_x=y_k_x + x_n.x*w_N_kn_x - x_n.y*w_N_kn_y;
-           y_k_y=y_k_y + x_n.x*w_N_kn_y + x_n.y*w_N_kn_x;
+           y_k_x=y_k_x + x_n_x*w_N_kn_x - x_n_y*w_N_kn_y;
+           y_k_y=y_k_y + x_n_x*w_N_kn_y + x_n_y*w_N_kn_x;
         }
-       
-       
-       
-    
-  
+
       } //fin de boucle n
-    
+
       if (liste_des_n_pas_nuls.length==0) {
-        
+
         return n_Qbits;//pas de changement , inutile de continuer
       }
-    
+
       y_k_x=y_k_x/(racine_N);
       y_k_y=y_k_y/(racine_N);
-    
-      let yk= new complexe(y_k_x,y_k_y);
-      nouveau_n_Qbits.push(yk);
-    
+
+      nouveau_n_Qbits.ecrit(k,y_k_x,y_k_y);
+
    }//fin de boucle k
-  
-  
- 
+
   return nouveau_n_Qbits;
-  
+
 }
 
 
@@ -2112,142 +1878,88 @@ function applique_Porte_Racine_SWAP(n_Qbits,L_index,nbre_Qbits,L_aretes_controle
     
 
 function applique_Porte_Universelle(n_Qbits,L_index,nbre_Qbits,matrice=undefined,L_aretes_controle){
-
-  /* TRANSITION : cette porte travaille encore sur un tableau de complexe. Le
-     reste du moteur lui passe desormais un vecteur_etat, converti ici a
-     l entree et reconverti au retour. L etape suivante reecrira le corps en
-     tableaux de flottants et ces deux conversions disparaitront. */
-  n_Qbits=convertit_vecteur_etat_en_complexes(n_Qbits);
-  
-  //applique une matrice aux bits correspondant aux positions dans L_index et retourne un nouveau n_Qbits modifié
+  //applique une matrice aux bits correspondant aux positions dans L_index et retourne un nouveau n_Qbits modifie
    // rappels :on a L_index= this.num_ligne = [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]; //numero de la ligne quantique a laquelle apparait ce sommet
-  
-  
-  
-  //ex ici la porte s applique sur les deux premiers qbit et f(x) = 1 siX =3
-  
- // |ψ⟩ =  + 0.25|0000⟩ - 0.25|0001⟩ + 0.25|0010⟩ - 0.25|0011⟩ + 0.25|0100⟩ - 0.25|0101⟩ - 0.25|0110⟩ + 0.25|0111⟩ + 0.25|1000⟩ - 0.25|1001⟩ + 0.25|1010⟩ - 0.25|1011⟩ + 0.25|1100⟩ - 0.25|1101⟩ + 0.25|1110⟩ - 0.25|1111⟩ 
-  
-  //1ere étape : 
- // on extrait les qbits qui ne passent pas par la porte, ici le dernier
-  //|ψ⟩ =  ( + 0.25|000⟩  + 0.25|001⟩  + 0.25|010⟩  - 0.25|011⟩ + 0.25|100⟩  + 0.25|101⟩  + 0.25|110⟩  + 0.25|111⟩  )*|0> 
-  //+ 
-   // (  - 0.25|000⟩  - 0.25|001⟩  - 0.25|010⟩  + 0.25|011⟩  - 0.25|100⟩ - 0.25|101⟩  - 0.25|110⟩  - 0.25|111⟩ )*|1>
-  
-  
- 
-  
-  
-  
+
    //Liste_controle=[[type_control1,num_bit_control1],[type_control2,num_bit_control2]] //renvoie la liste des controles sur la porte en indiquantb leur type (16 ou 17) et le numero de la ligne quntiqUE OU SEN TROUVE LE CONTROLE
-  let Liste_controle=calcul_Liste_controle(L_aretes_controle);  
-  
-  
+  let Liste_controle=calcul_Liste_controle(L_aretes_controle);
+
   let masque=0;
   let i=0;
   while  ((i<=14) &&(L_index[i]!=-1)){
     masque=masque+Math.pow(2,nbre_Qbits-1-L_index[i]);
     i=i+1;
   }
-   //print("masque negatif=",masque)
   let n= Math.pow(2, nbre_Qbits)-1;
 
   masque = masque^n;
- // print("masque positif=",masque)
-  
-  //2eme etape on cree un dictionnaire de nQbits, dans lequel les clés seront les bits qui ne seront pas dans l 'état du qbits ( dans notre exemple |0> et |1>)
-  // les valeurs seront une liste dont
- // - le 1er element est la liste des indices dans le qbit de depart
-  // - le 2e element est la liste des coeffs du nqbit qui entre dans la porte
-  // Dico_de_n_Qbits[Bits_en_dehors_porte] =[[i,....] , [n_Qbits[i],....]];
-   
-    let Dico_de_n_Qbits = {};
-  let nouveau_n_Qbits=new Array(n_Qbits.length);
-    //
 
-  
-    for (let i = 0; i <n_Qbits.length; i++) 
-    
-    if ((Liste_controle)&&(cette_porte_est_desactive_par_un_controle(i,Liste_controle,nbre_Qbits)))     {//etat controlé on copie nouveau qbits simplement
-      nouveau_n_Qbits[ i]=new complexe(n_Qbits[i].x,n_Qbits[i].y);
-      
+  /* On regroupe les etats par la valeur des bits qui NE passent PAS dans la
+     porte : chaque groupe forme un petit vecteur d etat auquel la matrice
+     s applique. Le dictionnaire ne retient plus que les indices, les
+     amplitudes etant lues directement dans les tableaux de flottants. */
+    let Dico_indices = {};
+  let nouveau_n_Qbits=new vecteur_etat(n_Qbits.length);
+
+    for (let i = 0; i <n_Qbits.length; i++)
+
+    if ((Liste_controle)&&(cette_porte_est_desactive_par_un_controle(i,Liste_controle,nbre_Qbits)))     {//etat controle on copie nouveau qbits simplement
+      nouveau_n_Qbits.ecrit(i,n_Qbits.re[i],n_Qbits.im[i]);
     }
-    
-    else //etat pas controlé
-    
-    
+
+    else //etat pas controle
     {
        let Bits_en_dehors_porte=masque&i;
-     // print("i=",i,"bits en dehors=",Bits_en_dehors_porte,"val=", n_Qbits[i])
-      
-      if ((Bits_en_dehors_porte in Dico_de_n_Qbits)==false){
-      
-      //if (!Dico_de_n_Qbits[Bits_en_dehors_porte]) {
-    Dico_de_n_Qbits[Bits_en_dehors_porte] =[[i] , [n_Qbits[i]]]; // Initialiser 
-  } else{
-      Dico_de_n_Qbits[Bits_en_dehors_porte][0].push(i);
-      Dico_de_n_Qbits[Bits_en_dehors_porte][1].push(n_Qbits[i]);
-  }
-     
-      
+
+      if ((Bits_en_dehors_porte in Dico_indices)==false)
+        Dico_indices[Bits_en_dehors_porte]=[i];
+      else
+        Dico_indices[Bits_en_dehors_porte].push(i);
+
     }
-    
- //
-  
-  
-  
-  
- //3e etape //on applique la matrice sur les nqbits de ce dictionnaire
-  
-  for (let key in Dico_de_n_Qbits){
-    
-    let Qbit_qui_entre_dans_matrice=Dico_de_n_Qbits[key][1];
-    Dico_de_n_Qbits[key][1]=applique_matrice( Qbit_qui_entre_dans_matrice,matrice);
-  }
-  
 
 
-  //4eme etape
-  
- // on recree le nouveau n_Qbit 
- 
- 
-  
-  
-  
-  
+ //on applique la matrice sur le petit vecteur de chaque groupe, puis on
+ //replace les amplitudes obtenues a leur rang d origine
+
   let somme_carre=0;
-  
-  
-   for (let key in Dico_de_n_Qbits){
-    let liste_indices=Dico_de_n_Qbits[key][0];
-    let  Qbit_qui_sort_de_matrice=Dico_de_n_Qbits[key][1];
-     
-     for (let i = 0; i <liste_indices.length; i++) { 
-       
-       nouveau_n_Qbits[liste_indices[i]]=Qbit_qui_sort_de_matrice[i];
-       
-       somme_carre=somme_carre+nouveau_n_Qbits[liste_indices[i]].proba;
-       
-     }
-     
-     
-    
+
+  for (let cle in Dico_indices){
+
+    let liste_indices=Dico_indices[cle];
+    let taille=liste_indices.length;
+
+    //le petit vecteur qui entre dans la matrice : on recopie aussi les
+    //probabilites, dont applique_matrice se sert pour conserver la norme
+    let Qbit_qui_entre=new vecteur_etat(taille);
+    for (let t = 0; t <taille; t++) {
+      let rang=liste_indices[t];
+      Qbit_qui_entre.re[t]=n_Qbits.re[rang];
+      Qbit_qui_entre.im[t]=n_Qbits.im[rang];
+      Qbit_qui_entre.pr[t]=n_Qbits.pr[rang];
+    }
+
+    let Qbit_qui_sort=applique_matrice(Qbit_qui_entre,matrice);
+
+    for (let t = 0; t <taille; t++) {
+      let rang=liste_indices[t];
+      nouveau_n_Qbits.re[rang]=Qbit_qui_sort.re[t];
+      nouveau_n_Qbits.im[rang]=Qbit_qui_sort.im[t];
+      nouveau_n_Qbits.pr[rang]=Qbit_qui_sort.pr[t];
+      somme_carre=somme_carre+nouveau_n_Qbits.pr[rang];
+    }
+
   }
-  
- 
-    
+
  //il faut le normaliser deja fait normalement
-  
+
   for (let i = 0; i <nouveau_n_Qbits.length; i++) {
-     if ((nouveau_n_Qbits[i].x!=0)||(nouveau_n_Qbits[i].y!=0))
-    nouveau_n_Qbits[i].coeff_complexe(nouveau_n_Qbits[i].x/sqrt(somme_carre),nouveau_n_Qbits[i].y/sqrt(somme_carre));
+     if ((nouveau_n_Qbits.re[i]!=0)||(nouveau_n_Qbits.im[i]!=0))
+    nouveau_n_Qbits.ecrit(i,nouveau_n_Qbits.re[i]/sqrt(somme_carre),nouveau_n_Qbits.im[i]/sqrt(somme_carre));
    }
-  
-  
-  
-  return convertit_complexes_en_vecteur_etat(nouveau_n_Qbits);
-  
+
+  return nouveau_n_Qbits;
+
 }
 
 
@@ -2256,64 +1968,54 @@ function applique_Porte_Universelle(n_Qbits,L_index,nbre_Qbits,matrice=undefined
 //sur le vecteur (x0,x1,x2....xn-1) et retourne le vecteur  (y0,y1,y2....yn-1)
 //la matrice est une matrice carré nxn et ressort un vecteur 
 function applique_matrice(n_Qbits,matrice){
-    // Assurez-vous que M est une matrice carrée et que A est un vecteur de dimension appropriée
+    // Assurez-vous que M est une matrice carree et que A est un vecteur de dimension appropriee
     const n = matrice.length; // Nombre de lignes (et de colonnes) de la matrice
     if (n_Qbits.length !== n) {
-        print("bug La dimension du vecteur A doit être égale à celle de la matrice M");
+        print("bug La dimension du vecteur A doit etre egale a celle de la matrice M");
        return undefined;
     }
-  
-  
-  
 
-    // Initialisation du vecteur de sortie nouveau_n_Qbits
-    //let nouveau_n_Qbits = new Array(n).fill(new complexe(0,0));//attention c est le même complexe 0,0 pour tout le vecteur, cela ne marche pas, il faut faire comme en dessous
-  let nouveau_n_Qbits =[];
-  for (let i = 0; i < n; i++) nouveau_n_Qbits.push(new complexe(0,0));
-  
-    let somme_carre_initial=0;//la matrice ne doit pas changer la norme du nqbit, qui n est pas forcemment 1 car on a decomposé le nqbit inital ! il faut conserve rla valeur
+  //le vecteur de sortie part de zero, comme le tableau de new complexe(0,0)
+  let nouveau_n_Qbits=new vecteur_etat(n);
+
+    let somme_carre_initial=0;//la matrice ne doit pas changer la norme du nqbit, qui n est pas forcemment 1 car on a decomposé le nqbit inital ! il faut conserver la valeur
     let somme_carre=0;
 
-    // Calcul de nouveau_n_Qbits = M * (n_Qbits
+    // Calcul de nouveau_n_Qbits = M * n_Qbits
     for (let i = 0; i < n; i++) {
-        for (let j = 0; j < n; j++) 
-          if ((n_Qbits[j].x!=0)||(n_Qbits[j].y!=0))
+        for (let j = 0; j < n; j++)
+          if ((n_Qbits.re[j]!=0)||(n_Qbits.im[j]!=0))
            if ((matrice[i][j].x!=0)||(matrice[i][j].y!=0)) //tester si = 0 gagne bcp de temps
-       
-           
-        
         {
-            nouveau_n_Qbits[i] = nouveau_n_Qbits[i].add( n_Qbits[j].mul(matrice[i][j]));
+            /* nouveau[i] = nouveau[i].add(n_Qbits[j].mul(matrice[i][j]))
+               Les deux operations de complexe arrondissaient chacune leur
+               resultat a 10 decimales : le produit d abord, la somme ensuite.
+               Il faut les deux arrondis, et dans cet ordre. */
+            let ax=n_Qbits.re[j], ay=n_Qbits.im[j];
+            let bx=matrice[i][j].x, by=matrice[i][j].y;
+
+            let produit_x=Math.round((ax*bx-ay*by)*1e10)/1e10;
+            let produit_y=Math.round((ax*by+ay*bx)*1e10)/1e10;
+
+            nouveau_n_Qbits.ecrit(i,nouveau_n_Qbits.re[i]+produit_x,nouveau_n_Qbits.im[i]+produit_y);
+
             if (j==n-1){
-                       somme_carre=somme_carre+nouveau_n_Qbits[i].proba;
-                       somme_carre_initial=somme_carre_initial+n_Qbits[i].proba;
-                       }          
-          
+                       somme_carre=somme_carre+nouveau_n_Qbits.pr[i];
+                       somme_carre_initial=somme_carre_initial+n_Qbits.pr[i];
+                       }
+
         }
     }
-  
-  
-  
-  
-  
-  
-  
-  
-     print("sommecarre",somme_carre,"   ",somme_carre_initial)
-   
-  
+
   //on renormalise le nouveau Qbit a son ancienne valeur
   if (somme_carre!=somme_carre_initial){
-   // print("je renormalise a l ancienne valeur",somme_carre,"   ",somme_carre_initial);
     let rapport=sqrt(somme_carre_initial/somme_carre);
-   for (let i = 0; i <nouveau_n_Qbits.length; i++) {
-     if ((nouveau_n_Qbits[i].x!=0)||(nouveau_n_Qbits[i].y!=0))
-                nouveau_n_Qbits[i]=new complexe(nouveau_n_Qbits[i].x*rapport,nouveau_n_Qbits[i].y*rapport);
-     
-              //print("rapport",rapport,"nouveau",nouveau_n_Qbits[i])
+   for (let i = 0; i <n; i++) {
+     if ((nouveau_n_Qbits.re[i]!=0)||(nouveau_n_Qbits.im[i]!=0))
+                nouveau_n_Qbits.ecrit(i,nouveau_n_Qbits.re[i]*rapport,nouveau_n_Qbits.im[i]*rapport);
    }
   }
-  
+
 
     return nouveau_n_Qbits;
 }
