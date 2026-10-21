@@ -1716,172 +1716,124 @@ L_pos.splice(-nbre_registre2,nbre_registre2);
   
  
   
-  //L_code code donné par les (n-nbre_registre2) premiers bits d entrées de l oracle
-  //ici on isole la chaine de caractere
-  let Liste_etats=[];
-  for (let i = 0; i <n_Qbits.length; i++) {
-    
-    
-  
-    let etat=convertit_nombreDecimal_En_StringNombre_binaire(i,nbre_Qbits);
-    Liste_etats.push(etat);
-  }
-  
-  let L_etats_premier_registre=extrait_bits_particuliers_qui_sont_a_position(Liste_etats,L_pos);
-  let L_etats_deuxieme_registre=extrait_bits_particuliers_qui_sont_a_position(Liste_etats,num_lignes_quantiques_registre2);
- let L_code=L_etats_premier_registre.slice()
- 
- 
- 
- //print("etats du 1er registre",L_etats_premier_registre);
+  /* L oracle envoie |x>|y> sur |x>|y xor f(x)>, ou x est le premier registre et
+     y le second. Il n y a donc que des indices a recalculer : chaque amplitude
+     se retrouve telle quelle a une autre place du vecteur.
 
-  
- //let Lbubug=L_code.slice();
- // print("L_code1",Lbubug)
-//  Lbubug=L_etats_deuxieme_registre.slice();
-//  print("L_etats deuxieme registre",Lbubug)
-  
- // print("foracle",f_oracle)
-  //cree le nouveau n_Qbit de même taille initailsé à -1
- 
- let nouveau_n_Qbits=new Array(n_Qbits.length);
- 
-  //let nouveau_n_Qbits=[];
-  for (let i = 0; i <n_Qbits.length; i++) { 
-   
-   // nouveau_n_Qbits.push(new complexe(0,0));
-    
-    L_code[i]=convertit_StringNombre_binaire_En_nombreDecimal(L_code[i]);
-    
-    L_code[i]=f_oracle[L_code[i]];
-    L_etats_deuxieme_registre[i]=convertit_StringNombre_binaire_En_nombreDecimal(L_etats_deuxieme_registre[i]);
-    
+     La version precedente passait par les chaines de caracteres : elle
+     fabriquait les 2^n etats en binaire, en extrayait deux fois autant de
+     sous-chaines par map(...).join(''), puis reconvertissait tout en decimal --
+     environ 9 millions de chaines a 18 qbits. Tout cela se fait avec des
+     masques et des decalages, comme le reste du fichier.
+
+     L etat de sortie est, dans l ordre de lecture : les lignes avant l oracle,
+     le premier registre inchange, le second registre recalcule, puis les lignes
+     apres l oracle. Les poids ci dessous sont ceux de cette concatenation. */
+
+  let nb_bits_registre1=L_pos.length;
+  let nb_bits_registre2=nbre_registre2;
+  let nb_bits_apres=nbre_Qbits-1-indice_fin_oracle;//lignes situees apres l oracle
+
+  //pour chaque ligne d un registre : le masque qui isole son bit dans l etat,
+  //et le rang qu occupe ce bit dans la valeur du registre
+  let masques_registre1=new Array(nb_bits_registre1);
+  let rangs_registre1=new Array(nb_bits_registre1);
+  for (let k = 0; k <nb_bits_registre1; k++) {
+    masques_registre1[k]=2**(nbre_Qbits-1-L_pos[k]);
+    rangs_registre1[k]=2**(nb_bits_registre1-1-k);
   }
-  
-  
-  
- // print("etats du 2er registre",L_etats_deuxieme_registre);
-//print("lcode=",L_code);
-//return n_Qbits
-  
-  //print("   ")
- // Lbubug=L_code.slice();
-  //print("L_code2",Lbubug)
-  //Lbubug=L_etats_deuxieme_registre.slice();
- // print("L_etats deuxieme registre2",Lbubug)
-  
- // print("L_code2",L_code)
+
+  let masques_registre2=new Array(nb_bits_registre2);
+  let rangs_registre2=new Array(nb_bits_registre2);
+  for (let k = 0; k <nb_bits_registre2; k++) {
+    masques_registre2[k]=2**(nbre_Qbits-1-num_lignes_quantiques_registre2[k]);
+    rangs_registre2[k]=2**(nb_bits_registre2-1-k);
+  }
+
+  let poids_avant=2**(nb_bits_registre1+nb_bits_registre2+nb_bits_apres);
+  let poids_registre1=2**(nb_bits_registre2+nb_bits_apres);
+  let poids_registre2=2**nb_bits_apres;
+  let masque_apres=poids_registre2-1;//isole les lignes situees apres l oracle
+  let decalage_avant=nbre_Qbits-indice_debut_oracle;//pour isoler celles d avant
+
+  let nouveau_n_Qbits=new Array(n_Qbits.length);
+
   //on parcourt chaque etat du n_qbit
   for (let i = 0; i <n_Qbits.length; i++) {
-    
-    
+
     let numero_etat;
-    
-       if ((Liste_controle)&&(cette_porte_est_desactive_par_un_controle(i,Liste_controle,nbre_Qbits))){
-      //if ((Liste_controle)&&(cette_porte_est_desactive_par_un_controle(Liste_etats[i],Liste_controle))) {
+
+    if ((Liste_controle)&&(cette_porte_est_desactive_par_un_controle(i,Liste_controle,nbre_Qbits))){
       numero_etat=i;
-     }
-    
-    else { //pas controlée
-      
-      //calcul des valeurs des  lignes d oracle qui doivent etre calculées
-      
-      // Étape 1 : Calculer le XOR de n1 et n2
-       const xorResult = L_code[i] ^ L_etats_deuxieme_registre[i];
-      
-      
-     // if (L_etats_deuxieme_registre[i]==0)//if (i<=15)
-      //print("x=",L_etats_premier_registre[i],"resultat f(x)=",xorResult);
-
-       // Étape 2 : Convertir le résultat en binaire
-        let binaryString = xorResult.toString(2);
-
-  // Étape 3 : Compléter avec des zéros non significatifs pour atteindre n bits
-      if (binaryString.length != nbre_registre2)
-        {
-              if (binaryString.length < nbre_registre2){
-                while (binaryString.length < nbre_registre2) {
-                      binaryString = "0" + binaryString;
-                  }
-              }else{ //on enleve
-                binaryString=binaryString.slice(0, -(binaryString.length - nbre_registre2));
-               // print("nouvelle taille",binaryString)
-              }
-       
-      
-          
-        }
-      
-      
-      //let etat=Liste_etats[i];//convertit_nombreDecimal_En_StringNombre_binaire(i,nbre_Qbits);
-  
-   
-      
-      let etat="";
-      //si oracle commence pas a la ligne 0 on ajoute le debut de l etat
-      if (indice_debut_oracle!=0) etat = Liste_etats[i].slice(0, indice_debut_oracle);
-      
-      
-      
-      
-      etat=etat+L_etats_premier_registre[i]+binaryString;
-      //si oracle finit pas a la dernière ligne on ajoute la fin de l etat
-      if (indice_fin_oracle!= nbre_Qbits-1 ) etat=etat+Liste_etats[i].slice(indice_fin_oracle+1);
-      
-       //attention : ici etat peut valoir 4 alors qu on n en selectionnera que 3
-     // if (L_etats_deuxieme_registre[i]==0)//if (i<=15)
-     // print("i=",i,"binary=",binaryString," etat=",etat,"longueur max registre 2",nbre_registre2)
-      numero_etat=convertit_StringNombre_binaire_En_nombreDecimal(etat);//trouve son numero dans le nouveau n_qbit
-      /*
-      let n=parseInt(etat[index], 10);
-      let nouveau_n=L_code[i]^n;//porteoracle =y (xor) f(x)
-      
-     // if (i==2) print("etat2",etat,"f(2)=",L_code[i],"n=",n,"nouveau_n",nouveau_n)
-      
-      //2 solutions 
-      //soit ça change pas
-      //soit ça change, donc fait l effet d une porte X
-      if (n==nouveau_n){//ça change pas
-      
-        numero_etat=i;
-      }
-      else{//ça change, donc comme une porte X
-        
-          //if (i==2) print("etatavant",etat)
-          etat=inverse_bit_a_index_pour_un_nbre_binaire(etat, index);
-        //if (i==2) print("etatapres",etat)
-          numero_etat=convertit_StringNombre_binaire_En_nombreDecimal(etat);//trouve son numero dans le nouveau n_qbit
-       // if (i==2) print("numero-etat",numero_etat)
-      }
-      */
-     
-      
-      
-       
     }
-    
-    //print(i,"etat",etat)
-    
-    
-   // print("le nouveau Qbit",etat,numero_etat," est egale au vieux Qbit",i, "qui a pour valeur",n_Qbits[i])
-    
+
+    else { //pas controlee
+
+      //valeur du premier registre, c est le x de f(x)
+      let valeur_registre1=0;
+      for (let k = 0; k <nb_bits_registre1; k++)
+        if ((i&masques_registre1[k])!=0) valeur_registre1=valeur_registre1+rangs_registre1[k];
+
+      //valeur du second registre, c est le y
+      let valeur_registre2=0;
+      for (let k = 0; k <nb_bits_registre2; k++)
+        if ((i&masques_registre2[k])!=0) valeur_registre2=valeur_registre2+rangs_registre2[k];
+
+      let f_de_x=f_oracle[valeur_registre1];
+
+      if ((f_de_x===0)||(f_de_x===1)){//le cas normal : f rend 0 ou 1
+
+        let nouveau_registre2=f_de_x^valeur_registre2;//y xor f(x)
+
+        //le registre s ecrit sur nb_bits_registre2 bits : s il en faut moins on
+        //complete par des zeros non significatifs, ce qui ne change pas la
+        //valeur ; s il en faut plus on ne garde que les bits de poids fort
+        let nb_bits_utiles=(nouveau_registre2===0)?1:(32-Math.clz32(nouveau_registre2));
+        if (nb_bits_utiles>nb_bits_registre2)
+          nouveau_registre2=nouveau_registre2>>>(nb_bits_utiles-nb_bits_registre2);
+
+        numero_etat= (i>>>decalage_avant)*poids_avant
+                   + valeur_registre1*poids_registre1
+                   + nouveau_registre2*poids_registre2
+                   + (i&masque_apres);
+
+      } else {
+
+        /* f a rendu autre chose que 0 ou 1 : soit la fonction saisie par
+           l utilisateur rend n importe quoi, soit sa table est trop courte et
+           f_de_x vaut undefined. Dans ces cas la, l ancien code passait par les
+           chaines et aboutissait a un resultat arbitraire -- qu on reproduit
+           ici tel quel, pour ne rien changer a ce qui s affichait. */
+
+        let etat_complet=convertit_nombreDecimal_En_StringNombre_binaire(i,nbre_Qbits);
+        let chaine_registre2=(f_de_x^valeur_registre2).toString(2);
+        if (chaine_registre2.length != nb_bits_registre2){
+          if (chaine_registre2.length < nb_bits_registre2){
+            while (chaine_registre2.length < nb_bits_registre2) chaine_registre2 = "0" + chaine_registre2;
+          } else
+            chaine_registre2=chaine_registre2.slice(0, -(chaine_registre2.length - nb_bits_registre2));
+        }
+
+        let etat="";
+        if (indice_debut_oracle!=0) etat = etat_complet.slice(0, indice_debut_oracle);
+        etat=etat
+            +valeur_registre1.toString(2).padStart(nb_bits_registre1,'0')
+            +chaine_registre2;
+        if (indice_fin_oracle!= nbre_Qbits-1 ) etat=etat+etat_complet.slice(indice_fin_oracle+1);
+
+        numero_etat=convertit_StringNombre_binaire_En_nombreDecimal(etat);
+
+      }
+
+    }
+
     //fait la correspondance en echangeant les amplitudes
-    
-    
-    //nouveau_n_Qbits[numero_etat].coeff_complexe(n_Qbits[i].x,n_Qbits[i].y);
-    
-    
     nouveau_n_Qbits[numero_etat]= new complexe(n_Qbits[i].x,n_Qbits[i].y);
-    
-    
- //
-    
+
   }
-  
- // print("fin oracle",nouveau_n_Qbits,n_Qbits)
-  
+
   return nouveau_n_Qbits;
-  
+
 }
 
 
