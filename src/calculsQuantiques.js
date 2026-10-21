@@ -508,86 +508,79 @@ let decimal = parseInt(binaryString, 2); // Convertir en décimal
 
 
 
+/* Produit tensoriel des n qbits d entree, construit par doublement.
+
+   La version precedente reprenait le produit a zero pour chacun des 2^n etats :
+   elle faisait n*2^n multiplications complexes. Ici le vecteur double de taille
+   a chaque qbit ajoute, ce qui en fait 2*2^n, soit n/2 fois moins (9 fois a 18
+   qbits), pour exactement les memes nombres : le qbit j est multiplie a DROITE
+   du produit deja forme, donc l ordre d association des multiplications est
+   inchange, et les flottants avec.
+
+   Le qbit ajoute devient le bit de poids faible, et les precedents remontent
+   d un rang : apres les n etapes, le qbit 0 est bien le bit de poids fort,
+   comme le veut le masque 2^(n-1-j) utilise partout ailleurs.
+
+   Le raccourci de l ancienne boucle est conserve lui aussi : des qu un
+   coefficient rencontre est nul, c est l objet complexe de ce coefficient qui
+   est rendu tel quel et les qbits suivants ne sont plus multiplies. Le tableau
+   fige retient quels etats sont ainsi arretes, puisque c est le premier zero
+   rencontre qui doit l emporter. */
 function retourne_vecteur_nQbits_dentree(LigneQuantique){
-  let n_Qbits=[];//sera le vecteur du produit tensoriel des n q bits d entrée
-  
+  let n_Qbits=[];//sera le vecteur du produit tensoriel des n q bits d entree
+
   let n = LigneQuantique.length;//nbre de qbits
   if (n==0) return n_Qbits;
-  
-  //let Liste_etats=[];//liste des differents etats du n_qbits sous forme de string : [|000>,|001>,|010>,|011>.....]
-  for (let i = 0; i < 2 ** n; i++) {
-    //print("ligne ",i, LigneQuantique[i]);
-    
-    
-    
-   // let etat=convertit_nombreDecimal_En_StringNombre_binaire(i,n);
-   // print("|"+etat+">");
-   // Liste_etats.push(etat);
-    
-    
-    let coeff=1;
-    let Qbit0;
-    let Qbit1;
-    
-    
-   // print(n,"  ",etat.length)
-    
-    for (let j = 0; j <n; j++) {
-    
-      // let bit=etat[j];
-      
-      //beaucoup plus rapide que de convertir en string et de ragrder si le bit est a 1
-       //cree un masque 0001000000 ou 1 est la position du qbit qui passe dans la porte, donc celui a inversé ou a traitersi besoin, evite de creer etat=|0001100110> et de regarder si le bit numero i est a 1 ou 0 
-  //attention (masque_index_a_traiter&i) renvoie 0 ou un nbre qui est une puissance de 2, pas 1....
-  let  masque_index_a_traiter = 2**(n-1-j);
-  
-      let bit_est_a_1=((masque_index_a_traiter&i)!=0);
-      
-    
-           
-        
-      
-         if  (bit_est_a_1==false){//bcp plus rapide que ci dessous
-        
-            
-              Qbit0=LigneQuantique[j][0].Qbit[0][0];//c est un complexe x+yi devant |0>
-           
-            if (Qbit0.x==0) if (Qbit0.y==0) {coeff=Qbit0;break;}//si a zero on se casse car comme on multiplie ca donnera tjs zero
-           
-           
-            if (j==0) coeff=Qbit0;
-           else coeff=coeff.mul(Qbit0);
-           
-          
-            
-         }else{
-           
-           
-             Qbit1=LigneQuantique[j][0].Qbit[0][1];//c est un complexe x+yi devant |1>
-           
-           
-             if (Qbit1.x==0) if (Qbit1.y==0) {coeff=Qbit1;break;}//si a zero on se casse car comme on multiplie ca donnera tjs zero
-           
-            if (j==0) coeff=Qbit1;
-           else coeff=coeff.mul(Qbit1);
-           
-           
-           
-         }
-     }
-    
-     n_Qbits.push(coeff);
-         
-          
-    
+
+  let taille_finale=2**n;
+  n_Qbits=new Array(taille_finale);
+  let fige=new Uint8Array(taille_finale);//1 = etat arrete sur un coefficient nul
+
+  //premier qbit : on prend ses deux coefficients tels quels, sans multiplier
+  //(c est ce que faisait le cas j==0 de l ancienne boucle)
+  let Qbit0=LigneQuantique[0][0].Qbit[0][0];//c est un complexe x+yi devant |0>
+  let Qbit1=LigneQuantique[0][0].Qbit[0][1];//c est un complexe x+yi devant |1>
+  n_Qbits[0]=Qbit0;
+  n_Qbits[1]=Qbit1;
+  fige[0]=((Qbit0.x==0)&&(Qbit0.y==0))?1:0;
+  fige[1]=((Qbit1.x==0)&&(Qbit1.y==0))?1:0;
+
+  //qbits suivants : chaque etat deja forme en engendre deux
+  for (let j = 1; j <n; j++) {
+
+    Qbit0=LigneQuantique[j][0].Qbit[0][0];
+    Qbit1=LigneQuantique[j][0].Qbit[0][1];
+
+    let Qbit0_est_nul=((Qbit0.x==0)&&(Qbit0.y==0));//si a zero on ne multiplie pas : ca donnerait tjs zero
+    let Qbit1_est_nul=((Qbit1.x==0)&&(Qbit1.y==0));
+
+    //on remonte de la fin pour pouvoir doubler dans le meme tableau : les cases
+    //ecrites, 2k et 2k+1, sont toujours au dela de celles qui restent a lire
+    for (let k = (1<<j)-1; k >=0; k--) {
+
+      let coeff=n_Qbits[k];
+
+      if (fige[k]==1){//etat deja arrete sur un zero : il se recopie a l identique
+        n_Qbits[2*k]=coeff;
+        n_Qbits[2*k+1]=coeff;
+        fige[2*k]=1;
+        fige[2*k+1]=1;
+        continue;
+      }
+
+      if (Qbit0_est_nul){ n_Qbits[2*k]=Qbit0; fige[2*k]=1; }
+      else { n_Qbits[2*k]=coeff.mul(Qbit0); fige[2*k]=0; }
+
+      if (Qbit1_est_nul){ n_Qbits[2*k+1]=Qbit1; fige[2*k+1]=1; }
+      else { n_Qbits[2*k+1]=coeff.mul(Qbit1); fige[2*k+1]=0; }
+
+    }
+
   }
-  
-  /*
-  
-  */
+
   if (debug_affiche_nQbits==true)
   print("le nqbits est",n_Qbits)
-  
+
    return n_Qbits;
 }
 
