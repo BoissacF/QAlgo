@@ -47,9 +47,10 @@ const MOTEUR = [
   "plein_ecran.js", "historique.js",
 ];
 
-// Seul Shor pour 21 (18 qubits, 262144 amplitudes) demande quelques secondes ;
-// tous les autres circuits sont instantanes.
-const LENTS = ["shor9bits"];
+// Seuls Shor pour 21 (18 qubits, 262144 amplitudes) et Shor pour 39
+// (22 qubits, 4194304 amplitudes) demandent du temps ; tous les autres
+// circuits sont instantanes.
+const LENTS = ["shor9bits", "shor11bits"];
 
 const PRECISION = 1e9;      // amplitudes arrondies à 9 décimales pour l'empreinte
 const DOMINANTS = 5;        // nombre d'états les plus probables conservés

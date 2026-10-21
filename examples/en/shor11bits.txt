@@ -1,0 +1,74 @@
+68!0#0.7071067812#0.7071067812#0#0;0;30;24;16;150;0;!65;0;410;24;16;150;0;!0#0.7071067812#0.7071067812#0#0;1;30;42;16;150;0;!65;1;410;42;16;150;0;!0#0.7071067812#0.7071067812#0#0;2;30;60;16;150;0;!65;2;410;60;16;150;0;!0#0.7071067812#0.7071067812#0#0;3;30;78;16;150;0;!65;3;410;78;16;150;0;!0#0.7071067812#0.7071067812#0#0;4;30;96;16;150;0;!65;4;410;96;16;150;0;!0#0.7071067812#0.7071067812#0#0;5;30;114;16;150;0;!65;5;410;114;16;150;0;!0#0.7071067812#0.7071067812#0#0;6;30;132;16;150;0;!65;6;410;132;16;150;0;!0#0.7071067812#0.7071067812#0#0;7;30;150;16;150;0;!65;7;410;150;16;150;0;!0#0.7071067812#0.7071067812#0#0;8;30;168;16;150;0;!65;8;410;168;16;150;0;!0#0.7071067812#0.7071067812#0#0;9;30;186;16;150;0;!65;9;410;186;16;150;0;!0#0.7071067812#0.7071067812#0#0;10;30;204;16;150;0;!65;10;410;204;16;150;0;!0#1#0#0#0;11;30;222;16;150;0;!65;11;410;222;16;150;0;!0#1#0#0#0;12;30;240;16;150;0;!65;12;410;240;16;150;0;!0#1#0#0#0;13;30;258;16;150;0;!65;13;410;258;16;150;0;!0#1#0#0#0;14;30;276;16;150;0;!65;14;410;276;16;150;0;!0#1#0#0#0;15;30;294;16;150;0;!65;15;410;294;16;150;0;!0#1#0#0#0;16;30;312;16;150;0;!65;16;410;312;16;150;0;!0#1#0#0#0;17;30;330;16;150;0;!65;17;410;330;16;150;0;!0#1#0#0#0;18;30;348;16;150;0;!65;18;410;348;16;150;0;!0#1#0#0#0;19;30;366;16;150;0;!65;19;410;366;16;150;0;!0#1#0#0#0;20;30;384;16;150;0;!65;20;410;384;16;150;0;!0#1#0#0#0;21;30;402;16;150;0;!65;21;410;402;16;150;0;!10#11;0;150;24;16;18,211,41;47;function f(X){let r=1@let b=2@let e=X@while(e>0){if(e%2===1)r=(r*b)%39@b=(b*b)%39@e=Math.floor(e/2)@}return r@}!64;0;320;24;16;150;0;!64;1;320;42;16;150;0;!64;2;320;60;16;150;0;!64;3;320;78;16;150;0;!64;4;320;96;16;150;0;!64;5;320;114;16;150;0;!64;6;320;132;16;150;0;!64;7;320;150;16;150;0;!64;8;320;168;16;150;0;!64;9;320;186;16;150;0;!64;10;320;204;16;150;0;!64;11;320;222;16;150;0;!64;12;320;240;16;150;0;!64;13;320;258;16;150;0;!64;14;320;276;16;150;0;!64;15;320;294;16;150;0;!64;16;320;312;16;150;0;!64;17;320;330;16;150;0;!64;18;320;348;16;150;0;!64;19;320;366;16;150;0;!64;20;320;384;16;150;0;!64;21;320;402;16;150;0;!14;0;224;24;18;199,41,173;20;!S;0;44;1;0;30;410;24;24!S;44;67;1;0;30;410;24;24!S;67;45;1;0;30;410;24;24!S;45;1;1;0;30;410;24;24!S;2;44;1;0;30;410;42;42!S;44;67;1;0;30;410;42;42!S;67;46;1;0;30;410;42;42!S;46;3;1;0;30;410;42;42!S;4;44;1;0;30;410;60;60!S;44;67;1;0;30;410;60;60!S;67;47;1;0;30;410;60;60!S;47;5;1;0;30;410;60;60!S;6;44;1;0;30;410;78;78!S;44;67;1;0;30;410;78;78!S;67;48;1;0;30;410;78;78!S;48;7;1;0;30;410;78;78!S;8;44;1;0;30;410;96;96!S;44;67;1;0;30;410;96;96!S;67;49;1;0;30;410;96;96!S;49;9;1;0;30;410;96;96!S;10;44;1;0;30;410;114;114!S;44;67;1;0;30;410;114;114!S;67;50;1;0;30;410;114;114!S;50;11;1;0;30;410;114;114!S;12;44;1;0;30;410;132;132!S;44;67;1;0;30;410;132;132!S;67;51;1;0;30;410;132;132!S;51;13;1;0;30;410;132;132!S;14;44;1;0;30;410;150;150!S;44;67;1;0;30;410;150;150!S;67;52;1;0;30;410;150;150!S;52;15;1;0;30;410;150;150!S;16;44;1;0;30;410;168;168!S;44;67;1;0;30;410;168;168!S;67;53;1;0;30;410;168;168!S;53;17;1;0;30;410;168;168!S;18;44;1;0;30;410;186;186!S;44;67;1;0;30;410;186;186!S;67;54;1;0;30;410;186;186!S;54;19;1;0;30;410;186;186!S;20;44;1;0;30;410;204;204!S;44;67;1;0;30;410;204;204!S;67;55;1;0;30;410;204;204!S;55;21;1;0;30;410;204;204!S;22;44;1;0;30;410;222;222!S;44;56;1;0;30;410;222;222!S;56;23;1;0;30;410;222;222!S;24;44;1;0;30;410;240;240!S;44;57;1;0;30;410;240;240!S;57;25;1;0;30;410;240;240!S;26;44;1;0;30;410;258;258!S;44;58;1;0;30;410;258;258!S;58;27;1;0;30;410;258;258!S;28;44;1;0;30;410;276;276!S;44;59;1;0;30;410;276;276!S;59;29;1;0;30;410;276;276!S;30;44;1;0;30;410;294;294!S;44;60;1;0;30;410;294;294!S;60;31;1;0;30;410;294;294!S;32;44;1;0;30;410;312;312!S;44;61;1;0;30;410;312;312!S;61;33;1;0;30;410;312;312!S;34;44;1;0;30;410;330;330!S;44;62;1;0;30;410;330;330!S;62;35;1;0;30;410;330;330!S;36;44;1;0;30;410;348;348!S;44;63;1;0;30;410;348;348!S;63;37;1;0;30;410;348;348!S;38;44;1;0;30;410;366;366!S;44;64;1;0;30;410;366;366!S;64;39;1;0;30;410;366;366!S;40;44;1;0;30;410;384;384!S;44;65;1;0;30;410;384;384!S;65;41;1;0;30;410;384;384!S;42;44;1;0;30;410;402;402!S;44;66;1;0;30;410;402;402!S;66;43;1;0;30;410;402;402!T;GOAL: We want to find the prime factors of N = 39, so 3 and 13.
+Shor's algorithm is probabilistic, meaning we do not necessarily find these factors on the first measurement.
+
+The algorithm must find the order r which,  for an integer a < 39, is the smallest k such that: a**k≡ 1 (mod 39)
+
+The number of qBits needed for each register must be n such that 2**n>=N**2
+Here, 11 qbits since 2**11 = 2048 is greater than 39**2 = 1521, whereas 2**10 = 1024 would not be enough
+The circuit therefore has 22 qbits: the 11 top lines for the first register, the 11 bottom ones for the second
+
+First possibility: "Winning the lottery". We randomly find a divisor of N, and the algorithm stops.
+
+Otherwise:
+In this simulation, a and r must satisfy the 2 hypotheses below:
+
+- hyp 1 : r is even
+- hyp 2 : a **(r/2) + 1 must not be divisible by 39
+
+For this simulation, if one of these 2 hypotheses is not verified, we choose another value of a and restart.
+
+A third hypothesis is tested but will not be verified here:
+
+- hyp 3 : The order r must divide 2**n   where n is the number of qbits, here 11
+
+Here a = 2 and the order is r = 12, since 2**12 = 4096 = 105x39 + 1
+- hyp 1 : 12 is even, verified
+- hyp 2 : 2**6 + 1 = 65 is not divisible by 39, verified
+- hyp 3 : 2048/12 = 170.67 is not an integer, NOT verified, exactly as for N = 21
+
+CAREFUL with the way the oracle is written. Here X goes up to 2047, and (2**X)%39 returns nothing as soon as X reaches 1024, because 2**1024 exceeds the largest floating point number of the machine. Repeated squaring is therefore required. That is what the oracle of this circuit does, written without any semicolon since the file format does not allow one in this text:
+function f(X){
+ let r=1
+ let b=2
+ let e=X
+ while(e>0){
+  if(e%2===1) r=(r*b)%39
+  b=(b*b)%39
+  e=Math.floor(e/2)
+ }
+ return r
+}
+
+Practical Steps:
+- We must change the oracle function with the chosen value of a
+- We perform a partial measurement of the second register (the last 11 bits)
+- For the first register, we look at the possible measurements m in the "Probas" window
+
+Since hypothesis 3 is not verified, we obtain many possible states.
+We retain only those with the highest probabilities, here for the 1st register:
+0, 171, 341, 512, 683, 853, 1024, 1195, 1365, 1536, 1707, 1877
+
+We compute for these different possible measurements m: the value m/(2**n), 2 situations:
+  1- If we obtain an integer → failure... we restart
+2- If we obtain a fraction, we must find an approximation with a denominator smaller than 39 using the continued fractions method
+Example: If we measure 171, the Euclidean algorithm gives:
+2048 = 11 x 171 + 167
+171 = 1 x 167 + 4
+Thus,
+171 / 2048 = 1 / (11 + 1 / (1 + 4/167)) which is close to 1 / (11 + 1) = 1 / 12
+
+Since 12 is much smaller than 39, we verify that:
+2**12≡ 1 (mod 39)
+Thus, the order r = 12
+
+If this was not the case, we would repeat a measurement. Here about one measurement in three gives the exact order, the same rate as for N = 21.
+
+Finding the Factors
+Once r = 12 is determined, we obtain two factors d1 and d2 of N such that:
+d1 = PGCD(a**r/2 +1) and d2 = PGCD(a**r/2 -1)
+2**6 = 64 which equals 25 modulo 39, so
+d1 = PGCD(26, 39) = 13 and d2 = PGCD(24, 39) = 3
+ Thus, here: 3 and 13
+
+Testing Different Values of a
+In this simulation, you can choose other values of a to test while verifying that hypotheses 1 and 2 are satisfied. Bases 7 and 11 also give order 12, bases 4 and 10 give order 6, and bases 5 and 8 give order 4, for which hypothesis 3 becomes true and the peaks become sharp.

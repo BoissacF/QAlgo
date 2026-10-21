@@ -1,0 +1,65 @@
+68!0#0.7071067812#0.7071067812#0#0;0;30;24;16;150;0;!65;0;410;24;16;150;0;!0#0.7071067812#0.7071067812#0#0;1;30;42;16;150;0;!65;1;410;42;16;150;0;!0#0.7071067812#0.7071067812#0#0;2;30;60;16;150;0;!65;2;410;60;16;150;0;!0#0.7071067812#0.7071067812#0#0;3;30;78;16;150;0;!65;3;410;78;16;150;0;!0#0.7071067812#0.7071067812#0#0;4;30;96;16;150;0;!65;4;410;96;16;150;0;!0#0.7071067812#0.7071067812#0#0;5;30;114;16;150;0;!65;5;410;114;16;150;0;!0#0.7071067812#0.7071067812#0#0;6;30;132;16;150;0;!65;6;410;132;16;150;0;!0#0.7071067812#0.7071067812#0#0;7;30;150;16;150;0;!65;7;410;150;16;150;0;!0#0.7071067812#0.7071067812#0#0;8;30;168;16;150;0;!65;8;410;168;16;150;0;!0#0.7071067812#0.7071067812#0#0;9;30;186;16;150;0;!65;9;410;186;16;150;0;!0#0.7071067812#0.7071067812#0#0;10;30;204;16;150;0;!65;10;410;204;16;150;0;!0#1#0#0#0;11;30;222;16;150;0;!65;11;410;222;16;150;0;!0#1#0#0#0;12;30;240;16;150;0;!65;12;410;240;16;150;0;!0#1#0#0#0;13;30;258;16;150;0;!65;13;410;258;16;150;0;!0#1#0#0#0;14;30;276;16;150;0;!65;14;410;276;16;150;0;!0#1#0#0#0;15;30;294;16;150;0;!65;15;410;294;16;150;0;!0#1#0#0#0;16;30;312;16;150;0;!65;16;410;312;16;150;0;!0#1#0#0#0;17;30;330;16;150;0;!65;17;410;330;16;150;0;!0#1#0#0#0;18;30;348;16;150;0;!65;18;410;348;16;150;0;!0#1#0#0#0;19;30;366;16;150;0;!65;19;410;366;16;150;0;!0#1#0#0#0;20;30;384;16;150;0;!65;20;410;384;16;150;0;!0#1#0#0#0;21;30;402;16;150;0;!65;21;410;402;16;150;0;!10#11;0;150;24;16;18,211,41;47;function f(X){let r=1@let b=2@let e=X@while(e>0){if(e%2===1)r=(r*b)%39@b=(b*b)%39@e=Math.floor(e/2)@}return r@}!64;0;320;24;16;150;0;!64;1;320;42;16;150;0;!64;2;320;60;16;150;0;!64;3;320;78;16;150;0;!64;4;320;96;16;150;0;!64;5;320;114;16;150;0;!64;6;320;132;16;150;0;!64;7;320;150;16;150;0;!64;8;320;168;16;150;0;!64;9;320;186;16;150;0;!64;10;320;204;16;150;0;!64;11;320;222;16;150;0;!64;12;320;240;16;150;0;!64;13;320;258;16;150;0;!64;14;320;276;16;150;0;!64;15;320;294;16;150;0;!64;16;320;312;16;150;0;!64;17;320;330;16;150;0;!64;18;320;348;16;150;0;!64;19;320;366;16;150;0;!64;20;320;384;16;150;0;!64;21;320;402;16;150;0;!14;0;224;24;18;199,41,173;20;!S;0;44;1;0;30;410;24;24!S;44;67;1;0;30;410;24;24!S;67;45;1;0;30;410;24;24!S;45;1;1;0;30;410;24;24!S;2;44;1;0;30;410;42;42!S;44;67;1;0;30;410;42;42!S;67;46;1;0;30;410;42;42!S;46;3;1;0;30;410;42;42!S;4;44;1;0;30;410;60;60!S;44;67;1;0;30;410;60;60!S;67;47;1;0;30;410;60;60!S;47;5;1;0;30;410;60;60!S;6;44;1;0;30;410;78;78!S;44;67;1;0;30;410;78;78!S;67;48;1;0;30;410;78;78!S;48;7;1;0;30;410;78;78!S;8;44;1;0;30;410;96;96!S;44;67;1;0;30;410;96;96!S;67;49;1;0;30;410;96;96!S;49;9;1;0;30;410;96;96!S;10;44;1;0;30;410;114;114!S;44;67;1;0;30;410;114;114!S;67;50;1;0;30;410;114;114!S;50;11;1;0;30;410;114;114!S;12;44;1;0;30;410;132;132!S;44;67;1;0;30;410;132;132!S;67;51;1;0;30;410;132;132!S;51;13;1;0;30;410;132;132!S;14;44;1;0;30;410;150;150!S;44;67;1;0;30;410;150;150!S;67;52;1;0;30;410;150;150!S;52;15;1;0;30;410;150;150!S;16;44;1;0;30;410;168;168!S;44;67;1;0;30;410;168;168!S;67;53;1;0;30;410;168;168!S;53;17;1;0;30;410;168;168!S;18;44;1;0;30;410;186;186!S;44;67;1;0;30;410;186;186!S;67;54;1;0;30;410;186;186!S;54;19;1;0;30;410;186;186!S;20;44;1;0;30;410;204;204!S;44;67;1;0;30;410;204;204!S;67;55;1;0;30;410;204;204!S;55;21;1;0;30;410;204;204!S;22;44;1;0;30;410;222;222!S;44;56;1;0;30;410;222;222!S;56;23;1;0;30;410;222;222!S;24;44;1;0;30;410;240;240!S;44;57;1;0;30;410;240;240!S;57;25;1;0;30;410;240;240!S;26;44;1;0;30;410;258;258!S;44;58;1;0;30;410;258;258!S;58;27;1;0;30;410;258;258!S;28;44;1;0;30;410;276;276!S;44;59;1;0;30;410;276;276!S;59;29;1;0;30;410;276;276!S;30;44;1;0;30;410;294;294!S;44;60;1;0;30;410;294;294!S;60;31;1;0;30;410;294;294!S;32;44;1;0;30;410;312;312!S;44;61;1;0;30;410;312;312!S;61;33;1;0;30;410;312;312!S;34;44;1;0;30;410;330;330!S;44;62;1;0;30;410;330;330!S;62;35;1;0;30;410;330;330!S;36;44;1;0;30;410;348;348!S;44;63;1;0;30;410;348;348!S;63;37;1;0;30;410;348;348!S;38;44;1;0;30;410;366;366!S;44;64;1;0;30;410;366;366!S;64;39;1;0;30;410;366;366!S;40;44;1;0;30;410;384;384!S;44;65;1;0;30;410;384;384!S;65;41;1;0;30;410;384;384!S;42;44;1;0;30;410;402;402!S;44;66;1;0;30;410;402;402!S;66;43;1;0;30;410;402;402!T;BUT : On veut trouver les facteurs premiers de N = 39, donc 3 et 13
+L'algorithme de Shor est probabiliste, on ne trouve pas forcemment ces facteurs dès la première mesure.
+
+L'algorithme doit trouver l'ordre r qui pour un entier a<39 soit le plus petit k tel que a**k≡ 1 (mod 39)
+
+Le nombre de qBits necessaire pour chaque registre doit être n tel que 2**n>=N**2
+Ici 11 qbits car 2**11 = 2048 est supérieur à 39**2 = 1521, alors que 2**10 = 1024 serait insuffisant
+Le circuit compte donc 22 qbits : les 11 lignes du haut pour le premier registre, les 11 du bas pour le second
+
+On choisit un entier a tel que a>1 et a<N
+Première possibilité : On gagne au loto . On trouve un diviseur de N par hasard, l'algorithme s'arrête .
+Sinon :
+Dans cette simulation  a et r doivent satisfaire aux 2 hypothèses ci dessous :
+- hyp 1 :  r est pair
+- hyp 2 : a **(r/2) + 1 ne doit pas être divisible par 39
+
+Pour cette simulation, si une de ces 2 hypothèses n'est pas vérifiée,  on choisit une autre valeur de a et on recommence.
+Une troisième hypothèse est testée mais ici elle ne sera pas vérifiée :
+- hyp 3 : l'ordre r doit diviser 2**n   ou n est le nombre de qbits, ici 11
+
+Ici a = 2 et l'ordre est r = 12, car 2**12 = 4096 = 105x39 + 1
+- hyp 1 : 12 est pair, elle est vérifiée
+- hyp 2 : 2**6 + 1 = 65 n'est pas divisible par 39, elle est vérifiée
+- hyp 3 : 2048/12 = 170,67 n'est pas entier, elle n'est PAS vérifiée, exactement comme pour N = 21
+
+ATTENTION à l'écriture de l'oracle. Ici X monte jusqu'à 2047, et (2**X)%39 ne donne plus rien dès X = 1024 parce que 2**1024 dépasse le plus grand flottant de la machine. Il faut donc élever au carré de proche en proche. C'est ce que fait l'oracle de ce circuit, écrit sans point-virgule car le format de fichier n'en accepte pas dans ce texte :
+function f(X){
+ let r=1
+ let b=2
+ let e=X
+ while(e>0){
+  if(e%2===1) r=(r*b)%39
+  b=(b*b)%39
+  e=Math.floor(e/2)
+ }
+ return r
+}
+
+Pratique :
+- on doit changer la fonction de l'oracle avec la valeur de a choisie
+- on fait une mesure partielle du deuxième registre (les 11 derniers bits)
+- Pour le premier registre, on regarde les mesures m possibles dans la fenêtre "Probas"
+
+L'hypothèse 3 n'étant pas vérifiée on obtient beaucoup d'états possibles.
+On ne retient que ceux de plus grandes probabilités, ici pour le 1er registre :
+0, 171, 341, 512, 683, 853, 1024, 1195, 1365, 1536, 1707, 1877
+- On calcule pour ces différentes mesures m possibles : la valeur m/(2**n), 2 situations :
+   1- si on obtient un entier c'est perdu... on recommence
+   2- si on obtient une fraction, on doit trouver une approximation avec un dénominateur inférieur à 39 avec la méthode des fractions continues.
+Exemple : si on mesure 171, l'algorithme d'Euclide nous donne
+2048 = 11 x 171 + 167
+171 = 1 x 167 + 4
+donc 171/2048 = 1/(11 + 1/(1 + 4/167)) qui vaut à peu près 1/(11+1) = 1/12
+12 est bien plus petit que 39  et on peut verifier que :
+2**12≡ 1 (mod 39)
+Donc l'ordre est 12
+Si ce n'était pas le cas, on refait une mesure. Ici une mesure sur trois environ redonne l'ordre exact, le même taux que pour N = 21.
+
+Une fois r = 12 déterminé, on obtient deux facteurs  d1 et d2  de N tels que :
+d1 = PGCD(a**r/2 +1) et d2 = PGCD(a**r/2 -1)
+2**6 = 64 qui vaut 25 modulo 39, donc
+d1 = PGCD(26, 39) = 13 et d2 = PGCD(24, 39) = 3
+ donc ici : 3 et 13
+
+Dans cette simulation tu peux choisir d'autres valeurs de a pour tester en vérifiant que les hypothèses 1 et 2 sont vérifiées. Les bases 7 et 11 donnent aussi l'ordre 12, les bases 4 et 10 donnent l'ordre 6, et les bases 5 et 8 donnent l'ordre 4, pour lequel l'hypothèse 3 devient vraie et les pics deviennent nets.

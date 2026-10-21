@@ -267,6 +267,7 @@ function change_menu(){
     document.getElementById('shor4bits').textContent="Shor's Algorithm for 15";
    
     document.getElementById('shor9bits').textContent="Shor's Algorithm for 21";
+    document.getElementById('shor11bits').textContent="Shor's Algorithm for 39";
     
     document.getElementById('t2').textContent="File";
     
@@ -336,6 +337,7 @@ document.getElementById('t10').textContent= "Export to amplitudes.csv";
     
   
     document.getElementById('shor9bits').textContent="Algorithme de Shor pour 21";
+    document.getElementById('shor11bits').textContent="Algorithme de Shor pour 39";
     
  
     document.getElementById('t2').textContent="Fichier";

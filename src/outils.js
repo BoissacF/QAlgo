@@ -1893,7 +1893,7 @@ function chargeFichierExemple(element) {
     
   }*/
   
-   if ((element.id=="shor9bits")||(element.id=="shor4bits")){
+   if ((element.id=="shor9bits")||(element.id=="shor4bits")||(element.id=="shor11bits")){
   
       document.getElementById("radioOuidecimal").checked=true; 
       R.affiche_decimal=true;
