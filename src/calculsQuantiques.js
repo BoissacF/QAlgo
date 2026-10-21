@@ -116,24 +116,115 @@ function tirageAleatoire(probs) {
 
 
 //retourne un nombre aleatoire correspondant a l indice dans la liste du nQbits fonction du vecteur de probas (dont la somme est 1)
-function tirageAleatoire_etat_dun_nQbits(nQbits) {
-  let r = random(1); // Générer un nombre aléatoire entre 0 et 1
-  let somme = 0;     // Variable pour suivre la somme cumulative des probabilités
-  
-  for (let i = 0; i < nQbits.length; i++) {
-    somme += nQbits[i].proba; // Ajouter la probabilité à la somme cumulative
-    
-    if (r < somme) {
-      return i; // Si le nombre aléatoire est inférieur à la somme cumulative, on renvoie l'indice
-    }
-    
-   
+/* ---------------------------------------------------------------------------
+   Le vecteur d etat : les 2^n amplitudes du registre.
+
+   Trois tableaux de flottants au lieu d un tableau de 2^n objets complexe. Un
+   complexe coute 204 octets mesures, parce que V8 ne range pas ses champs dans
+   l objet mais boite chaque double dans un HeapNumber separe : a 18 qbits le
+   vecteur pesait 51 Mo, contre 6 Mo ici. C est ce qui borne le simulateur, et
+   non la vitesse.
+
+   re et im sont les parties reelle et imaginaire ARRONDIES a 10 decimales,
+   comme les champs x et y de complexe. pr est la probabilite, calculee sur les
+   valeurs d AVANT l arrondi, exactement comme le faisait complexe : les deux ne
+   sont donc pas tout a fait coherentes, et c est voulu -- c est ce que le
+   moteur a toujours calcule, et les empreintes des tests en dependent.
+
+   vivant[i] vaut 0 quand l amplitude a ete supprimee par une mesure, ce que
+   l ancienne representation marquait par un undefined dans le tableau. Il
+   reste a null tant qu aucune amplitude n a ete supprimee.                   */
+class vecteur_etat {
+  constructor(taille){
+    this.length=taille;
+    this.re=new Float64Array(taille);
+    this.im=new Float64Array(taille);
+    this.pr=new Float64Array(taille);
+    this.vivant=null;//null = toutes les amplitudes sont vivantes
   }
-  
+
+  //ecrit l amplitude x+yi au rang k, exactement comme le faisait
+  //new complexe(x,y) : re et im arrondis, pr calcule avant l arrondi
+  ecrit(k,x,y){
+    this.re[k]=Math.round(x*1e10)/1e10;
+    this.im[k]=Math.round(y*1e10)/1e10;
+    this.pr[k]=x*x+y*y;
+  }
+
+  //pose telle quelle l amplitude d un complexe deja construit, probabilite
+  //comprise : l ancien code rangeait l objet lui meme dans le vecteur, sans le
+  //recalculer, et sa probabilite avait ete obtenue avant arrondi
+  pose(k,c){
+    this.re[k]=c.x;
+    this.im[k]=c.y;
+    this.pr[k]=c.proba;
+  }
+
+  est_vivant(i){
+    return (this.vivant===null)||(this.vivant[i]===1);
+  }
+
+  //marque l amplitude comme supprimee par une mesure
+  tue(i){
+    if (this.vivant===null){
+      this.vivant=new Uint8Array(this.length);
+      this.vivant.fill(1);
+    }
+    this.vivant[i]=0;
+    this.re[i]=0;
+    this.im[i]=0;
+    this.pr[i]=0;
+  }
+}
+
+
+//un vecteur d etat depuis un tableau de complexe, undefined valant une
+//amplitude supprimee par une mesure
+function convertit_complexes_en_vecteur_etat(tableau){
+  let v=new vecteur_etat(tableau.length);
+  for (let i = 0; i <tableau.length; i++){
+    let c=tableau[i];
+    if (c==undefined){ v.tue(i); continue; }
+    v.re[i]=c.x;
+    v.im[i]=c.y;
+    v.pr[i]=c.proba;
+  }
+  return v;
+}
+
+
+//l inverse : un tableau de complexe, pour l affichage
+function convertit_vecteur_etat_en_complexes(v){
+  if ((v instanceof vecteur_etat)==false) return v;//deja un tableau de complexe
+  let tableau=new Array(v.length);
+  for (let i = 0; i <v.length; i++){
+    if (v.est_vivant(i)==false){ tableau[i]=undefined; continue; }
+    tableau[i]=complexe_depuis_vecteur(v.re[i],v.im[i],v.pr[i]);
+  }
+  return tableau;
+}
+
+
+//retourne un nombre aleatoire correspondant a l indice dans la liste du nQbits fonction du vecteur de probas (dont la somme est 1)
+function tirageAleatoire_etat_dun_nQbits(nQbits) {
+  let r = random(1); // Generer un nombre aleatoire entre 0 et 1
+  let somme = 0;     // Variable pour suivre la somme cumulative des probabilites
+
+  //TRANSITION : appelee sur un vecteur_etat comme sur un tableau de complexe
+  let est_un_vecteur=(nQbits instanceof vecteur_etat);
+
+  for (let i = 0; i < nQbits.length; i++) {
+    somme += est_un_vecteur ? nQbits.pr[i] : nQbits[i].proba; // Ajouter la probabilite a la somme cumulative
+
+    if (r < somme) {
+      return i; // Si le nombre aleatoire est inferieur a la somme cumulative, on renvoie l indice
+    }
+
+  }
+
    if (somme==0) print("gros bug function tirageAleatoire_etat_dun_nQbits(nQbits)!!!!!!!!!!!!",somme)
-    return 0; //ne devrait jamais arrivé ici
-  
-  
+    return 0; //ne devrait jamais arrive ici
+
 }
 
 function convertit_Bloch_complexe(teta,phi){//teta et phi sont en rad
@@ -527,21 +618,21 @@ let decimal = parseInt(binaryString, 2); // Convertir en décimal
    fige retient quels etats sont ainsi arretes, puisque c est le premier zero
    rencontre qui doit l emporter. */
 function retourne_vecteur_nQbits_dentree(LigneQuantique){
-  let n_Qbits=[];//sera le vecteur du produit tensoriel des n q bits d entree
 
   let n = LigneQuantique.length;//nbre de qbits
-  if (n==0) return n_Qbits;
+  if (n==0) return [];
 
   let taille_finale=2**n;
-  n_Qbits=new Array(taille_finale);
+  let n_Qbits=new vecteur_etat(taille_finale);
   let fige=new Uint8Array(taille_finale);//1 = etat arrete sur un coefficient nul
 
   //premier qbit : on prend ses deux coefficients tels quels, sans multiplier
-  //(c est ce que faisait le cas j==0 de l ancienne boucle)
+  //(c est ce que faisait le cas j==0 de l ancienne boucle, qui rangeait l objet
+  //complexe du qbit lui meme dans le vecteur, probabilite comprise)
   let Qbit0=LigneQuantique[0][0].Qbit[0][0];//c est un complexe x+yi devant |0>
   let Qbit1=LigneQuantique[0][0].Qbit[0][1];//c est un complexe x+yi devant |1>
-  n_Qbits[0]=Qbit0;
-  n_Qbits[1]=Qbit1;
+  n_Qbits.pose(0,Qbit0);
+  n_Qbits.pose(1,Qbit1);
   fige[0]=((Qbit0.x==0)&&(Qbit0.y==0))?1:0;
   fige[1]=((Qbit1.x==0)&&(Qbit1.y==0))?1:0;
 
@@ -554,25 +645,30 @@ function retourne_vecteur_nQbits_dentree(LigneQuantique){
     let Qbit0_est_nul=((Qbit0.x==0)&&(Qbit0.y==0));//si a zero on ne multiplie pas : ca donnerait tjs zero
     let Qbit1_est_nul=((Qbit1.x==0)&&(Qbit1.y==0));
 
-    //on remonte de la fin pour pouvoir doubler dans le meme tableau : les cases
+    let a0x=Qbit0.x, a0y=Qbit0.y, a1x=Qbit1.x, a1y=Qbit1.y;
+
+    //on remonte de la fin pour pouvoir doubler dans le meme vecteur : les cases
     //ecrites, 2k et 2k+1, sont toujours au dela de celles qui restent a lire
     for (let k = (1<<j)-1; k >=0; k--) {
 
-      let coeff=n_Qbits[k];
+      let x=n_Qbits.re[k];
+      let y=n_Qbits.im[k];
+      let p=n_Qbits.pr[k];
 
       if (fige[k]==1){//etat deja arrete sur un zero : il se recopie a l identique
-        n_Qbits[2*k]=coeff;
-        n_Qbits[2*k+1]=coeff;
+        n_Qbits.re[2*k]=x;   n_Qbits.im[2*k]=y;   n_Qbits.pr[2*k]=p;
+        n_Qbits.re[2*k+1]=x; n_Qbits.im[2*k+1]=y; n_Qbits.pr[2*k+1]=p;
         fige[2*k]=1;
         fige[2*k+1]=1;
         continue;
       }
 
-      if (Qbit0_est_nul){ n_Qbits[2*k]=Qbit0; fige[2*k]=1; }
-      else { n_Qbits[2*k]=coeff.mul(Qbit0); fige[2*k]=0; }
+      //le produit, puis l arrondi : c est exactement ce que faisait complexe.mul
+      if (Qbit0_est_nul){ n_Qbits.pose(2*k,Qbit0); fige[2*k]=1; }
+      else { n_Qbits.ecrit(2*k,x*a0x-y*a0y,x*a0y+y*a0x); fige[2*k]=0; }
 
-      if (Qbit1_est_nul){ n_Qbits[2*k+1]=Qbit1; fige[2*k+1]=1; }
-      else { n_Qbits[2*k+1]=coeff.mul(Qbit1); fige[2*k+1]=0; }
+      if (Qbit1_est_nul){ n_Qbits.pose(2*k+1,Qbit1); fige[2*k+1]=1; }
+      else { n_Qbits.ecrit(2*k+1,x*a1x-y*a1y,x*a1y+y*a1x); fige[2*k+1]=0; }
 
     }
 
@@ -605,37 +701,33 @@ function affichage_dans_console_probas_du_nQbit(n_Qbits,nbre_Qbits){
 }
 
 function calcul_probas_pour_un_Qbit_numeroQbit_du_nQbit(n_Qbits,numeroQbit,nbre_Qbits){
-  
-          //cree un masque 0001000000 ou 1 est la position du qbit qui passe dans la porte, donc celui a inversé ou a traitersi besoin, evite de creer etat=|0001100110> et de regarder si le bit numero i est a 1 ou 0 
+
+          //cree un masque 0001000000 ou 1 est la position du qbit qui passe dans la porte, donc celui a inverse ou a traiter si besoin, evite de creer etat=|0001100110> et de regarder si le bit numero i est a 1 ou 0
   //attention (masque_index_a_traiter&i) renvoie 0 ou un nbre qui est une puissance de 2, pas 1....
   let  masque_index_a_traiter = 2**(nbre_Qbits-1-numeroQbit);
-  
-  
-      
-  
-      let P1=0;//proba d avoir 1
-      for (let i = 0; i <n_Qbits.length; i++) 
+
+  let P1=0;//proba d avoir 1
+
+  if (n_Qbits instanceof vecteur_etat){
+
+    let pr=n_Qbits.pr;
+    for (let i = 0; i <n_Qbits.length; i++)
+      if (n_Qbits.est_vivant(i))
+        // c est beaucoup plus rapide de faire un et que de convertir !!!!!
+        if ((masque_index_a_traiter&i)!=0)  P1=P1+100*pr[i];
+
+  } else {
+
+    //TRANSITION : appelee aussi sur un tableau de complexe (le vecteur mesure,
+    //une fois reconverti pour l affichage)
+    for (let i = 0; i <n_Qbits.length; i++)
       if (n_Qbits[i]!=undefined)
-      
-      {
-        
-        
-             // ce st beaucoup plus rapide de faire un et que de convertir !!!!!
-            if ((masque_index_a_traiter&i)!=0)  P1=P1+100*n_Qbits[i].proba;
-        
-       
-        
-          // let etat=convertit_nombreDecimal_En_StringNombre_binaire(i,nbre_Qbits);
-        
-       // print("numeroqbit=",numeroQbit,"i=",i,"nbre_equiv",nbre_equivalent_numeroQbit,"etat",etat,"test",((nbre_equivalent_numeroQbit&i)!=0)," autre",(etat[numeroQbit]=="1") )
-        
-           //if (etat[numeroQbit]=="1")  P1=P1+100*n_Qbits[i].proba;
-    
-       }
-  
-       return [100-P1,P1];
-    
-  
+        if ((masque_index_a_traiter&i)!=0)  P1=P1+100*n_Qbits[i].proba;
+
+  }
+
+  return [100-P1,P1];
+
 }
 
 
@@ -740,148 +832,80 @@ function calcul_Liste_controle(L_aretes_controle){
   return Liste_controle;
 }
 
-function applique_Porte_X(n_Qbits,index,nbre_Qbits,L_aretes_controle){//applique une porte X au bit correspondant a l index et retourne un nouveau n_Qbits modifié
-  
+function applique_Porte_X(n_Qbits,index,nbre_Qbits,L_aretes_controle){//applique une porte X au bit correspondant a l index et retourne un nouveau n_Qbits modifie
 
-  
    //Liste_controle=[[type_control1,num_bit_control1],[type_control2,num_bit_control2]] //renvoie la liste des controles sur la porte en indiquantb leur type (16 ou 17) et le numero de la ligne quntiqUE OU SEN TROUVE LE CONTROLE
-  let Liste_controle=calcul_Liste_controle(L_aretes_controle);  
-  
-  
-    //cree un masque 0001000000 ou 1 est la position du qbit qui passe dans la porte, donc celui a inversé ou a traitersi besoin, evite de creer etat=|0001100110> et de regarder si le bit numero i est a 1 ou 0 
-  //attention
+  let Liste_controle=calcul_Liste_controle(L_aretes_controle);
+
+    //cree un masque 0001000000 ou 1 est la position du qbit qui passe dans la porte, donc celui a inverser : evite de creer etat=|0001100110> et de regarder si le bit numero i est a 1 ou 0
   let  masque_index_a_traiter = 2**(nbre_Qbits-1-index);
-  
-  
-  
-  //cree le nouveau n_Qbit de même taille initailsé à -1
- /* let nouveau_n_Qbits=[];
-  for (let i = 0; i <n_Qbits.length; i++) { 
-    
-    nouveau_n_Qbits.push(new complexe(0,0));
-  }*/
-  
-  let nouveau_n_Qbits=new Array(n_Qbits.length);
-  
-  
+
+  let nouveau_n_Qbits=new vecteur_etat(n_Qbits.length);
+
   //on parcourt chaque etat du n_qbit
   for (let i = 0; i <n_Qbits.length; i++) {
-    
-    
+
     let numero_etat;
-    //let etat=convertit_nombreDecimal_En_StringNombre_binaire(i,nbre_Qbits);
-    
-    
-    
-    
-    
+
     if ((Liste_controle)&&(cette_porte_est_desactive_par_un_controle(i,Liste_controle,nbre_Qbits))){
-  // if ((Liste_controle)&&(cette_porte_est_desactive_par_un_controle(etat,Liste_controle))){
       numero_etat=i;
-      
-      
     }
-    
+
     else {
-      //etat=inverse_bit_a_index_pour_un_nbre_binaire(etat, index);//porte X : inverse le bit a index
-    
-       //numero_etat=convertit_StringNombre_binaire_En_nombreDecimal(etat);//trouve son numero dans le nouveau n_qbit
-      
-      
-      
-      //va plus vite que de convertir en string comme ci dessous
-         // Applique l'inversion du bit à l'index spécifié
-         numero_etat= i ^  masque_index_a_traiter;
+      //va plus vite que de convertir en string : applique l inversion du bit a l index specifie
+      numero_etat= i ^  masque_index_a_traiter;
     }
-    
-    //print(i,"etat",etat)
-    
-    
-   // print("le nouveau Qbit",etat,numero_etat," est egale au vieux Qbit",i, "qui a pour valeur",n_Qbits[i])
-    
+
     //fait la correspondance en echangeant les amplitudes
-    
-    nouveau_n_Qbits[ numero_etat]=new complexe(n_Qbits[i].x,n_Qbits[i].y);
-   // nouveau_n_Qbits[numero_etat].coeff_complexe(n_Qbits[i].x,n_Qbits[i].y); 
-    
-  
-    
+    nouveau_n_Qbits.ecrit(numero_etat,n_Qbits.re[i],n_Qbits.im[i]);
+
   }
-  
+
   return nouveau_n_Qbits;
-  
+
 }
 
 
 
-function applique_Porte_SWAP(n_Qbits,index1,index2,nbre_Qbits,L_aretes_controle){//applique une porte SWAP au bit correspondant a l index et retourne un nouveau n_Qbits modifié
-  
+function applique_Porte_SWAP(n_Qbits,index1,index2,nbre_Qbits,L_aretes_controle){//applique une porte SWAP aux deux bits correspondant aux index et retourne un nouveau n_Qbits modifie
+
 //ATTENTION NE DOIT SE LANCER QUE SI LA PORTE A SES DEUX ENTREES, SINON ON LANCE pAS cette fonction, c est inutile
-  
+
    //Liste_controle=[[type_control1,num_bit_control1],[type_control2,num_bit_control2]] //renvoie la liste des controles sur la porte en indiquantb leur type (16 ou 17) et le numero de la ligne quntiqUE OU SEN TROUVE LE CONTROLE
-  let Liste_controle=calcul_Liste_controle(L_aretes_controle);  
-   print("je lance swap")
-  print("la liste de controles est",Liste_controle)
+  let Liste_controle=calcul_Liste_controle(L_aretes_controle);
+
   //index1 et index2 sont les deux indices a intervertir si et seulement si ils sont differents
-  
-  
-  //cree le nouveau n_Qbit de même taille initailsé à -1
-  /*let nouveau_n_Qbits=[];
-  for (let i = 0; i <n_Qbits.length; i++) { 
-    
-    nouveau_n_Qbits.push(new complexe(0,0));
-  }*/
-  
-  
-   let nouveau_n_Qbits=new Array(n_Qbits.length);
- 
-  
-  
-  
+  let  masque_index1 = 2**(nbre_Qbits-1-index1);
+  let  masque_index2 = 2**(nbre_Qbits-1-index2);
+
+  let nouveau_n_Qbits=new vecteur_etat(n_Qbits.length);
+
   //on parcourt chaque etat du n_qbit
   for (let i = 0; i <n_Qbits.length; i++) {
-    
-   
+
     let numero_etat;
-    let etat=convertit_nombreDecimal_En_StringNombre_binaire(i,nbre_Qbits);
-    
-    
+
+    let bit1=((masque_index1&i)!=0);
+    let bit2=((masque_index2&i)!=0);
+
     if (((Liste_controle)&&(cette_porte_est_desactive_par_un_controle(i,Liste_controle,nbre_Qbits)))
-   
     ||
-      (etat[index1]==etat[index2])){
-   //si y a control et sic est le bon bit de control aucun changement
+      (bit1==bit2)){
+   //si y a control et si c est le bon bit de control aucun changement, et deux bits egaux s echangent sans rien changer
       numero_etat=i;
-     // print("yo controle",i,"etat",etat,"index1",index1,"  index2",index2,etat[index1]==etat[index2],cette_porte_est_desactive_par_un_controle(i,Liste_controle,nbre_Qbits))
-      
     }
-    
-    else {//on inverse les deux bits des deux lignes si ils sont differents
-      
-    //  print("yo pas de controle",i,"etat",etat)
-      etat=inverse_bit_a_index_pour_un_nbre_binaire(etat, index1);// inverse le bit a index1
-      etat=inverse_bit_a_index_pour_un_nbre_binaire(etat, index2);// inverse le bit a index1
-    
-       numero_etat=convertit_StringNombre_binaire_En_nombreDecimal(etat);//trouve son numero dans le nouveau n_qbit
+
+    else {//on inverse les deux bits des deux lignes puisqu ils sont differents
+      numero_etat= i ^ masque_index1 ^ masque_index2;
     }
-    
-    //print(i,"etat",etat)
-    
-    
-   // print("le nouveau Qbit",etat,numero_etat," est egale au vieux Qbit",i, "qui a pour valeur",n_Qbits[i])
-    
+
     //fait la correspondance en echangeant les amplitudes
-    
-     
-  nouveau_n_Qbits[ numero_etat]=new complexe(n_Qbits[i].x,n_Qbits[i].y);
-  //  nouveau_n_Qbits[numero_etat].coeff_complexe(n_Qbits[i].x,n_Qbits[i].y); 
-    
-  //  print(nouveau_n_Qbits,n_Qbits)
-    
+    nouveau_n_Qbits.ecrit(numero_etat,n_Qbits.re[i],n_Qbits.im[i]);
+
   }
-  
+
   return nouveau_n_Qbits;
-  
+
 }
 
 
@@ -890,196 +914,114 @@ function applique_Porte_SWAP(n_Qbits,index1,index2,nbre_Qbits,L_aretes_controle)
 
 
 
-function applique_Porte_Y(n_Qbits,index,nbre_Qbits,L_aretes_controle){//applique une porte X au bit correspondant a l index et retourne un nouveau n_Qbits modifié
-  
+function applique_Porte_Y(n_Qbits,index,nbre_Qbits,L_aretes_controle){//applique une porte Y au bit correspondant a l index et retourne un nouveau n_Qbits modifie
 
-  
    //Liste_controle=[[type_control1,num_bit_control1],[type_control2,num_bit_control2]] //renvoie la liste des controles sur la porte en indiquantb leur type (16 ou 17) et le numero de la ligne quntiqUE OU SEN TROUVE LE CONTROLE
-  let Liste_controle=calcul_Liste_controle(L_aretes_controle);  
-  
-  
-  
-  
-  
-  //cree le nouveau n_Qbit de même taille initailsé à -1
- /* let nouveau_n_Qbits=[];
-  for (let i = 0; i <n_Qbits.length; i++) { 
-   
-    nouveau_n_Qbits.push(new complexe(0,0));
-  }*/
-   let nouveau_n_Qbits=new Array(n_Qbits.length);
-  
-  
-  
-  
-  
-  
+  let Liste_controle=calcul_Liste_controle(L_aretes_controle);
+
+  //cree un masque 0001000000 ou 1 est la position du qbit qui passe dans la porte
+  let  masque_index_a_traiter = 2**(nbre_Qbits-1-index);
+
+  let nouveau_n_Qbits=new vecteur_etat(n_Qbits.length);
+
   //on parcourt chaque etat du n_qbit
   for (let i = 0; i <n_Qbits.length; i++) {
-    
-    
-    let numero_etat;
-    let etat=convertit_nombreDecimal_En_StringNombre_binaire(i,nbre_Qbits);
-    
-    
-       if ((Liste_controle)&&(cette_porte_est_desactive_par_un_controle(i,Liste_controle,nbre_Qbits))){
-     //if ((Liste_controle)&&(cette_porte_est_desactive_par_un_controle(etat,Liste_controle))){
-     
-      numero_etat=i;
-     // nouveau_n_Qbits[numero_etat].coeff_complexe(n_Qbits[i].x,n_Qbits[i].y); 
-        
-      
-  nouveau_n_Qbits[ numero_etat]=new complexe(n_Qbits[i].x,n_Qbits[i].y);  
-        
-      
-    }
-    
-    else {
-      
-      let bit_depart=etat[index];
-      etat=inverse_bit_a_index_pour_un_nbre_binaire(etat, index);//porte X : inverse le bit a index
-    
-       numero_etat=convertit_StringNombre_binaire_En_nombreDecimal(etat);//trouve son numero dans le nouveau n_qbit
-      
-      //f (bit_depart==0) nouveau_n_Qbits[numero_etat].coeff_complexe(-n_Qbits[i].y,n_Qbits[i].x); 
-     // else nouveau_n_Qbits[numero_etat].coeff_complexe(n_Qbits[i].y,-n_Qbits[i].x); 
-      
-      
-      
-      if (bit_depart==0)
-  nouveau_n_Qbits[ numero_etat]=new complexe(-n_Qbits[i].y,n_Qbits[i].x);
-       else
-  nouveau_n_Qbits[ numero_etat]=new complexe(n_Qbits[i].y,-n_Qbits[i].x);
-      
-      
-       
-      
-      
-      
-      
-    }
-    
-    //print(i,"etat",etat)
-    
-    
-   // print("le nouveau Qbit",etat,numero_etat," est egale au vieux Qbit",i, "qui a pour valeur",n_Qbits[i])
-    
-    //fait la correspondance en echangeant les amplitudes
-    
-    //nouveau_n_Qbits[ numero_etat]=n_Qbits[i];
-    
-    
-  //  print(nouveau_n_Qbits,n_Qbits)
-    
-  }
-  
-  return nouveau_n_Qbits;
-  
-}
 
+    let x=n_Qbits.re[i];
+    let y=n_Qbits.im[i];
 
-
-function applique_Porte_Z(n_Qbits,index,nbre_Qbits,L_aretes_controle){//applique une porte Z au bit correspondant a l index et retourne un nouveau n_Qbits modifié
-  
-  
-   //Liste_controle=[[type_control1,num_bit_control1],[type_control2,num_bit_control2]] //renvoie la liste des controles sur la porte en indiquantb leur type (16 ou 17) et le numero de la ligne quntiqUE OU SEN TROUVE LE CONTROLE
-  let Liste_controle=calcul_Liste_controle(L_aretes_controle);  
-  
-  
-  //cree le nouveau n_Qbit de même taille initailsé à -1
-  let nouveau_n_Qbits=[];
-  for (let i = 0; i <n_Qbits.length; i++) { 
-    //nouveau_n_Qbits.push(-1);
-     nouveau_n_Qbits.push(new complexe(0,0));
-  }
-  
-  //on parcourt chaque etat du n_qbit
-  for (let i = 0; i <n_Qbits.length; i++) {
-    
-    let etat=convertit_nombreDecimal_En_StringNombre_binaire(i,nbre_Qbits);
-    
     if ((Liste_controle)&&(cette_porte_est_desactive_par_un_controle(i,Liste_controle,nbre_Qbits))){
-     //if ((Liste_controle)&&(cette_porte_est_desactive_par_un_controle(etat,Liste_controle))){ 
-    //nouveau_n_Qbits[i]=n_Qbits[i];//desactivé par le bit de controle
-      nouveau_n_Qbits[i].coeff_complexe(n_Qbits[i].x,n_Qbits[i].y); 
-      
-      
+      nouveau_n_Qbits.ecrit(i,x,y);//desactive par le bit de controle
     }
-    else
-      {//Porte Z activé
-    
-    
-    
-    
-    
-    
-    //Z change la phase (signe de l amplitude) si c est |1> sinon fait rien
-        //nouveau_n_Qbits[i]=n_Qbits[i];
-        if (etat[index]=="1")  nouveau_n_Qbits[i].coeff_complexe(-n_Qbits[i].x,-n_Qbits[i].y);
-        else nouveau_n_Qbits[i].coeff_complexe(n_Qbits[i].x,n_Qbits[i].y); 
-    
-   // if (etat[index]=="1") nouveau_n_Qbits[i]=-1*n_Qbits[i];
-   // else nouveau_n_Qbits[i]=n_Qbits[i];
-      }
-    
+
+    else {
+
+      //Y inverse le bit et multiplie par i ou par -i selon sa valeur de depart
+      let numero_etat= i ^  masque_index_a_traiter;
+
+      if ((masque_index_a_traiter&i)==0) nouveau_n_Qbits.ecrit(numero_etat,-y,x);
+      else nouveau_n_Qbits.ecrit(numero_etat,y,-x);
+
+    }
+
   }
-  
+
   return nouveau_n_Qbits;
-  
+
 }
 
-function applique_Porte_R(n_Qbits,index,nbre_Qbits,phase,L_aretes_controle){//applique une porte R au bit correspondant a l index et retourne un nouveau n_Qbits modifié
-  
-  
- 
+
+
+function applique_Porte_Z(n_Qbits,index,nbre_Qbits,L_aretes_controle){//applique une porte Z au bit correspondant a l index et retourne un nouveau n_Qbits modifie
+
    //Liste_controle=[[type_control1,num_bit_control1],[type_control2,num_bit_control2]] //renvoie la liste des controles sur la porte en indiquantb leur type (16 ou 17) et le numero de la ligne quntiqUE OU SEN TROUVE LE CONTROLE
-  let Liste_controle=calcul_Liste_controle(L_aretes_controle);  
-  
-  
-  //cree le nouveau n_Qbit de même taille initailsé à -1
-  let nouveau_n_Qbits=[];
-  for (let i = 0; i <n_Qbits.length; i++) { 
-    //nouveau_n_Qbits.push(-1);
-     nouveau_n_Qbits.push(new complexe(0,0));
-  }
-  
+  let Liste_controle=calcul_Liste_controle(L_aretes_controle);
+
+  //cree un masque 0001000000 ou 1 est la position du qbit qui passe dans la porte
+  let  masque_index_a_traiter = 2**(nbre_Qbits-1-index);
+
+  let nouveau_n_Qbits=new vecteur_etat(n_Qbits.length);
+
   //on parcourt chaque etat du n_qbit
   for (let i = 0; i <n_Qbits.length; i++) {
-    
-    let etat=convertit_nombreDecimal_En_StringNombre_binaire(i,nbre_Qbits);
-    
-     if ((Liste_controle)&&(cette_porte_est_desactive_par_un_controle(i,Liste_controle,nbre_Qbits))){
-    //if ((Liste_controle)&&(cette_porte_est_desactive_par_un_controle(etat,Liste_controle))){  
-    //nouveau_n_Qbits[i]=n_Qbits[i];//desactivé par le bit de controle
-      nouveau_n_Qbits[i].coeff_complexe(n_Qbits[i].x,n_Qbits[i].y); 
-      
-      
+
+    let x=n_Qbits.re[i];
+    let y=n_Qbits.im[i];
+
+    if ((Liste_controle)&&(cette_porte_est_desactive_par_un_controle(i,Liste_controle,nbre_Qbits))){
+      nouveau_n_Qbits.ecrit(i,x,y);//desactive par le bit de controle
     }
     else
-      {//Porte Z activé
-    
-    
-    
-    
-    
-    
-    //R change la phase (signe de l amplitude) en multipliant par exp(iphi) le coeff de ket 1 
-        if (etat[index]=="1")  {
-          let x= n_Qbits[i].x*Math.cos(phase)-n_Qbits[i].y*Math.sin(phase);
-          let y= n_Qbits[i].x*Math.sin(phase)+n_Qbits[i].y*Math.cos(phase);
-          nouveau_n_Qbits[i].coeff_complexe(x,y);
-                                
-        }
-        else nouveau_n_Qbits[i].coeff_complexe(n_Qbits[i].x,n_Qbits[i].y); 
-    
-   // if (etat[index]=="1") nouveau_n_Qbits[i]=-1*n_Qbits[i];
-   // else nouveau_n_Qbits[i]=n_Qbits[i];
+      {//Porte Z activee
+
+    //Z change la phase (signe de l amplitude) si c est |1> sinon fait rien
+        if ((masque_index_a_traiter&i)!=0) nouveau_n_Qbits.ecrit(i,-x,-y);
+        else nouveau_n_Qbits.ecrit(i,x,y);
+
       }
-    
+
   }
-  print("nouveau nqbits", nouveau_n_Qbits)
+
   return nouveau_n_Qbits;
-  
+
+}
+
+function applique_Porte_R(n_Qbits,index,nbre_Qbits,phase,L_aretes_controle){//applique une porte R au bit correspondant a l index et retourne un nouveau n_Qbits modifie
+
+   //Liste_controle=[[type_control1,num_bit_control1],[type_control2,num_bit_control2]] //renvoie la liste des controles sur la porte en indiquantb leur type (16 ou 17) et le numero de la ligne quntiqUE OU SEN TROUVE LE CONTROLE
+  let Liste_controle=calcul_Liste_controle(L_aretes_controle);
+
+  //cree un masque 0001000000 ou 1 est la position du qbit qui passe dans la porte
+  let  masque_index_a_traiter = 2**(nbre_Qbits-1-index);
+
+  let cosinus=Math.cos(phase);
+  let sinus=Math.sin(phase);
+
+  let nouveau_n_Qbits=new vecteur_etat(n_Qbits.length);
+
+  //on parcourt chaque etat du n_qbit
+  for (let i = 0; i <n_Qbits.length; i++) {
+
+    let x=n_Qbits.re[i];
+    let y=n_Qbits.im[i];
+
+    if ((Liste_controle)&&(cette_porte_est_desactive_par_un_controle(i,Liste_controle,nbre_Qbits))){
+      nouveau_n_Qbits.ecrit(i,x,y);//desactive par le bit de controle
+    }
+    else
+      {//Porte R activee
+
+    //R change la phase en multipliant par exp(iphi) le coeff de ket 1
+        if ((masque_index_a_traiter&i)!=0)
+          nouveau_n_Qbits.ecrit(i,x*cosinus-y*sinus,x*sinus+y*cosinus);
+        else nouveau_n_Qbits.ecrit(i,x,y);
+
+      }
+
+  }
+
+  return nouveau_n_Qbits;
+
 }
 
 /*
@@ -1196,6 +1138,13 @@ function vieuxapplique_Porte_H(n_Qbits,index,nbre_Qbits,L_aretes_controle){//app
 
 
 function applique_Porte_H(n_Qbits,index,nbre_Qbits,L_aretes_controle){//applique une porte H au bit correspondant a l index et retourne un nouveau n_Qbits modifié
+
+  /* TRANSITION : cette porte travaille encore sur un tableau de complexe. Le
+     reste du moteur lui passe desormais un vecteur_etat, converti ici a
+     l entree et reconverti au retour. L etape suivante reecrira le corps en
+     tableaux de flottants et ces deux conversions disparaitront. */
+  n_Qbits=convertit_vecteur_etat_en_complexes(n_Qbits);
+  
   
   
    //Liste_controle=[[type_control1,num_bit_control1],[type_control2,num_bit_control2]] //renvoie la liste des controles sur la porte en indiquantb leur type (16 ou 17) et le numero de la ligne quntiqUE OU SEN TROUVE LE CONTROLE
@@ -1319,7 +1268,7 @@ function applique_Porte_H(n_Qbits,index,nbre_Qbits,L_aretes_controle){//applique
   }
   
  // print("nouveauqbit",nouveau_n_Qbits)
-  return nouveau_n_Qbits;
+  return convertit_complexes_en_vecteur_etat(nouveau_n_Qbits);
   
 }
 
@@ -1327,7 +1276,7 @@ function applique_Porte_H(n_Qbits,index,nbre_Qbits,L_aretes_controle){//applique
 //calcule le nQbit apres une mesure surun des qbit
 function applique_Porte_BitMesure(BitMesure,n_Qbits,index,nbre_Qbits){//applique le bit mesure
 
-  let nouveau_n_Qbits=new Array(n_Qbits.length);
+  let nouveau_n_Qbits=new vecteur_etat(n_Qbits.length);
 
   let somme_carre=0;
   BitMesure=String(BitMesure);
@@ -1350,19 +1299,19 @@ function applique_Porte_BitMesure(BitMesure,n_Qbits,index,nbre_Qbits){//applique
   for (let i = 0; i <n_Qbits.length; i++)
   {
 
-    if (n_Qbits[i]==undefined) {
-      nouveau_n_Qbits[i]=undefined;//a deja ete supprime avant
+    if (n_Qbits.est_vivant(i)==false) {
+      nouveau_n_Qbits.tue(i);//a deja ete supprime avant
       continue;
     }
 
     let bit_de_letat=((masque_index_a_traiter&i)!=0)?1:0;
 
     if (bit_de_letat!=bit_voulu) {
-      nouveau_n_Qbits[i]=undefined;//on le supprimme
+      nouveau_n_Qbits.tue(i);//on le supprimme
     }
     else{
-      nouveau_n_Qbits[i]=new complexe(n_Qbits[i].x,n_Qbits[i].y);
-      somme_carre=somme_carre+nouveau_n_Qbits[i].proba;
+      nouveau_n_Qbits.ecrit(i,n_Qbits.re[i],n_Qbits.im[i]);
+      somme_carre=somme_carre+nouveau_n_Qbits.pr[i];
     }
 
   }
@@ -1370,10 +1319,10 @@ function applique_Porte_BitMesure(BitMesure,n_Qbits,index,nbre_Qbits){//applique
   //on normalise le nouveau Qbit
   let norme=sqrt(somme_carre);
    for (let i = 0; i <n_Qbits.length; i++) {
-     if (nouveau_n_Qbits[i]!=undefined)
-     if ((nouveau_n_Qbits[i].x!=0)||(nouveau_n_Qbits[i].y!=0))
+     if (nouveau_n_Qbits.est_vivant(i))
+     if ((nouveau_n_Qbits.re[i]!=0)||(nouveau_n_Qbits.im[i]!=0))
 
-     nouveau_n_Qbits[i].coeff_complexe(nouveau_n_Qbits[i].x/norme,nouveau_n_Qbits[i].y/norme);
+     nouveau_n_Qbits.ecrit(i,nouveau_n_Qbits.re[i]/norme,nouveau_n_Qbits.im[i]/norme);
    }
 
  return nouveau_n_Qbits;
@@ -1521,6 +1470,13 @@ let L_pos = indexOfMinusOne !== -1 ? L_index.slice(0, indexOfMinusOne) : L_index
 
 
 function applique_Porte_Diffuseur_grover(n_Qbits,L_index,nbre_Qbits){
+
+  /* TRANSITION : cette porte travaille encore sur un tableau de complexe. Le
+     reste du moteur lui passe desormais un vecteur_etat, converti ici a
+     l entree et reconverti au retour. L etape suivante reecrira le corps en
+     tableaux de flottants et ces deux conversions disparaitront. */
+  n_Qbits=convertit_vecteur_etat_en_complexes(n_Qbits);
+  
   //applique une porte Operateur de diffusion de Grover au bit correspondantaux positions dans L_index et retourne un nouveau n_Qbits modifié
    // rappels :on a L_index= this.num_ligne = [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]; //numero de la ligne quantique a laquelle apparait ce sommet
   
@@ -1644,7 +1600,7 @@ function applique_Porte_Diffuseur_grover(n_Qbits,L_index,nbre_Qbits){
     
     
   
-  return nouveau_n_Qbits;
+  return convertit_complexes_en_vecteur_etat(nouveau_n_Qbits);
   
 }
 
@@ -1733,7 +1689,7 @@ L_pos.splice(-nbre_registre2,nbre_registre2);
   let masque_apres=poids_registre2-1;//isole les lignes situees apres l oracle
   let decalage_avant=nbre_Qbits-indice_debut_oracle;//pour isoler celles d avant
 
-  let nouveau_n_Qbits=new Array(n_Qbits.length);
+  let nouveau_n_Qbits=new vecteur_etat(n_Qbits.length);
 
   //on parcourt chaque etat du n_qbit
   for (let i = 0; i <n_Qbits.length; i++) {
@@ -1805,7 +1761,7 @@ L_pos.splice(-nbre_registre2,nbre_registre2);
     }
 
     //fait la correspondance en echangeant les amplitudes
-    nouveau_n_Qbits[numero_etat]= new complexe(n_Qbits[i].x,n_Qbits[i].y);
+    nouveau_n_Qbits.ecrit(numero_etat,n_Qbits.re[i],n_Qbits.im[i]);
 
   }
 
@@ -1815,6 +1771,13 @@ L_pos.splice(-nbre_registre2,nbre_registre2);
 
 
 function applique_Porte_Transformee_Fourier(n_Qbits,L_index,nbre_Qbits,inverse=false){
+
+  /* TRANSITION : cette porte travaille encore sur un tableau de complexe. Le
+     reste du moteur lui passe desormais un vecteur_etat, converti ici a
+     l entree et reconverti au retour. L etape suivante reecrira le corps en
+     tableaux de flottants et ces deux conversions disparaitront. */
+  n_Qbits=convertit_vecteur_etat_en_complexes(n_Qbits);
+  
   //applique une porte Transformee de Fourier aux bits correspondant aux positions dans L_index et retourne un nouveau n_Qbits modifié
    // rappels :on a L_index= this.num_ligne = [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]; //numero de la ligne quantique a laquelle apparait ce sommet
   
@@ -1943,7 +1906,7 @@ for (let key in Dico_de_n_Qbits){
  
     
   
-  return nouveau_n_Qbits;
+  return convertit_complexes_en_vecteur_etat(nouveau_n_Qbits);
   
 }
 
@@ -2149,6 +2112,13 @@ function applique_Porte_Racine_SWAP(n_Qbits,L_index,nbre_Qbits,L_aretes_controle
     
 
 function applique_Porte_Universelle(n_Qbits,L_index,nbre_Qbits,matrice=undefined,L_aretes_controle){
+
+  /* TRANSITION : cette porte travaille encore sur un tableau de complexe. Le
+     reste du moteur lui passe desormais un vecteur_etat, converti ici a
+     l entree et reconverti au retour. L etape suivante reecrira le corps en
+     tableaux de flottants et ces deux conversions disparaitront. */
+  n_Qbits=convertit_vecteur_etat_en_complexes(n_Qbits);
+  
   //applique une matrice aux bits correspondant aux positions dans L_index et retourne un nouveau n_Qbits modifié
    // rappels :on a L_index= this.num_ligne = [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]; //numero de la ligne quantique a laquelle apparait ce sommet
   
@@ -2276,7 +2246,7 @@ function applique_Porte_Universelle(n_Qbits,L_index,nbre_Qbits,matrice=undefined
   
   
   
-  return nouveau_n_Qbits;
+  return convertit_complexes_en_vecteur_etat(nouveau_n_Qbits);
   
 }
 

@@ -101,7 +101,7 @@ function debugage(){//se lance avec la touche d
   
   print("nQbits entree",n_Qbits);
   
-  let n_Qbits_sortie=Fourier(n_Qbits,true);
+  let n_Qbits_sortie=Fourier(convertit_vecteur_etat_en_complexes(n_Qbits),true);
   
   print("nQbits sortie",n_Qbits_sortie);
   
@@ -455,6 +455,24 @@ texte_complexe(type_affichage,sans_plus_depart=false,affichage_simple_sans_phare
       
 }
 
+
+
+/* Reconstruit un complexe depuis un vecteur d etat (voir vecteur_etat dans
+   calculsQuantiques.js). Les parties reelle et imaginaire y sont deja arrondies
+   a 10 decimales, et la probabilite y a ete calculee sur les valeurs d avant
+   l arrondi : on les repose donc telles quelles, sans repasser par
+   coeff_complexe, qui arrondirait une seconde fois et recalculerait la
+   probabilite sur les valeurs arrondies. Les resultats seraient alors
+   legerement differents de ce que le moteur a toujours produit. */
+function complexe_depuis_vecteur(x,y,proba){
+  let c=new complexe(0,0);
+  c.xbrut=x;
+  c.ybrut=y;
+  c.x=x;
+  c.y=y;
+  c.proba=proba;
+  return c;
+}
 
 
 function change_Taille_sommets_Graphe(coeff) { //si des sommets debordent on essaie de recadrer en diminuant toutes les aretes

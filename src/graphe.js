@@ -959,10 +959,10 @@ class Graph {
    
   
     //on initialise this.n_Qbits_mesure en le copiant sur la sortie
-    this.n_Qbits_mesure=[];
+    this.n_Qbits_mesure=new vecteur_etat(this.n_Qbits_sortie.length);
   for (let i = 0; i <this.n_Qbits_sortie.length; i++) { 
     
-    this.n_Qbits_mesure.push(new complexe(this.n_Qbits_sortie[i].x,this.n_Qbits_sortie[i].y));
+    this.n_Qbits_mesure.ecrit(i,this.n_Qbits_sortie[i].x,this.n_Qbits_sortie[i].y);
     
     
     
@@ -1055,6 +1055,10 @@ class Graph {
    //  print('yoyojecalcule')
     // print("yo, voila le nqbits mesure",this.n_Qbits_mesure,"et sonvecteur proba",this.Probas_mesure);
     //ICI LE QNQBIT DE SORTIE MESURE EST CALCULEE
+
+    //TRANSITION : l effondrement est fini, tout ce qui suit lit encore un
+    //tableau de complexe
+    this.n_Qbits_mesure=convertit_vecteur_etat_en_complexes(this.n_Qbits_mesure);
     
     //3e etape 
     //on recalcule les probas des portes 64 et 65 pas mesurées
@@ -2736,7 +2740,25 @@ class Graph {
   //METHODE CLASSE
   //apres un changement : arete , modification parametres, supprimmer etc... on doit recalculer  tous les Qbits sauf ceux de type 0,1,2
 
+  /* TRANSITION : le moteur calcule sur un vecteur_etat -- trois tableaux de
+     flottants -- tandis que l affichage, l historique et la capture de circuit
+     lisent encore un tableau de complexe. On convertit donc de part et d autre
+     de la chaine de portes. L etape suivante portera les flottants jusqu a
+     l affichage et ces deux conversions disparaitront, avec les 51 Mo que
+     coute encore le vecteur reconstruit a 18 qbits. */
   calcul_les_Qbits_de_sorties_de_tous_les_elements() {
+
+    if ((this.n_Qbits_sortie instanceof vecteur_etat)==false)
+      this.n_Qbits_sortie=convertit_complexes_en_vecteur_etat(this.n_Qbits_sortie);
+
+    this.calcul_les_Qbits_de_sorties_sur_vecteur_de_flottants();
+
+    this.n_Qbits_sortie=convertit_vecteur_etat_en_complexes(this.n_Qbits_sortie);
+
+  }
+
+
+  calcul_les_Qbits_de_sorties_sur_vecteur_de_flottants() {
     //let t1=millis()
     
     //si il y a une seule porte controlée ou un controle dont le numero de ligne quantique est encore à -1 apres la formation des lignes quantiques, c est qu il y a une coupure, le graphe n est pas calculable, on s en va
