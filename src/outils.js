@@ -551,6 +551,33 @@ function zoom(element){
 
 
 
+/* Refuse un qbit d entree de plus quand le circuit a atteint la limite.
+
+   Cette limite est nbre_qbits_max (declaree dans sketch.js), la MEME que celle
+   des portes multi-lignes : une porte -- oracle, Fourier, diffuseur -- doit
+   pouvoir traverser tout le circuit, donc les deux chiffres ne peuvent pas
+   diverger. C est pour cela qu on lit la constante au lieu de recopier le
+   nombre, qui etait jusqu ici ecrit en dur a quatre endroits et n avait pas
+   suivi quand le plafond du moteur est passe de 18 a 24.
+
+   Le message reprend la constante, il ne peut donc plus annoncer un chiffre
+   different de celui qui s applique. */
+function trop_de_qbits_pour_en_ajouter(){
+
+  if (G.lignes_quantiques.length<nbre_qbits_max) return false;
+
+  if (langue==1)
+    alert('Sorry, for now QAlgo can only calculate circuits with a maximum of '
+          +nbre_qbits_max+' qubits');
+  else
+    alert('Désolé, Pour l instant QAlgo ne peut calculer que les circuits comprenant '
+          +nbre_qbits_max+' qbits au maximum');
+
+  return true;
+}
+
+
+
 function choix_type(element){
   
   if (demarrage==false) return;
@@ -588,9 +615,7 @@ function choix_type(element){
     case "type0"://+|0>
        
        
-       if (G.lignes_quantiques.length>=18) if (langue!=1)
-       {alert('Désolé, Pour l instant QAlgo ne peut calculer que les circuits comprenant 18 qbits au maximum');return;}else
-       {alert('Sorry, for now QAlgo can only calculate circuits with a maximum of 18 qubits');return;}
+       if (trop_de_qbits_pour_en_ajouter()) return;
        
       typeSelectionne =0;
       
@@ -598,9 +623,7 @@ function choix_type(element){
       break;
     case "type1"://+|1>
        
-       if (G.lignes_quantiques.length>=18) if (langue!=1)
-       {alert('Désolé, Pour l instant QAlgo ne peut calculer que les circuits comprenant 18 qbits au maximum');return;}else
-       {alert('Sorry, for now QAlgo can only calculate circuits with a maximum of 18 qubits');return;}
+       if (trop_de_qbits_pour_en_ajouter()) return;
        
        
        typeSelectionne =1;
@@ -610,9 +633,7 @@ function choix_type(element){
       break;
       
     case "type2"://+0.707|0> + 0.707|1>
-       if (G.lignes_quantiques.length>=18) if (langue!=1)
-       {alert('Désolé, Pour l instant QAlgo ne peut calculer que les circuits comprenant 18 qbits au maximum');return;}else
-       {alert('Sorry, for now QAlgo can only calculate circuits with a maximum of 18 qubits');return;}
+       if (trop_de_qbits_pour_en_ajouter()) return;
        
        typeSelectionne =2;
       
@@ -628,9 +649,7 @@ function choix_type(element){
       break;
       
        case "type22"://+0.707|0> - 0.707|1>
-       if (G.lignes_quantiques.length>=18) if (langue!=1)
-       {alert('Désolé, Pour l instant QAlgo ne peut calculer que les circuits comprenant 18 qbits au maximum');return;}else
-       {alert('Sorry, for now QAlgo can only calculate circuits with a maximum of 18 qubits');return;}
+       if (trop_de_qbits_pour_en_ajouter()) return;
        
        
        
@@ -1673,7 +1692,11 @@ function DeCodeStringEnGraph(code) {
   
   G.affiche_du_nQbit_de_sortie_et_des_probas();
       
-  if (R.Graphique_visible==false) graphique(); 
+  /* Apres l ouverture d un circuit, le graphique est visible si et seulement
+     si le circuit est assez petit -- voir NOMBRE_QBITS_MAX_GRAPHIQUE_AUTO.
+     graphique() est une bascule : on ne l appelle que s il faut changer. */
+  let graphique_souhaite=(G.lignes_quantiques.length<=NOMBRE_QBITS_MAX_GRAPHIQUE_AUTO);
+  if (R.Graphique_visible!=graphique_souhaite) graphique();
   ouverture_de_fichier_en_cours=false;
   
  //loop();//on remet l affichage
@@ -1877,6 +1900,19 @@ function CodeGraphEnString() {
    clignoter. Parmi les exemples, seuls Shor pour 21 (18 qbits) et Shor pour 39
    (22 qbits) depassent ce seuil. */
 const NOMBRE_QBITS_POUR_MESSAGE_DATTENTE=12;
+
+
+/* Nombre de qbits au dela duquel l ouverture d un circuit ne montre plus le
+   graphique des etats.
+
+   Il trace une barre par amplitude, et son cout par image double a chaque qbit
+   ajoute. Mesure, par image : 2 ms a 16 qbits, 10 ms a 18, 32 ms a 20, 126 ms
+   a 22 et 513 ms a 24 -- soit deux images par seconde, une interface
+   inutilisable, alors que le reste du moteur tient tres bien a 24 qbits.
+
+   Au dela du seuil, l utilisateur ouvre le graphique lui-meme s il le veut, en
+   connaissance de cause : le bouton est dans la barre de menu. */
+const NOMBRE_QBITS_MAX_GRAPHIQUE_AUTO=20;
 
 
 /* Compte les qbits d entree d un circuit sans le decoder : ce sont les sommets

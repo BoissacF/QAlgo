@@ -89,7 +89,10 @@ class Arete {
   }
 }
 
-// Sommet class nbre_qbits_max=16 QBITS AU MAXIMUM
+// Sommet class. Le nombre de lignes quantiques qu une porte multiple peut
+// traverser est nbre_qbits_max, declaree dans sketch.js, et c est aussi le
+// nombre maximal de qbits du circuit -- voir trop_de_qbits_pour_en_ajouter()
+// dans outils.js.
 class Sommet {
   constructor(numeroSommet, x, y, d,type) {
     //typeSelectionne; //  0:+|0> ; 1:+|1> ; 2:+0.707|0> + 0.707|1> ; 3 porte X ; 4:porte Z ; 5:porte H

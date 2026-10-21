@@ -34,7 +34,16 @@ let menuCouleurVisible = false;
    ses emplacements et le calcul s arretait sur une erreur, bien avant que la
    memoire du vecteur d etat pose probleme. Porte de 20 a 24 le 21 octobre
    2026, ce qui coute quatre tableaux de quatre cases par porte multiple --
-   rien. */
+   rien.
+
+   C est aussi le nombre maximal de qbits d un circuit : une porte doit pouvoir
+   traverser tout le circuit, donc les deux limites n en font qu une. C est
+   trop_de_qbits_pour_en_ajouter(), dans outils.js, qui refuse le qbit de trop,
+   et son message reprend cette constante.
+
+   A titre indicatif, le cout d un recalcul complet, affichage compris :
+   20 qbits 1,3 s et 26 Mo, 22 qbits 5,3 s et 96 Mo, 24 qbits 22 s et 200 Mo.
+   C est le temps qui borne l usage, pas la memoire. */
 let nbre_qbits_max =24;
 /*
 
