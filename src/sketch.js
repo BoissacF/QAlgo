@@ -11,6 +11,11 @@
 //pb2 : impossible ouvrir fichier
 
 let doit_lancer_calcul_LignesQuantiQues_nQbitsEntree_nQbitsSortie=false;//lance lescalculs dans draw si pas de selection
+
+/* Vrai le temps d une image, juste avant un recalcul long : draw() peint alors
+   le message d attente et rend la main, et le recalcul a lieu a l image
+   suivante -- le message etant deja a l ecran. Voir draw(). */
+let message_dattente_deja_peint=false;
 let Time_Click = 0;
 
 let Time_doubleClick = 300; // temps en millisecondes pour considérer un double cli
@@ -1185,8 +1190,22 @@ if (G.TabSommets.length>2) graf3DBloch2.affiche();
       {
         
         if (doit_lancer_calcul_LignesQuantiQues_nQbitsEntree_nQbitsSortie==true) {
+
+        /* Sur un gros circuit ce recalcul tient plusieurs secondes -- 5 s a 22
+           qbits, 22 s a 24 -- et le navigateur ne repeint rien pendant tout ce
+           temps. On peint donc le message d attente et on rend la main : le
+           recalcul aura lieu a l image suivante, le message etant alors
+           visible. Sans cela l interface semble simplement gelee. */
+        if ((G.lignes_quantiques.length>=NOMBRE_QBITS_POUR_MESSAGE_DATTENTE)
+            &&(message_dattente_deja_peint==false)){
+          message_dattente_deja_peint=true;
+          affichemessagedattente();
+          return;
+        }
+        message_dattente_deja_peint=false;
+
         G.calcul_LignesQuantiQues_nQbitsEntree_nQbitsSortie();
-        
+
       }
       
       if (typeSelectionne>=0) //affiche un carre de selection
