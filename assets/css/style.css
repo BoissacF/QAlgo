@@ -463,3 +463,23 @@ nav>ul li ul li:hover .soussous {
   border-bottom: 1px solid #dee2e6;
   user-select: none;
 }
+
+/* En-tete des deux fenetres de coefficients : la case qui limite l affichage
+   aux amplitudes les plus fortes. Le contenu des fenetres, lui, est rendu
+   insensible a la souris pour qu on puisse les deplacer en cliquant dessus --
+   il faut donc redonner les evenements a cette case. */
+.entete-coefficients {
+  font-size: 12px;
+  font-weight: normal;
+  margin-bottom: 4px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid #bbb;
+  cursor: default;
+  pointer-events: auto;
+  user-select: none;
+}
+
+.entete-coefficients label {
+  cursor: pointer;
+  margin: 0;
+}

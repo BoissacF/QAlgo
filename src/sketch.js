@@ -607,6 +607,8 @@ function setupTextContainer(container, top, left, maxWidth = '1200px') {
   let offsetX, offsetY;
 
   container.addEventListener('mousedown', function (e) {
+    // un clic sur la case a cocher de l en-tete ne doit pas deplacer la fenetre
+    if ((e.target.closest!=undefined)&&(e.target.closest('.entete-coefficients')!=null)) return;
     // Autoriser drag sauf si on clique sur coin de resize
     if (e.offsetX < container.clientWidth - 10 &&
         e.offsetY < container.clientHeight - 10) {

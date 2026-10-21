@@ -115,12 +115,85 @@ let debug_affiche_creation_daretes=false;
 let debug_affiche_listegenere_lignesquantiques=false;
 let debug_affiche_nQbits=false;
 
-/* Nombre maximal d etats listes dans la fenetre des coefficients.
+/* Nombre d etats listes dans les deux fenetres de coefficients quand la case
+   « seulement les plus forts » est cochee, ce qui est le cas par defaut.
 
-   Au dela, la liste n est de toute facon plus lisible, et la chaine produite ne
-   tient plus en memoire : 2,2 Mo de texte a 18 qbits, 40 Mo a 22. Les etats
-   omis sont comptes et annonces a la fin de la liste. */
-let nombre_max_etats_affiches=2000;
+   Sans cette limite, l affichage coute plus cher que tout le calcul des qu on
+   depasse une vingtaine de qbits : la chaine produite pese 2,2 Mo a 18 qbits et
+   40 Mo a 22, pour une liste que personne ne lit. Les etats omis sont comptes
+   et annonces a la fin de la liste. */
+let nombre_max_etats_affiches=1000;
+let limite_affichage_coefficients=true;
+
+
+/* Appelee par les deux cases a cocher, en tete des fenetres de coefficients.
+   Elles montrent le meme reglage : on les garde donc accordees. */
+function changeLimiteCoefficients(element){
+  limite_affichage_coefficients=element.checked;
+  for (const id of ['limiteCoefficients1','limiteCoefficients2']){
+    let autre=document.getElementById(id);
+    if ((autre!=undefined)&&(autre!==element)) autre.checked=element.checked;
+  }
+  G.affiche_du_nQbit_de_sortie_et_des_probas();
+}
+
+
+/* Les rangs des amplitudes de plus forte probabilite, rendus dans l ordre des
+   rangs pour que la liste se lise comme la somme |psi> qu elle represente.
+
+   Un tas-min de taille combien suffit, et il tient en une seule passe : la
+   quasi-totalite des amplitudes echoue des la premiere comparaison et ne coute
+   rien de plus. Trier les 2^n probabilites serait hors de question a 22 qbits.
+
+   On compte au passage les amplitudes au dessus du seuil d affichage, pour
+   pouvoir annoncer combien d etats ont ete omis. */
+function rangs_des_plus_fortes_probabilites(vecteur,combien,seuil){
+
+  let tas_rang=new Int32Array(combien);
+  let tas_proba=new Float64Array(combien);
+  let taille=0;
+  let au_dessus_du_seuil=0;
+
+  for (let i = 0; i <vecteur.length; i++){
+
+    let p=vecteur.pr[i];
+    if (p>=seuil) au_dessus_du_seuil=au_dessus_du_seuil+1;
+
+    if (taille<combien){
+      //on remplit le tas, puis on remonte le nouvel element a sa place
+      let k=taille;
+      taille=taille+1;
+      tas_rang[k]=i;
+      tas_proba[k]=p;
+      while (k>0){
+        let pere=(k-1)>>1;
+        if (tas_proba[pere]<=tas_proba[k]) break;
+        let pr=tas_proba[pere]; tas_proba[pere]=tas_proba[k]; tas_proba[k]=pr;
+        let rg=tas_rang[pere];  tas_rang[pere]=tas_rang[k];  tas_rang[k]=rg;
+        k=pere;
+      }
+    }
+    else if (p>tas_proba[0]){
+      //la racine est la plus faible des retenues : on la remplace et on la redescend
+      tas_rang[0]=i;
+      tas_proba[0]=p;
+      let k=0;
+      for (;;){
+        let gauche=2*k+1, droite=gauche+1, petit=k;
+        if ((gauche<taille)&&(tas_proba[gauche]<tas_proba[petit])) petit=gauche;
+        if ((droite<taille)&&(tas_proba[droite]<tas_proba[petit])) petit=droite;
+        if (petit===k) break;
+        let pr=tas_proba[petit]; tas_proba[petit]=tas_proba[k]; tas_proba[k]=pr;
+        let rg=tas_rang[petit];  tas_rang[petit]=tas_rang[k];  tas_rang[k]=rg;
+        k=petit;
+      }
+    }
+  }
+
+  let rangs=Array.from(tas_rang.subarray(0,taille));
+  rangs.sort(function(a,b){ return a-b; });
+  return {rangs:rangs, au_dessus_du_seuil:au_dessus_du_seuil};
+}
 
 let Change_textes_des_Qbits = 0; //0 ou 1, c est le 1er etat ou le deuxieme etat possible du Qbit qui est affiché
 let temps_superposition = 0; //c est le temps depuis le dernier affichage d un etat de superposition
@@ -3106,17 +3179,25 @@ affiche_du_nQbit_de_sortie_et_des_probas() {
     let etats_omis=0;
     let nbre_etats_listes=0;
 
-    for (let i = 0; i < n_Qbit_a_afficher.length; i++) {
-      
-      
-     //if (n_Qbit_a_afficher[i] .proba==0) continue;
+    /* Quand la case est cochee, on ne parcourt que les rangs des amplitudes les
+       plus fortes. Le seuil est celui au dessous duquel la probabilite s affiche
+       comme nulle, a la precision demandee par l utilisateur. */
+    let seuil=0.5*Math.pow(10,-precision_proba)/100;
+    let rangs=null;
+    if ((limite_affichage_coefficients==true)&&(n_Qbit_a_afficher.length>nombre_max_etats_affiches)){
+      let choix=rangs_des_plus_fortes_probabilites(n_Qbit_a_afficher,nombre_max_etats_affiches,seuil);
+      rangs=choix.rangs;
+      etats_omis=Math.max(0,choix.au_dessus_du_seuil-nombre_max_etats_affiches);
+    }
+
+    let nbre_rangs=(rangs===null)?n_Qbit_a_afficher.length:rangs.length;
+
+    for (let k = 0; k < nbre_rangs; k++) {
+
+      let i=(rangs===null)?k:rangs[k];
+
       let proba_nombre=abs(roundToDecimals(100 * n_Qbit_a_afficher.pr[i], precision_proba));
       if (proba_nombre==0) continue;//amplitude negligeable a la precision demandee
-
-      if (nbre_etats_listes>=nombre_max_etats_affiches){
-        etats_omis=etats_omis+1;
-        continue;
-      }
 
       let proba=String(proba_nombre);
 

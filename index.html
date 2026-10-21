@@ -43,7 +43,7 @@
     	<!-- 1. Chargement du CSS (toujours en premier) -->
 <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css" />
 <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
-<link rel="stylesheet" type="text/css" href="assets/css/style.css?v=21.5" />
+<link rel="stylesheet" type="text/css" href="assets/css/style.css?v=21.6" />
 
 <!-- 2. Chargement de Bootstrap JS (au moment où tu en as besoin, avant les autres scripts) -->
 <script src="vendor/bootstrap/bootstrap.bundle.min.js"></script>
@@ -68,17 +68,17 @@
     
     <!-- L'ordre de chargement compte : ces fichiers partagent des variables globales.
          Le ?v= force le rechargement du cache des visiteurs apres une mise en ligne. -->
-    <script src="src/bloch.js?v=21.5"></script>
-    <script src="src/Graphic.js?v=21.5"></script>
-    <script src="src/traduction.js?v=21.5"></script>
-    <script src="src/affichage.js?v=21.5"></script>
-    <script src="src/outils.js?v=21.5"></script>
-    <script src="src/graphe.js?v=21.5"></script>
-    <script src="src/sommetaretes.js?v=21.5"></script>
-    <script src="src/calculsQuantiques.js?v=21.5"></script>
-    <script src="src/sketch.js?v=21.5"></script>
-    <script src="src/plein_ecran.js?v=21.5"></script>
-    <script src="src/historique.js?v=21.5"></script>
+    <script src="src/bloch.js?v=21.6"></script>
+    <script src="src/Graphic.js?v=21.6"></script>
+    <script src="src/traduction.js?v=21.6"></script>
+    <script src="src/affichage.js?v=21.6"></script>
+    <script src="src/outils.js?v=21.6"></script>
+    <script src="src/graphe.js?v=21.6"></script>
+    <script src="src/sommetaretes.js?v=21.6"></script>
+    <script src="src/calculsQuantiques.js?v=21.6"></script>
+    <script src="src/sketch.js?v=21.6"></script>
+    <script src="src/plein_ecran.js?v=21.6"></script>
+    <script src="src/historique.js?v=21.6"></script>
     
 
     <!--     
@@ -1811,8 +1811,8 @@ CE MENU FONCTIONNE SUR BOOTSRAP 5 pas sur le 4!!!!!!!!!!-->
           
           
           
- <div style="display:none" id="textcontainer1" ><div class="text-content">Texte du container 1</div></div>  
-  <div style="display:none" id="textcontainer2" ><div class="text-content">Texte du container 1</div></div>
+ <div style="display:none" id="textcontainer1" ><div class="entete-coefficients"><label><input type="checkbox" id="limiteCoefficients1" checked onchange="changeLimiteCoefficients(this)"> <span id="texteLimiteCoefficients1">Afficher seulement les 1000 coefficients les plus forts</span></label></div><div class="text-content">Texte du container 1</div></div>  
+  <div style="display:none" id="textcontainer2" ><div class="entete-coefficients"><label><input type="checkbox" id="limiteCoefficients2" checked onchange="changeLimiteCoefficients(this)"> <span id="texteLimiteCoefficients2">Afficher seulement les 1000 coefficients les plus forts</span></label></div><div class="text-content">Texte du container 1</div></div>
           
           
 <!--fin de elements-->
