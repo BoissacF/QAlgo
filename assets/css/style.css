@@ -1,0 +1,465 @@
+/* ELEMENTS*/
+
+html,body {
+   font-size: 0.8rem; /* Réduit la taille du texte à 80% de la taille par défaut */
+   margin: 0;
+  padding: 0;
+  font-family: Avenir, sans-serif;
+   user-select: none;/* desactive le double clic qui,suivant l explorateur, ouvre des menus contectuelsou selectionne desparties, ...
+  */
+}
+
+/* Style de survol pour les éléments de menu */
+.nav-item .dropdown-menu .dropdown-item:hover {
+  background-color: #f8f9fa; /* Change la couleur de fond au survol */
+  color: #007bff; /* Change la couleur du texte au survol */
+}
+/*
+canvas {
+  display: block;
+  width: 100%;
+}
+*/
+.augmentertaille{
+  font-size: 1.2rem;
+}
+
+.grayscale {
+    filter: grayscale(100%);
+}
+
+#sous-titre {
+  font-size: 16px; /* Taille de police du sous-titre */
+  color: gray; /* Couleur grise pour le sous-titre */
+  text-align: center;
+  margin-top: -20px; /* Marge nÃƒÂ©gative pour rapprocher du titre */
+}
+
+
+
+/* Mise en forme pour mettre label et input sur la même ligne */
+        .color-picker-container {
+            display: flex;
+            align-items: center;
+        }
+
+        /* Limiter la largeur de l'input à 100px */
+#colorPicker {
+            width: 100px;
+        }
+
+/* Espacement entre le label et l'input */
+label {
+            margin-right: 10px;
+        }
+
+
+.evitedebordement {
+  overflow: hidden; /* Cache le débordement */
+  
+  white-space: nowrap; /* Évite le retour à la ligne */
+}
+
+
+.selectpetit{
+  max-width: 50px; /* Largeur maximale */
+  height: 30px;
+ 
+}
+
+.selecttrespetit{
+  max-width: 40px; /* Largeur maximale */
+  height: 30px; 
+  font-size: 10px;
+}
+
+
+.selecttaillemoyen{
+  max-width: 230px; /* Largeur maximale */
+}
+
+
+.selectunite{
+  max-width: 110px; /* Largeur maximale */
+}
+ /* Limiter la largeur du select */
+#selectQbitAffichage {
+            max-width: 150px; /* Largeur maximale */
+        }
+
+.grosgras{
+  font-size: 40px;
+  font-weight: bold;
+  
+}
+
+.input-small {
+      width: 50px;
+      height: calc(1.5em + 0.75rem + 2px); /* Taille pour matcher le texte */
+    }
+    .align-line {
+      display: flex;
+      align-items: center;
+    }
+    .align-line > span {
+      margin: 0 5px; /* Espacement entre les éléments */
+    }
+
+
+#parentducanvas {
+  
+  /* align-items: center; centre verticalement avec flexstar c est en haut*/
+  
+   display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+Select{
+  width: 60px;
+}
+/*
+p {
+
+  font-size: 15px;
+  color: blue;
+  text-align: left;
+}
+*/
+h1 {
+  font-size: 20px;
+  
+   background-image:linear-gradient(grey,white);
+  text-align: center;
+}
+
+h6 {
+  font-size: 20px;
+  
+   background-image:linear-gradient(grey,white);
+  text-align: center;
+}
+
+#toto{
+  font-size: 80px;
+  background-color: white;
+  
+}
+
+
+li {
+  list-style-type: none;/* pour enlever le point devant les listes li*/
+}
+
+
+/* FIN ELEMENTS*/
+
+/* LES ID*/
+#info{
+  font-size: 12px;
+  text-align: left;
+   
+  position: relative;
+top: 0px; right: 100px;/*le cÃ´tÃ© gauche est dÃ©calÃ© de 50*/
+  
+}
+/*FIN DES ID*/
+
+
+.presentation{
+ display: none;
+}
+
+
+ul li:hover .presentation{
+  display: block;
+  
+  
+}
+
+/* CLASS*/
+
+.liensfred{
+  
+text-decoration: none;/*pour supprimer le soulognement automatique des liens HTML
+color: red;*/
+  color:black;
+  
+}
+
+.liensfred:hover {
+  /*hover c est quand on survole avec la souris*/
+  color:blue;
+}
+
+
+
+.message{
+  
+  font-size: 20px;
+  color: green;
+  text-align: left;
+}
+
+.zonetexte{
+  
+  border-width:5px;
+  
+ border-style:ridge;
+ border-color:black;
+}
+
+
+.titreinfo{
+   font-size: 15px;
+  color: blue;
+  text-align: left;
+}
+.blocdetexte {
+  display: none;
+  /*s cache l element */
+  box-shadow: 0px 1px 2px #CCC;
+  background-color: white;
+  position: absolute;
+  width: 300%;
+  z-index: 1000;
+
+
+}
+
+.blocdetexte li {
+  float: none;
+  width: 100%;
+  text-align: left;
+}
+
+/*FIN DES CLASS*/
+
+
+/*MENU DEROULANT*/
+
+/*
+https://www.pierre-giraud.com/html-css-apprendre-coder-cours/creation-menu-deroulant/
+*/
+
+/*
+nav {
+  width: 100%;
+ margin: 0 auto;
+  background-color: white;
+  position: sticky;
+  top: 0px;
+  
+}
+
+nav ul {
+  list-style-type: none;
+}
+
+nav ul li {
+  float: left;
+  width: 20%;
+  text-align: center;
+  position: relative;
+}
+
+nav ul::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+nav a {
+  display: block;
+  
+  */
+  
+  /* affiche */
+  
+  /*
+  text-decoration: none;
+  color: black;
+  border-bottom: 2px solid transparent;
+  padding: 10px 0px;
+}
+*/
+
+
+/*
+nav a:hover {
+  color: orange;
+  border-bottom: 2px solid gold;
+}
+
+nav>ul li:hover .blocdetexte {
+  display: block;
+}
+
+
+
+nav>ul li:hover .sous {
+  display: block;
+}
+
+.sous li {
+  float: none;
+  width: 100%;
+  text-align: left;
+}
+
+.sous a {
+  padding: 10px;
+  border-bottom: none;
+}
+*/
+/*
+.sous a:hover {
+	*/
+  /*hover c est quand on survole avec la souris*/
+  /*
+  border-bottom: none;
+  background-color: RGBa(200, 200, 200, 0.1);
+}
+
+
+.sous {
+  display: none;
+  */
+  /*s cache l element */
+  /*
+  box-shadow: 0px 1px 2px #CCC;
+  background-color: white;
+  position: absolute;
+  width: 150%;
+  z-index: 1000;
+}
+
+
+
+
+
+
+
+
+
+.soussous {
+  display: none;
+  
+  box-shadow: 0px 1px 2px #CCC;
+  background-color: grey;
+  
+ 
+
+  width: 70%;
+  z-index: 1000;
+   
+}
+
+nav>ul li ul li:hover .soussous {
+  display: block;
+  
+}
+*/
+/*after : ajoute un pseudo element apres a dans deroulant*/
+/*
+.deroulant>a::after {
+  
+  content: "â–¼";
+  font-size: 12px;
+}*/
+
+
+/*FIN MENU DEROULANT*/
+
+
+/*BOUTONS*/
+
+
+
+
+.BoutonTresGrand{
+  width: 120px;
+}
+
+.BoutonGrand{
+  width: 60px;
+}
+
+
+.BoutonPetit{
+  width: 30px;
+}
+
+
+.boutonHTML {
+  width: 100px;
+  
+  
+}
+/*FIN BOUTONS*/
+
+.tailleSliders{
+     width: 80px;
+  }
+
+.matrix-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+.matrix {
+            display: grid;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+.matrix-cell {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid black;
+    background-color: white;
+    color: black;
+    font-family: Arial, sans-serif;
+    font-size: 12px; /*  Réduction automatique */
+    cursor: default;
+    user-select: none;
+    text-align: center;
+    white-space: nowrap; /*  Empêche le retour à la ligne */
+    overflow: hidden; /* Cache tout débordement */
+    
+}
+
+.afficheprioritaire {
+   
+  position: absolute;
+      display: none; /* Cachée par défaut */
+  width: auto;  /* hauteur fixe */
+    height: 50px;  /* Ajuste la largeur pour garder les proportions */
+      /* Taille de l'image */
+      z-index: 1000; /* S'assurer qu'elle est bien au-dessus */
+}
+
+ textarea {
+      width: 300px;
+      height: 150px;
+      resize: both; /* Permet de redimensionner à la fois horizontalement et verticalement */
+      overflow: auto; /* Permet d'ajouter une barre de défilement si nécessaire */
+    }
+
+/* Intertitres de la palette : ils remplacent des <hr>, d'ou les marges
+   serrees — la colonne est deja haute. */
+.titre-palette {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6c757d;
+  margin: 5px 0 1px;
+  padding-bottom: 1px;
+  border-bottom: 1px solid #dee2e6;
+  user-select: none;
+}

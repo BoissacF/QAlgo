@@ -1,0 +1,15 @@
+# Coordonnees du serveur de publication, lues par publie.sh.
+# Copier ce fichier en publie.conf et le completer : publie.conf n'est pas
+# versionne et reste sur le poste de developpement.
+
+# Compte et machine, au format utilisateur@hote
+SERVEUR="root@mon.serveur.fr"
+
+# Port SSH (22 par defaut)
+PORT=22
+
+# Dossier servi par le serveur web, ou le site est deploye
+CIBLE="/var/www/QAlgo"
+
+# Adresse publique du meme dossier, pour la verification finale par HTTP
+URL="https://mon.serveur.fr/QAlgo"

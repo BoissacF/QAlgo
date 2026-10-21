@@ -1,0 +1,46 @@
+/* QAlgo — chargement différé de Google Analytics, abandonné au bout de 2 secondes
+ *
+ * Simulateur de circuits quantiques pour l'enseignement — https://www.qalgo.org
+ * Code source : https://github.com/BoissacF/QAlgo
+ *
+ * Copyright (C) 2025-2026 Frédéric Boissac
+ * Logiciel libre sous licence GNU AGPL version 3 ou ultérieure ;
+ * voir le fichier LICENSE à la racine du dépôt.
+ *
+ * MODÈLE. Copier ce fichier en analytics.js et remplacer G-XXXXXXXXXX par
+ * son propre identifiant de mesure. analytics.js n'est pas versionné : un
+ * identifiant de mesure appartient à celui qui exploite le site. Sans ce
+ * fichier, les pages signalent une erreur de console sans gravité et le
+ * simulateur fonctionne normalement.
+ */
+// analytics.js - Code complet pour Google Analytics avec Web Worker
+
+// Attendre que la page soit chargée avant d'initialiser GA
+
+
+window.addEventListener('load', function() {
+  
+   
+    // Charger GA de façon traditionnelle avec timeout de sécurité
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = 'https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX';
+    
+    const timeout = setTimeout(() => {
+      console.log('Timeout de chargement GA');
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+    }, 2000);//temps au bout duquel on abandonne google analytics 
+    
+    script.onload = () => {
+      clearTimeout(timeout);
+      window.dataLayer = window.dataLayer || [];
+      function gtag() { dataLayer.push(arguments); }
+      gtag('js', new Date());
+      gtag('config', 'G-XXXXXXXXXX');
+    };
+    
+    document.head.appendChild(script);
+  
+});

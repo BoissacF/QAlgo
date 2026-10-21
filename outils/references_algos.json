@@ -1,0 +1,538 @@
+{
+  "en/bell1": {
+    "qubits": 2,
+    "sommets": 9,
+    "amplitudes": 4,
+    "somme_probas": 1,
+    "etats_dominants": [
+      [
+        "00",
+        0.5
+      ],
+      [
+        "11",
+        0.5
+      ]
+    ],
+    "empreinte": "ed24819a099739e14ff9167872164c17"
+  },
+  "en/bell2": {
+    "qubits": 2,
+    "sommets": 10,
+    "amplitudes": 4,
+    "somme_probas": 1,
+    "etats_dominants": [
+      [
+        "00",
+        0.5
+      ],
+      [
+        "11",
+        0.5
+      ]
+    ],
+    "empreinte": "6cbbf08108fa5c461d3a3dcf6ded5a58"
+  },
+  "en/bell3": {
+    "qubits": 2,
+    "sommets": 10,
+    "amplitudes": 4,
+    "somme_probas": 1,
+    "etats_dominants": [
+      [
+        "01",
+        0.5
+      ],
+      [
+        "10",
+        0.5
+      ]
+    ],
+    "empreinte": "b562ef99597bf9daff06e5b849480dab"
+  },
+  "en/bell4": {
+    "qubits": 2,
+    "sommets": 11,
+    "amplitudes": 4,
+    "somme_probas": 1,
+    "etats_dominants": [
+      [
+        "01",
+        0.5
+      ],
+      [
+        "10",
+        0.5
+      ]
+    ],
+    "empreinte": "d87b5f291000239ecd8b1990b22efe28"
+  },
+  "en/codagesuperdense": {
+    "qubits": 2,
+    "sommets": 18,
+    "amplitudes": 4,
+    "somme_probas": 1,
+    "etats_dominants": [
+      [
+        "00",
+        1
+      ]
+    ],
+    "empreinte": "6d0789c0f70c6a7326e7e331a7a95d08"
+  },
+  "en/deutschjozsa": {
+    "qubits": 5,
+    "sommets": 24,
+    "amplitudes": 32,
+    "somme_probas": 1,
+    "etats_dominants": [
+      [
+        "00010",
+        0.5
+      ],
+      [
+        "00011",
+        0.5
+      ]
+    ],
+    "empreinte": "c04b14bf357f28aa89b52d40d8e170c1"
+  },
+  "en/grover3bits": {
+    "qubits": 4,
+    "sommets": 22,
+    "amplitudes": 16,
+    "somme_probas": 1,
+    "etats_dominants": [
+      [
+        "1010",
+        0.472656
+      ],
+      [
+        "1011",
+        0.472656
+      ],
+      [
+        "0000",
+        0.003906
+      ],
+      [
+        "0001",
+        0.003906
+      ],
+      [
+        "0010",
+        0.003906
+      ]
+    ],
+    "empreinte": "47db27a3422ffedd3efabecced431589"
+  },
+  "en/grover6bits": {
+    "qubits": 7,
+    "sommets": 45,
+    "amplitudes": 128,
+    "somme_probas": 1,
+    "etats_dominants": [
+      [
+        "1110010",
+        0.498293
+      ],
+      [
+        "1110011",
+        0.498293
+      ],
+      [
+        "0000000",
+        0.000027
+      ],
+      [
+        "0000001",
+        0.000027
+      ],
+      [
+        "0000010",
+        0.000027
+      ]
+    ],
+    "empreinte": "cf0fd494d8bd1451f650b8844ff06eac"
+  },
+  "en/shor4bits": {
+    "qubits": 8,
+    "sommets": 34,
+    "amplitudes": 256,
+    "somme_probas": 1,
+    "etats_dominants": [
+      [
+        "00000001",
+        0.0625
+      ],
+      [
+        "00000010",
+        0.0625
+      ],
+      [
+        "00000100",
+        0.0625
+      ],
+      [
+        "00001000",
+        0.0625
+      ],
+      [
+        "01000001",
+        0.0625
+      ]
+    ],
+    "empreinte": "44ce30685793faa46e782628a81fc9df"
+  },
+  "en/shor9bits": {
+    "qubits": 18,
+    "sommets": 56,
+    "amplitudes": 262144,
+    "somme_probas": 1,
+    "etats_dominants": [
+      [
+        "000000000000000001",
+        0.028214
+      ],
+      [
+        "000000000000000010",
+        0.028214
+      ],
+      [
+        "100000000000000001",
+        0.028214
+      ],
+      [
+        "100000000000000010",
+        0.028214
+      ],
+      [
+        "000000000000000100",
+        0.027561
+      ]
+    ],
+    "empreinte": "b4f5417f27fe6898826a1499d6cb5301"
+  },
+  "en/teleportation": {
+    "qubits": 3,
+    "sommets": 24,
+    "amplitudes": 8,
+    "somme_probas": 1,
+    "etats_dominants": [
+      [
+        "001",
+        0.231131
+      ],
+      [
+        "011",
+        0.231131
+      ],
+      [
+        "101",
+        0.231131
+      ],
+      [
+        "111",
+        0.231131
+      ],
+      [
+        "000",
+        0.018869
+      ]
+    ],
+    "empreinte": "37a1c500b494614a5f0734c275e7970f"
+  },
+  "en/toffoli": {
+    "qubits": 3,
+    "sommets": 14,
+    "amplitudes": 8,
+    "somme_probas": 1,
+    "etats_dominants": [
+      [
+        "000",
+        0.25
+      ],
+      [
+        "010",
+        0.25
+      ],
+      [
+        "100",
+        0.25
+      ],
+      [
+        "111",
+        0.25
+      ]
+    ],
+    "empreinte": "f317a9e8ac375cf88ec9c2e104acc714"
+  },
+  "fr/bell1": {
+    "qubits": 2,
+    "sommets": 9,
+    "amplitudes": 4,
+    "somme_probas": 1,
+    "etats_dominants": [
+      [
+        "00",
+        0.5
+      ],
+      [
+        "11",
+        0.5
+      ]
+    ],
+    "empreinte": "ed24819a099739e14ff9167872164c17"
+  },
+  "fr/bell2": {
+    "qubits": 2,
+    "sommets": 10,
+    "amplitudes": 4,
+    "somme_probas": 1,
+    "etats_dominants": [
+      [
+        "00",
+        0.5
+      ],
+      [
+        "11",
+        0.5
+      ]
+    ],
+    "empreinte": "6cbbf08108fa5c461d3a3dcf6ded5a58"
+  },
+  "fr/bell3": {
+    "qubits": 2,
+    "sommets": 10,
+    "amplitudes": 4,
+    "somme_probas": 1,
+    "etats_dominants": [
+      [
+        "01",
+        0.5
+      ],
+      [
+        "10",
+        0.5
+      ]
+    ],
+    "empreinte": "b562ef99597bf9daff06e5b849480dab"
+  },
+  "fr/bell4": {
+    "qubits": 2,
+    "sommets": 11,
+    "amplitudes": 4,
+    "somme_probas": 1,
+    "etats_dominants": [
+      [
+        "01",
+        0.5
+      ],
+      [
+        "10",
+        0.5
+      ]
+    ],
+    "empreinte": "d87b5f291000239ecd8b1990b22efe28"
+  },
+  "fr/codagesuperdense": {
+    "qubits": 2,
+    "sommets": 18,
+    "amplitudes": 4,
+    "somme_probas": 1,
+    "etats_dominants": [
+      [
+        "00",
+        1
+      ]
+    ],
+    "empreinte": "6d0789c0f70c6a7326e7e331a7a95d08"
+  },
+  "fr/deutschjozsa": {
+    "qubits": 5,
+    "sommets": 24,
+    "amplitudes": 32,
+    "somme_probas": 1,
+    "etats_dominants": [
+      [
+        "00010",
+        0.5
+      ],
+      [
+        "00011",
+        0.5
+      ]
+    ],
+    "empreinte": "c04b14bf357f28aa89b52d40d8e170c1"
+  },
+  "fr/grover3bits": {
+    "qubits": 4,
+    "sommets": 22,
+    "amplitudes": 16,
+    "somme_probas": 1,
+    "etats_dominants": [
+      [
+        "1010",
+        0.472656
+      ],
+      [
+        "1011",
+        0.472656
+      ],
+      [
+        "0000",
+        0.003906
+      ],
+      [
+        "0001",
+        0.003906
+      ],
+      [
+        "0010",
+        0.003906
+      ]
+    ],
+    "empreinte": "47db27a3422ffedd3efabecced431589"
+  },
+  "fr/grover6bits": {
+    "qubits": 7,
+    "sommets": 45,
+    "amplitudes": 128,
+    "somme_probas": 1,
+    "etats_dominants": [
+      [
+        "1110010",
+        0.498293
+      ],
+      [
+        "1110011",
+        0.498293
+      ],
+      [
+        "0000000",
+        0.000027
+      ],
+      [
+        "0000001",
+        0.000027
+      ],
+      [
+        "0000010",
+        0.000027
+      ]
+    ],
+    "empreinte": "cf0fd494d8bd1451f650b8844ff06eac"
+  },
+  "fr/shor4bits": {
+    "qubits": 8,
+    "sommets": 34,
+    "amplitudes": 256,
+    "somme_probas": 1,
+    "etats_dominants": [
+      [
+        "00000001",
+        0.0625
+      ],
+      [
+        "00000010",
+        0.0625
+      ],
+      [
+        "00000100",
+        0.0625
+      ],
+      [
+        "00001000",
+        0.0625
+      ],
+      [
+        "01000001",
+        0.0625
+      ]
+    ],
+    "empreinte": "44ce30685793faa46e782628a81fc9df"
+  },
+  "fr/shor9bits": {
+    "qubits": 18,
+    "sommets": 56,
+    "amplitudes": 262144,
+    "somme_probas": 1,
+    "etats_dominants": [
+      [
+        "000000000000000001",
+        0.028214
+      ],
+      [
+        "000000000000000010",
+        0.028214
+      ],
+      [
+        "100000000000000001",
+        0.028214
+      ],
+      [
+        "100000000000000010",
+        0.028214
+      ],
+      [
+        "000000000000000100",
+        0.027561
+      ]
+    ],
+    "empreinte": "b4f5417f27fe6898826a1499d6cb5301"
+  },
+  "fr/teleportation": {
+    "qubits": 3,
+    "sommets": 24,
+    "amplitudes": 8,
+    "somme_probas": 1,
+    "etats_dominants": [
+      [
+        "001",
+        0.231131
+      ],
+      [
+        "011",
+        0.231131
+      ],
+      [
+        "101",
+        0.231131
+      ],
+      [
+        "111",
+        0.231131
+      ],
+      [
+        "000",
+        0.018869
+      ]
+    ],
+    "empreinte": "37a1c500b494614a5f0734c275e7970f"
+  },
+  "fr/toffoli": {
+    "qubits": 3,
+    "sommets": 14,
+    "amplitudes": 8,
+    "somme_probas": 1,
+    "etats_dominants": [
+      [
+        "000",
+        0.25
+      ],
+      [
+        "010",
+        0.25
+      ],
+      [
+        "100",
+        0.25
+      ],
+      [
+        "111",
+        0.25
+      ]
+    ],
+    "empreinte": "f317a9e8ac375cf88ec9c2e104acc714"
+  }
+}

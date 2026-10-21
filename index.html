@@ -1,0 +1,1827 @@
+<!DOCTYPE html>
+
+<html lang="en"> <!-- Balise principale pour signaler l'anglais -->
+  <head>
+  
+ 
+ 
+
+<script defer src="analytics.js"></script>
+<!-- Balises pour augmenter le référencement -->
+<meta charset="UTF-8">
+ <title>QAlgo.org: Quantum Algorithm Simulator</title>
+    <meta name="description" content="QAlgo is an online quantum algorithm simulator. Create quantum circuits, generate gates, visualize qubits on the Bloch sphere, and explore probabilities. An educational tool for teaching quantum technologies.">
+    <meta name="keywords" content="QAlgo, quantum algorithms, simulator, quantum gates, Bloch sphere, qubit visualization, quantum circuits, quantum computing, quantum pedagogy, teaching, quantum, Qbit, simulation, quantum programming, quantum physics">
+
+    <!-- Balises de référencement en anglais -->
+    <meta name="robots" content="index, follow">
+    
+    <!-- Open Graph pour Facebook (version anglaise) -->
+    <meta property="og:title" content="QAlgo.org: Quantum Algorithm Simulator">
+    <meta property="og:description" content="Explore interactive quantum algorithms on Qalgo.org. Create, visualize, and test quantum circuits online with intuitive tools.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.qalgo.org">
+    
+    <!-- Twitter Card (version anglaise) -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="QAlgo.org: Quantum Algorithm Simulator">
+    <meta name="twitter:description" content="Discover QAlgo, the interactive quantum algorithm simulator. Visualize qubits, create gates, and explore quantum circuits.">
+
+    <!-- Balise pour signaler la version alternative en français -->
+	<link rel="alternate" hreflang="fr" href="https://www.qalgo.org/indexFR.html">
+    
+    
+    <!-- Balises supplémentaires pour le référencement -->
+    <meta name="author" content="Qalgo.org">
+
+
+<!-- Fin des balises pour augmenter le référencement -->
+
+  
+  
+  
+    	<!-- 1. Chargement du CSS (toujours en premier) -->
+<link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css" />
+<link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
+<link rel="stylesheet" type="text/css" href="assets/css/style.css?v=21.4" />
+
+<!-- 2. Chargement de Bootstrap JS (au moment où tu en as besoin, avant les autres scripts) -->
+<script src="vendor/bootstrap/bootstrap.bundle.min.js"></script>
+
+<!-- 3. Chargement des scripts asynchrones p5.js (pour éviter de bloquer le rendu de la page) -->
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.10.2/p5.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.10.2/addons/p5.sound.min.js"></script>
+	
+	
+	<!--
+	
+	<script src="vendor/p5/p5.js"></script>
+    <script src="vendor/p5/p5.sound.min.js"></script>
+	-->
+	
+	
+	
+  </head>
+
+  <body onload="changeLanguage()">
+  
+    
+    <!-- L'ordre de chargement compte : ces fichiers partagent des variables globales.
+         Le ?v= force le rechargement du cache des visiteurs apres une mise en ligne. -->
+    <script src="src/bloch.js?v=21.4"></script>
+    <script src="src/Graphic.js?v=21.4"></script>
+    <script src="src/traduction.js?v=21.4"></script>
+    <script src="src/affichage.js?v=21.4"></script>
+    <script src="src/outils.js?v=21.4"></script>
+    <script src="src/graphe.js?v=21.4"></script>
+    <script src="src/sommetaretes.js?v=21.4"></script>
+    <script src="src/calculsQuantiques.js?v=21.4"></script>
+    <script src="src/sketch.js?v=21.4"></script>
+    <script src="src/plein_ecran.js?v=21.4"></script>
+    <script src="src/historique.js?v=21.4"></script>
+    
+
+    <!--     
+ATTENTION
+CE MENU FONCTIONNE SUR BOOTSRAP 5 pas sur le 4!!!!!!!!!!-->
+   
+    <nav  class="navbar navbar-expand-sm bg-light navbar-light augmentertaille ">
+      <div class="container">
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapsibleNavbar"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="collapsibleNavbar">
+          <ul class="navbar-nav">
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                href="https://physalgo.fr"
+                >Home</a
+              >
+            </li>
+
+            <!-- ANimation-->
+            
+            <li  class="nav-item dropdown">
+  <a id= "t1" class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Exemples</a>
+  <ul class="dropdown-menu">
+    <li>
+      <a class="dropdown-item" id="bell1" onclick="chargeFichierExemple(this)">Etat de Bell ∣Φ+⟩</a>
+        
+    </li>
+    <li>
+     <a class="dropdown-item" id="bell2" onclick="chargeFichierExemple(this)">Etat de Bell ∣Φ-⟩</a>
+    </li>
+    <li>
+      <a class="dropdown-item" id="bell3" onclick="chargeFichierExemple(this)">Etat de Bell ∣Ψ+⟩</a>
+        
+    </li>
+    <li>
+     <a class="dropdown-item" id="bell4" onclick="chargeFichierExemple(this)">Etat de Bell ∣Ψ-⟩</a>
+    </li>
+     <li>
+     <a class="dropdown-item" id="toffoli" onclick="chargeFichierExemple(this)">Porte de Toffoli</a>
+    </li>
+    <li>
+     <a class="dropdown-item" id="codagesuperdense" onclick="chargeFichierExemple(this)">Codage Super dense</a>
+    </li>
+    <li>
+     <a class="dropdown-item" id="deutschjozsa" onclick="chargeFichierExemple(this)">Algorithme de Deutsch-Jozsa</a>
+    </li>
+    
+    <li>
+     <a class="dropdown-item" id="grover3bits" onclick="chargeFichierExemple(this)">Algorithme de Grover avec 3 qbits</a>
+    </li>
+    <li>
+     <a class="dropdown-item" id="grover6bits" onclick="chargeFichierExemple(this)">Algorithme de Grover avec 6 qbits</a>
+    </li>
+    <li>
+     <a class="dropdown-item" id="teleportation" onclick="chargeFichierExemple(this)">Teleportation quantique</a>
+    </li>
+    <li>
+     <a class="dropdown-item" id="shor4bits" onclick="chargeFichierExemple(this)">Algorithme de Shor pour 15</a>
+    </li>
+    <li>
+     <a class="dropdown-item" id="shor9bits" onclick="chargeFichierExemple(this)">Algorithme de Shor pour 21</a>
+    </li>
+    
+  </ul>
+</li>
+            
+            
+
+            
+            <!--fin animations-->
+
+            <!-- fichiers-->
+
+            <li class="nav-item dropdown">
+              <a
+                class="nav-link dropdown-toggle"
+                href="#"
+                role="button"
+                data-bs-toggle="dropdown" id="t2"
+                >Fichier</a
+              >
+              <ul class="dropdown-menu">
+                <td>
+                  <input
+                    type="file"
+                    style="display:none"
+                    accept=".QT, .txt"
+                    id="fileToLoad"
+                    onchange=" loadFileAsText();"
+                  />
+                </td>
+                <li><a  class="dropdown-item" onclick="simuleCliCdeInput()" id= "t3">Ouvrir Fichier</a></li>
+                  <hr class="my-2" />
+                <li>
+                  
+                  
+                    <li>
+                      <!--
+                      <td><input id="inputFileNameToSaveAs"   placeholder="Entre un nom de fichier" /></td>-->
+                    </li>
+                
+                    <li>
+                      <a class="dropdown-item" onclick="saveTextAsFile()" id= "t4">Enregistrer</a>
+                      <hr class="my-2" />
+                    </li>
+                
+                
+                
+                 <li><a class="dropdown-item" onclick="saveAmplitudesFile()" id= "t10">Exporter vers amplitudes.csv</a></li>
+                
+                
+                  
+                </li>
+              </ul>
+            </li>
+            <!--fin fichiers-->
+
+        <li class="nav-item">
+              <a
+                class="nav-link"
+                href="https://www.youtube.com/playlist?list=PLRB_NPOpDF7c1ls7fDW1XJaqxqoHdImrc"
+                target="_blank" id="t5">Vidéo</a
+              >
+            </li>
+        
+        
+        <li class="nav-item">
+              <a
+                class="nav-link"
+                href="mailto:prof.boissac@gmail.com" id="contact">Suggestions/Bugs</a
+              >
+            </li>
+        
+        
+            <!--sous menu deroulant a propos-->
+            <li class="nav-item dropdown">
+              <a
+                class="nav-link dropdown-toggle"
+                href="#"
+                role="button"
+                data-bs-toggle="dropdown"
+                 id="t6">Code/Licence</a
+              >
+              <ul class="dropdown-menu">
+
+                <li>
+                  <a class="dropdown-item text-muted"
+                    >JavaScript Application 2025-2026</a
+                  >
+                </li>
+                <li>
+                  <a class="dropdown-item text-muted"
+                    >Animations, Sketchs, P5JS</a
+                  >
+                </li>
+                <li>
+                  <a class="dropdown-item text-muted"
+                     id="t7">Auteur : Frédéric Boissac</a
+                  >
+                </li>
+                <li>
+                  <span class="dropdown-item-text text-muted" id="t8"
+                    >Logiciel libre sous licence GNU AGPL version 3 (<a
+                      href="https://www.gnu.org/licenses/agpl-3.0.html"
+                      target="_blank"
+                      rel="noopener"
+                      >lire la licence</a
+                    >)</span
+                  >
+                </li>
+                <li>
+                  <a
+                    class="dropdown-item"
+                    id="t11"
+                    href="https://github.com/BoissacF/QAlgo"
+                    target="_blank"
+                    rel="noopener"
+                    >Accéder au code</a
+                  >
+                </li>
+
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+  
+
+    <div class="container-fluid"><!--DEBUT du container de toute la page (en dessous deu menu)-->
+      <!-- fluid éta,t le container sur toute la page-->
+      
+<div  class="augmentertaille"><!--TOUS LES JUMBOTRONS-->
+      
+        <!--jumbotron pour afficher la matrice de creation de porte-->
+      <div class="container" id="affichagematrice" style="display:none">
+          <div class="mt-4 p-5 bg-secondary text-white rounded">
+            <h2 id ="tradicioula1">Création d'une porte quantique</h2>
+         <hr class="my-1" />
+            
+      <span class="text-white font-italic text-sm small" id="textematrice">Construis ta porte en modifiant les coefficients de la matrice M. Le simulateur QAlgo normalise automatiquement les qbits en sortie de porte, pour un coefficient complexe α l'effet de α x M |ψ⟩ sera identique à M |ψ⟩. Tu peux donc simplifier M. (ex Pour Hadamard, (1,1,1,-1))</span>
+            <hr class="my-1" />
+
+            
+            <section id="generematrice" style="display:none">
+           <button
+      type="button"
+      id="boutongenerematrice"
+      class="btn btn-warning btn-lg mb-2"
+      onclick="genere_matrice_et_porte_a_partir_circuit_affiche_a_lecran()"
+    >
+      Générer automatiquement la matrice du circuit actuel 
+    </button>
+<hr class="my-1" />
+            </section>
+            
+            
+            <div class="container mt-3">
+    
+            
+                <div class="align-line">
+            <label for="nombrelignequantique" class="me-3 fw-bold" id ="tradicioula2">Nombre de lignes quantiques </label>
+
+            <input type="number" id="nombrelignequantique" class="form-control selectpetit" min="1" max="8" value="1" onchange="generateMatrix()">
+            </div>
+            
+             <hr class="my-1" />
+            
+            <div class="align-line">
+              
+              <label for="symboleportecree" class="me-3 fw-bold" id ="tradicioula3">Symbole</label><input type="text" class="form-control input-small" placeholder="?"  id="symboleportecree" value="" >
+              
+              <span> </span>
+              
+              
+            
+              <label for="selectnotationcoeff" class="me-3 fw-bold" id ="tradicioula4"> Format des coefficients</label>
+            <select class="form-control selecttaillemoyen" id="selectnotationcoeff" onchange="changerOptionCoeffmatrice(this)">
+        <option value="1">Complex : a + b x i</option>
+        <option value="2">Trigonometric : r.exp(i&#952)</option>
+              
+      </select>
+              </div>
+            
+            <hr class="my-1" />
+            
+            
+            
+         <section id="uniteMatrice" style="display:none">
+    <div class="d-flex align-items-center">
+        <label for="uniteAngleMatrice" class="me-3 fw-bold">Angle unit</label>
+        <!-- Select limité à 150px de large -->
+        <select class="form-control selectunite" id="uniteAngleMatrice" onclick="changerAngle(this)" >
+            <option value="1">Degree</option>
+            <option value="2">Radian</option>
+            <option value="3">k.&pi; Radian</option>
+         
+        </select>
+    </div>
+</section>
+          
+          
+          
+            <div class="grosgras">
+              
+              <section id="coeffcomplexe"   style="display:inline">
+           <div class="align-line">
+      <span>M<sub id="texteindice">0,0</sub> :  </span><input type="text" class="form-control input-small" placeholder="" id="coeffa1" value="1" onkeyup="recupere_coeff_matrice_et_affiche_matrice()">
+      <span>+</span>
+      <input type="text" class="form-control input-small" placeholder="" id="coeffb1" value="0" onkeyup="recupere_coeff_matrice_et_affiche_matrice()">
+     <span> x i</span>
+              </div>   
+        
+                </section><!--complexe-->
+              
+               <section id="coefftrigo"   style="display:none">
+           <div class="align-line">
+      <span>M<sub>i,j</sub> :  </span><input type="text" class="form-control input-small" placeholder=""  id="coeffrtrigo1" value="1" onkeyup="recupere_coeff_matrice_et_affiche_matrice()">
+      <span>.exp(i</span>
+      <input type="text" class="form-control input-small" placeholder="" id="coefftetatrigo1" value="0" onkeyup="recupere_coeff_matrice_et_affiche_matrice()"><span class="affichePi" style="display:none">&pi;</span>
+     <span>)</span>
+              </div>   
+             
+                </section><!--trigo-->
+              
+              
+              
+            </div>
+        
+</div>
+            
+            
+            
+          
+   
+            
+
+            
+            <hr class="my-1" />
+             <!--debut code generer des boutons-->
+            
+            
+            
+        
+            
+      <div class="row d-flex flex-wrap" id="tailleLes2colmatrix" >
+        <div class="col-md-1  " id="taillecol1matrix"><!--debut de la premiere colonne-->   
+          
+            <div class="d-flex flex-column align-items-center mt-3">
+    <!-- Bouton Haut -->
+    <button class="btn btn-primary boutondirection mb-2" id="boutonhaut" onclick="M.deplacecurseur(this)">
+        &#x2191;
+    </button>
+
+    <div class="d-flex">
+        <!-- Bouton Gauche -->
+        <button class="btn btn-primary boutondirection mr-2" id="boutongauche" onclick="M.deplacecurseur(this)" >
+            &#x2190;
+        </button>
+
+        <!-- Bouton Droite -->
+        <button class="btn btn-primary boutondirection" id="boutondroite" onclick="M.deplacecurseur(this)" >
+            &#x2192;
+        </button>
+      
+      
+      
+    </div>
+    <!-- Bouton Bas -->
+    <button class="btn btn-primary boutondirection mt-2" id="boutonbas" onclick="M.deplacecurseur(this)" >
+        &#x2193;
+    </button>
+</div>
+          
+          
+          
+          <br>
+        
+        <select class="form-control input-small" id="multiplie" >
+            <option value="1">x 1</option>
+            <option value="5">x 5</option>
+            <option value="10">x 10</option>
+          <option value="50">x 50</option>
+           
+         
+        </select>
+    
+          
+          
+        </div> <!--fin  de la premiere colonne-->  
+        
+        
+      <div class="col-md-11 evitedebordement" id="taillecol2matrix"><!--debut de la deuxieme colonne--> 
+          
+    
+
+        
+      
+            <div class="matrix-container">
+              <div id="matrix" class="matrix"></div>
+            </div>
+            
+            
+       
+            
+        </div> <!--fin  de la demieme colonne-->  
+    
+        </div><!--fin des colonnes-->
+    
+    
+
+   <!--fin du code generer des boutons-->
+            
+            
+            
+            <hr class="my-4" />
+            <!-- Bouton valider -->
+    <button
+      type="button"
+      id="boutonOkmatrice"
+      class="btn btn-success btn-lg mb-2"
+      onclick="fermeraffichagecommande(this)"
+    >
+      Valider
+    </button>
+    
+    <button
+      type="button"
+      id="boutonAnnulermatrice"
+      class="btn btn-danger btn-lg mb-2"
+      onclick="fermeraffichagecommande(this)"
+    >
+      Annuler
+    </button>
+          </div>
+        </div>
+       
+       <!--fin de jumbotron pour afficher la matrice de creation de porte-->
+      
+      
+      
+    
+        <!-- JUMBOTRON POUR AFFICHER les paramtres d affichages generaux-->
+      
+        <div class="container" id="affichageParametresAffichage" style="display:none">
+          <div class="mt-4 p-5 bg-secondary text-white rounded">
+            <h2>Paramètres d'affichage</h2>
+         <hr class="my-1" />
+            
+           
+           
+           <div class="d-flex align-items-center">
+        <!-- Label bien aligné -->
+        <label for="selectQbitAffichage" class="me-3 fw-bold" >Représentation des amplitudes</label>
+
+        <!-- Select limité à 150px de large -->
+        <select class="form-control" id="selectQbitAffichage" onchange="changerOptionQbit(this)">
+            <option value="1">Complexe : a + b x i</option>
+            <option value="2">Trigonométrique : r.exp(i&#952)</option>
+            
+        </select>
+             
+       <!--      
+    </div>
+            
+            
+             <div class="d-flex align-items-center">
+-->
+        <!-- Label bien aligné -->
+        <label for="uniteaffichage" class="me-3 fw-bold" >&nbsp;&nbsp;&nbsp;Unité des angles</label>
+
+        <!-- Select limité à 150px de large -->
+        <select class="form-control selectunite" id="uniteaffichage"  onclick="changerAngle(this)">
+            <option value="1">Degré</option>
+            <option value="2">Radian</option>
+          <option value="3">k.&pi; Radian</option>
+          
+        </select>
+             
+             
+             
+    </div>
+            
+           <hr class="my-4" />  
+           
+            
+           
+     
+           
+    
+<div class="d-flex align-items-center">
+        <!-- Texte bien aligné à gauche -->
+        <label class="me-3 fw-bold">Affichage des états des Qbits sur les lignes quantiques</label>
+
+        <!-- Boutons radio bien espacés -->
+        <div class="form-check me-3">
+            <input class="form-check-input" type="radio" name="etatQBits" id="radioOui" checked>
+            <label class="form-check-label" for="radioOui">Oui</label>
+        </div>
+
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="etatQBits" id="radioNon">
+            <label class="form-check-label" for="radioNon">Non</label>
+        </div>
+    </div> 
+            
+             <div class="d-flex align-items-center">
+         <!-- Texte bien aligné à gauche -->
+        <label class="me-3 fw-bold">Affichage en mode Superposition </label>
+
+        <!-- Boutons radio bien espacés -->
+        <div class="form-check me-3">
+            <input class="form-check-input" type="radio" name="Super" id="radioOuiSuper" >
+            <label class="form-check-label" for="radioOuiSuper">Oui</label>
+        </div>
+
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="Super" id="radioNonSuper" checked>
+            <label class="form-check-label" for="radioNonSuper">Non</label>
+        </div>
+     </div>   
+            
+            
+            
+             <hr class="my-4" />  
+           
+            
+           
+     
+            
+            
+            
+            
+     <div class="d-flex align-items-center">
+         <!-- Texte bien aligné à gauche -->
+        <label class="me-3 fw-bold">Affichage des fenêtres d'états et de probabilités </label>
+
+        <!-- Boutons radio bien espacés -->
+        <div class="form-check me-3">
+            <input class="form-check-input" type="radio" name="probas" id="radioOuiProba" checked>
+            <label class="form-check-label" for="radioOuiProba">Oui</label>
+        </div>
+
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="probas" id="radioNonProba">
+            <label class="form-check-label" for="radioNonProba">Non</label>
+        </div>
+     </div> 
+            
+            
+              
+            
+            
+            
+       <div class="d-flex align-items-center">
+         <!-- Texte bien aligné à gauche -->
+        <label class="me-3 fw-bold">Affichage des états en notation décimale</label>
+
+        <!-- Boutons radio bien espacés -->
+        <div class="form-check me-3">
+            <input class="form-check-input" type="radio" name="decimal" id="radioOuidecimal" >
+            <label class="form-check-label" for="radioOuidecimal">Oui</label>
+        </div>
+
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="decimal" id="radioNondecimal" checked>
+            <label class="form-check-label" for="radioNondecimal">Non</label>
+        </div>
+         
+     
+         
+         
+     </div>    
+            
+            
+       <div class="d-flex align-items-center">      
+      <label class="me-3 fw-bold">Précision des probabilités (nombre de décimales)</label>
+
+            <input type="number" id="precisionChiffresApresVirgule" class="form-control selectpetit" min="0" max="6" value="1">
+            
+        </div>       
+            
+            
+          
+   
+   
+            
+              <hr class="my-4" />  
+            
+            <div class="color-picker-container">
+        <label for="colorPicker" class="me-3 fw-bold">Couleur de fond</label>
+        <input type="color" id="colorPicker" class="form-control" value="#ff0000">
+    </div>
+
+            <hr class="my-4" />
+            <button
+              type="button"
+              id="boutonparametreaffichage"
+              class="btn btn-success btn-lg mb-2"
+              onclick="fermeraffichagecommande(this)"
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      
+       <!--fin jumbotron parametre affichage generaux-->
+      
+        <!--<p>Voici l'expression : r.e<sup>iθ</sup></p>-->
+      
+      
+       <!-- JUMBOTRON POUR AFFICHER les paramtres du qbit-->
+      
+        <!--<p>Voici l'expression : r.e<sup>iθ</sup></p>-->
+      
+      
+       <!-- JUMBOTRON POUR AFFICHER les paramtres du qbit-->
+     
+        <div class="container " id="affichageParametresqbit"  style="display:none">
+          <div class="mt-4 p-5 bg-secondary text-white rounded">
+            <h2>Paramètres du qBit</h2>
+         <hr class="my-1" />
+            <p>Choisis des amplitudes (complexes, trigonométriques, sphère de Bloch) pour le qBit normalisé</p>
+            <select class="form-control" id="selectQbit" onchange="changerOptionQbit(this)">
+        <option value="1">Complexe : a + b x i (normalisation automatique après validation)</option>
+        <option value="2">Trigonométrique : r.exp(i&#952) (normalisation automatique après validation)</option>
+        <option value="3">Sphère de Bloch : cos(&#952/2)|0⟩ + sin(&#952/2) exp(i&#934)|1⟩</option>
+    
+      </select>
+            
+            <hr class="my-1" />
+            
+            
+            
+         <section id="unite" style="display:none">
+    <div class="d-flex align-items-center">
+        <label for="uniteAngleQbit" class="me-3 fw-bold">Unité des angles</label>
+        <!-- Select limité à 150px de large -->
+        <select class="form-control selectunite" id="uniteAngleQbit" onclick="changerAngle(this)" >
+            <option value="1">Degré</option>
+            <option value="2">Radian</option>
+            <option value="3">k.&pi; Radian</option>
+         
+        </select>
+    </div>
+</section>
+            
+            
+          
+           
+            
+            <div class="grosgras">
+              
+              <section id="complexe"   style="display:inline">
+           <div class="align-line">
+      <span>|0⟩ :  </span><input type="text" class="form-control input-small" placeholder="" id="a1" value="1" onkeyup="retourne_coeff_qbit()">
+      <span>+</span>
+      <input type="text" class="form-control input-small" placeholder="" id="b1" value="0" onkeyup="retourne_coeff_qbit()">
+     <span> x i</span>
+              </div>   
+             <div class="align-line">
+               <span>|1⟩ :  </span>
+      <input type="text" class="form-control input-small" placeholder="" id="a2" value="0" onkeyup="retourne_coeff_qbit()">
+      <span> + </span>
+      <input type="text" class="form-control input-small" placeholder="" id="b2" value="0" onkeyup="retourne_coeff_qbit()">
+      <span> x i</span>
+          </div>
+                </section><!--complexe-->
+              
+               <section id="trigo"   style="display:none">
+           <div class="align-line">
+      <span>|0⟩ :  </span><input type="text" class="form-control input-small" placeholder=""  id="rtrigo1" value="1" onkeyup="retourne_coeff_qbit()">
+      <span>.exp(i</span>
+      <input type="text" class="form-control input-small" placeholder="" id="tetatrigo1" value="0" onkeyup="retourne_coeff_qbit()"><span class="affichePi" style="display:none">&pi;</span>
+     <span>)</span>
+              </div>   
+             <div class="align-line">
+               <span>|1⟩ :  </span><input type="text" class="form-control input-small" placeholder="" id="rtrigo2"  value="0" onkeyup="retourne_coeff_qbit()">
+      <span>.exp(i</span>
+      <input type="text" class="form-control input-small" placeholder="" id="tetatrigo2" value="0" onkeyup="retourne_coeff_qbit()"><span class="affichePi" style="display:none">&pi;</span>
+     <span>)</span>
+          </div>
+                </section><!--trigo-->
+              
+               <section id="bloch"   style="display:none">
+           <div class="align-line">
+      <span>|0⟩ :  cos(</span><input type="text" class="form-control input-small" placeholder="" id="tetabloch1" value="0" onkeyup="retourne_coeff_qbit()"><span class="affichePi" style="display:none">&pi;</span>
+      <span>/2)</span>
+      
+              </div>   
+             <div class="align-line">
+               <span>|1⟩ :  sin(</span><span id="tetabloch2">0</span><span class="affichePi" style="display:none">&pi;</span>
+      
+      <span>/2).exp(i</span>
+      <input type="text" class="form-control input-small" placeholder="" id="phibloch" value="0" onkeyup="retourne_coeff_qbit()"><span class="affichePi" style="display:none">&pi;</span>
+      <span>)</span>
+          </div>
+                </section><!--bloch-->
+              
+            </div>
+
+            <br>
+            <a id="qbitnormalise"></a>
+            <hr class="my-4" />
+            <button
+              type="button"
+              id="boutonparametre"
+              class="btn btn-success btn-lg mb-2"
+              onclick="fermeraffichagecommande(this)"
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      
+       <!--fin jumbotron parametre du Qbit-->
+      
+      
+              <!-- JUMBOTRON POUR AFFICHER phase de Rphi-->
+      
+        <div class="container" id="affichagePhasedeR" style="display:none">
+          <div class="mt-4 p-5 bg-secondary text-white rounded">
+            <h2>Phase de R<sub>&#934</sub></h2>
+         <hr class="my-1" />
+            <p>Choisis l'unité et la phase de &#934</p>
+            
+            
+            <hr class="my-1" />
+            
+    <div class="d-flex align-items-center">
+        <label for="unitePhase" class="me-3 fw-bold">Unité de la phase</label>
+        <!-- Select limité à 150px de large -->
+        <select class="form-control selectunite" id ="unitePhase" onclick="changerAngle(this)" >
+            <option value="1">Degré</option>
+            <option value="2">Radian</option>
+            <option value="3">k.&pi; Radian</option>
+         
+        </select>
+    </div>
+
+          
+            
+      <div class="grosgras align-line">
+              
+        <span> &#934 = </span>
+      
+      <input type="text" class="form-control input-small" placeholder="" id="phiPhaseR" value="0" style="width: 100px;" ><span class="affichePi" style="display:none">&pi;</span>
+           
+        </div>
+
+            
+            <hr class="my-4" />
+            <button
+              type="button"
+              id="boutonphaseR"
+              class="btn btn-success btn-lg mb-2"
+              onclick="fermeraffichagecommande(this)"
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      
+       <!--fin jumbotron phase de Rphi--> 
+
+        <!-- JUMBOTRON POUR AFFICHER UN TEXTE INFO-->
+      <div class="dropdown text-center" id="text-container">
+        <div class="container" id="affichageCommande" style="display:none">
+          <div class="mt-4 p-5 bg-secondary text-white rounded">
+            
+            
+            <div id="t9">
+            <h2>Commandes principales</h2>
+
+            <p>Déposer ou supprimer des Qbits ou portes : <strong>Cliquer Glisser</strong> </p>
+            
+            <p>Selectionner et déplacer : <strong>Clic Gauche</strong></p>
+            
+            <p>Mesure partielle : <strong>Double clic sur mesure</strong></p>
+            
+            <p>Modifier taille : <strong>Clic Gauche + roulette</strong> </p>
+            
+            <p>Modifier couleur : <strong>Clic droit</strong> </p>
+            
+            
+           
+            
+            <p>Modifier coefficients qBit : <strong>Double Clic</strong> </p>
+            
+            <p>Modifier f(x)  Oracle  : <strong>Double Clic</strong> </p>
+            
+            <p>Modifier  &#934  de R<sub> &#934</sub>  : <strong>Double Clic</strong> </p>
+            
+           
+            
+            <p>Supprimer :  <strong>"Efface" ou "Suppr" au clavier</strong></p>
+
+            <hr class="my-4" />
+            <button
+              type="button"
+              id="boutonok"
+              class="btn btn-success btn-lg mb-2"
+              onclick="fermeraffichagecommande(this)"
+            >
+              Fermer
+            </button>
+            </div>
+          </div>
+        </div>
+      </div>
+       <!--fin jumbotron aide-->
+      
+      <!--jumbotron f(x)-->
+      
+      <div class="container" id="affichageFonction" style="display:none">
+  <div class="mt-4 p-5 bg-secondary text-white rounded">
+    
+    <h2>Paramètres de la fonction f(x) de l'oracle</h2>
+    Action de l'oracle sur deux registres quantiques ∣x⟩ et ∣y⟩ :
+   <strong> <a >O<sub>f</sub>|x⟩|y⟩ = |x⟩|y ⊕ f(x)⟩</a></strong>
+    <hr class="my-1" />
+    
+    
+    <div class="align-line">
+      <span>Nombre de qbits du registre |y⟩ : </span>
+      
+      <input type="number" id="nbreqbitsregistre" class="form-control selectpetit" min="1" max="10" value="1" onchange="nbreQbitsregistreY()">
+      
+     
+      
+      
+        </div> 
+    
+    <hr class="my-1" />
+    
+    <a>Choisis une fonction f(x) dans les exemples ci-dessous ou crée-la toi-même de A à Z (en javascript).</a>
+    <br>
+    <a>x correspond au nombre décimal du registre |x⟩ (ex : 3 pour |011⟩)</a>
+    <hr class="my-1" />
+      
+    <div class="form-group">
+      <label for="selectOption">Exemples de fonction f(x) :</label>
+      <select class="form-control" id="selectOption" onchange="changerTexte(this)">
+        <option value="1">fonction qui cherche une valeur (ex : Algorithme Grover) x</option>
+        <option value="2">fonction qui cherche l'indice d'un élement (ex : Algorithme Grover) x</option>
+        <option value="3">f(x) = constante</option>
+        <option value="4">f(x) est équilibrée (0 si x estpair , 1 si impair)</option>
+        <option value="5">f(x) = XOR entre tous les q-bits</option>
+        <option value="6">Ta fonction f(x)</option>
+      </select>
+    </div>
+    <hr class="my-1" />
+    <!-- ici je voudrais mon text area pour capturer la fonction -->
+   <div class="form-group">
+     
+    
+  
+  <textarea class="form-control" id="fonctionTextarea" rows="5">
+    function f(x) {
+            if (x == 5) return 1;
+            else return 0;
+     }
+    
+    
+  </textarea>
+</div>
+       
+     
+
+    <hr class="my-4" />
+    
+    <!-- Bouton valider -->
+    <button
+      type="button"
+      id="boutonOkfonction"
+      class="btn btn-success btn-lg mb-2"
+      onclick="fermeraffichagecommande(this)"
+    >
+      Valider
+    </button>
+    
+    <button
+      type="button"
+      id="boutonAnnulerfonction"
+      class="btn btn-danger btn-lg mb-2"
+      onclick="fermeraffichagecommande(this)"
+    >
+      Annuler
+    </button>
+  </div>
+</div>
+
+      <!--fin jumbotron f(x)-->
+      
+  
+      <!--explication-->
+      
+      
+      
+      <div class="container" id="explication" style="display:none">
+  <div class="mt-4 p-5 bg-secondary text-white rounded">
+    
+    <h2>Principe de l'algorithme</h2>
+   
+    <hr class="my-1" />
+      
+    
+    
+   <div class="form-group">
+     
+    
+  
+  <textarea class="form-control" id="explicationAlgo" rows="5">
+   Ici, tu peux expliquer le principe de ton algorithme. Les explications seront enregistrées en même temps que ton fichier.
+    
+    
+  </textarea>
+</div>
+       
+         
+
+    <hr class="my-4" />
+    
+    <!-- Bouton valider -->
+    <button
+      type="button"
+      id="boutonOkexplication"
+      class="btn btn-success btn-lg mb-2"
+      onclick="fermeraffichagecommande(this)"
+    >
+      Fermer
+    </button>
+    
+    
+  </div>
+
+      </div>
+      <!--fin explication-->
+            
+      
+   </div><!--FIN DE TOUS LES JUMBOTRONS-->   
+      
+      
+      <div class="row" id="les2colonnes">
+        <div class="col-1 " style="min-width: 110px;"  id="colonne1"><!--debut colonne 1 du menu-->
+          <!--
+          <div class="container mt-5 d-flex justify-content-center">-->
+          <div class="titre-palette" id="titrePalette1">Qubits</div>
+          <div class="d-inline-flex">
+            <!--affiche sur une même ligne-->
+            <button
+              class="btn btn-primary rounded-circle p-0 d-flex align-items-center justify-content-center"
+              id="type1"
+              style="width: 25px; height: 25px; font-weight: bold; margin-right: 2px;margin-left: 2px;"
+              onfocus="choix_type(this)"
+                       data-bs-toggle="tooltip"
+               data-bs-placement="top"
+               title="Qbit à l'état |1⟩"
+            >
+              |1⟩
+            </button>
+
+            <button
+              class="btn btn-success rounded-circle p-0 d-flex align-items-center justify-content-center"
+              id="type2"
+              style="width: 25px; height: 25px; font-weight: bold;margin-right: 2px;"
+              onfocus="choix_type(this)"
+                    data-bs-toggle="tooltip"
+               data-bs-placement="top"
+              
+              title="Qbit à l'état (|0⟩+|1⟩)/&radic;2"
+            >
+              |+⟩
+            </button>
+            
+             <button
+              class="btn btn-warning rounded-circle p-0 d-flex align-items-center justify-content-center"
+              id="type22"
+              style="width: 25px; height: 25px; font-weight: bold;margin-right: 2px;"
+              onfocus="choix_type(this)"
+                    data-bs-toggle="tooltip"
+               data-bs-placement="top"
+              
+              title="Qbit à l'état (|0⟩-|1⟩)/&radic;2"
+            >
+              |-⟩
+            </button>
+
+            <button
+              class="btn btn-danger rounded-circle p-0 d-flex align-items-center justify-content-center"
+              id="type0"
+              style="width: 25px; height: 25px; font-weight: bold;"
+              onfocus="choix_type(this)"
+                 data-bs-toggle="tooltip"
+               data-bs-placement="top"
+               title= "Qbit à l'état |0⟩"
+            >
+              |0⟩
+            </button>
+          </div>
+
+         
+          
+          <div class="titre-palette" id="titrePalette2">Portes</div><!--fait une marge de 2 px-->
+          
+          
+          
+
+          <!-- <div class="d-flex justify-content-center align-items-center"> pour forcer les 3 boutons a etre sur la meme ligne mais centre-->
+          <div class="d-inline-flex">
+            <!--affiche sur une même ligne-->
+            <button
+              type="button"
+              class="btn btn-primary btn-sm p-0 d-flex align-items-center justify-content-center"
+              id="type3"
+              style="font-weight: bold; margin-right: 5px; width: 25px; height: 25px;"
+              onfocus="choix_type(this)"
+                    onmouseover="afficheImage(this)"
+              onmouseout="cacherImage(this)"
+                    
+                data-bs-toggle="tooltip"
+               data-bs-placement="top"
+               title="Porte NOT : inverse |0⟩ et |1⟩"
+            >
+              X
+               <img id="X" class="afficheprioritaire" style="display:none" src="assets/gates/X.JPG"  >
+            </button>
+
+            <button
+              type="button"
+              class="btn btn-success btn-sm p-0 d-flex align-items-center justify-content-center"
+              id="type4"
+              style="font-weight: bold; margin-right: 5px; width: 25px; height: 25px;"
+              onfocus="choix_type(this)"
+                    onmouseover="afficheImage(this)"
+              onmouseout="cacherImage(this)"
+                    
+                     data-bs-toggle="tooltip"
+               data-bs-placement="top"
+               title="Porte Z : applique une phase de -1 à |1⟩"
+            >
+              Z
+               <img id="Z" class="afficheprioritaire" style="display:none" src="assets/gates/Z.JPG"  >
+            </button>
+            
+            <button
+              type="button"
+              class="btn btn-warning btn-sm p-0 d-flex align-items-center justify-content-center"
+              id="type6"
+              style="font-weight: bold; margin-right: 5px; width: 25px; height: 25px;"
+              onfocus="choix_type(this)"
+                    onmouseover="afficheImage(this)"
+              onmouseout="cacherImage(this)"
+                    
+                data-bs-toggle="tooltip"
+               data-bs-placement="top"
+               title="Porte Y : change |0⟩ en i|1⟩ et |1⟩ en -i|0⟩"
+            >
+              Y
+               <img id="Y" class="afficheprioritaire" style="display:none" src="assets/gates/Y.JPG"  >
+            </button>
+
+            <button
+              type="button"
+              class="btn btn-danger btn-sm p-0 d-flex align-items-center justify-content-center"
+              id="type5"
+              style="font-weight: bold; width: 25px; height: 25px;"
+              onfocus="choix_type(this)"
+                    
+              onmouseover="afficheImage(this)"
+              onmouseout="cacherImage(this)"
+                    
+               data-bs-toggle="tooltip"
+               data-bs-placement="top"
+               title="Porte de Hadamar :  transforme  |0⟩ en  (|0⟩+|1⟩)/&radic;2 et |1⟩ en (|0⟩-|1⟩)/&radic;2"
+            >
+              H
+              <img id="H" class="afficheprioritaire" style="display:none" src="assets/gates/H.JPG"  >
+            </button>
+            
+            
+        
+    
+            
+            
+          </div><!--meme ligne-->
+          
+<hr style="margin: 2px 0;" /><!--fait une marge de 2 px-->
+          
+         
+             <div class="d-inline-flex">
+            
+             <button
+              type="button"
+              class="btn btn-primary btn-sm p-0 d-flex align-items-center justify-content-center"
+              id="type32"
+              style="font-weight: bold; margin-right: 5px; width: 25px; height: 25px;"
+              onfocus="choix_type(this)"
+                     onmouseover="afficheImage(this)"
+              onmouseout="cacherImage(this)"
+                    
+                     data-bs-toggle="tooltip"
+               data-bs-placement="top"
+               title="Racine carré de la porte X "
+            >
+              X<sup>1/2</sup>
+               <img id="Rnon" class="afficheprioritaire" style="display:none" src="assets/gates/Rnon.JPG"  >
+            </button>
+               
+               
+               
+                <button
+              type="button"
+              class="btn btn-success btn-sm p-0 d-flex align-items-center justify-content-center"
+              id="type13"
+              style="font-weight: bold; margin-right: 5px; width: 25px; height: 25px;"
+              onfocus="choix_type(this)"
+                    
+                data-bs-toggle="tooltip"
+               data-bs-placement="top"
+               title="Transformée de Fourier"
+            >
+              F
+            </button>
+
+            <button
+              type="button"
+              class="btn btn-warning btn-sm p-0 d-flex align-items-center justify-content-center"
+              id="type14"
+              style="font-weight: bold; margin-right: 5px; width: 25px; height: 25px;"
+              onfocus="choix_type(this)"
+                    
+                     data-bs-toggle="tooltip"
+               data-bs-placement="top"
+               title="Transformée de Fourier inverse"
+            >
+              F<sup>-1</sup>
+            </button>
+               
+               
+            
+           
+            
+            
+            
+           
+            
+            
+            <!--
+            
+             <button
+              type="button"
+              class="btn btn-secondary btn-sm p-0 "
+              id="type65"
+              style="font-weight: bold; width: 20px; height: 20px;"
+              onfocus="choix_type(this)"
+                     
+               data-bs-toggle="tooltip"
+               data-bs-placement="top"
+               title="Mesure du Qbit" 
+                
+                     
+                     
+            >
+               &#10549;
+            </button>
+            
+            -->
+          </div>
+          
+          
+          
+          <hr style="margin: 2px 0;" /><!--fait une marge de 2 px-->
+          
+        
+          
+           <!-- <div class="d-flex justify-content-center align-items-center"> pour forcer les 3 boutons a etre sur la meme ligne mais centre-->
+          <div class="d-inline-flex">
+            <!--affiche sur une même ligne-->
+            
+            <button
+              type="button"
+              class="btn btn-primary btn-sm p-0 d-flex align-items-center justify-content-center"
+              id="type12"
+              style="font-weight: bold; margin-right: 5px; width: 45px; height: 25px;"
+              onfocus="choix_type(this)"
+                    onmouseover="afficheImage(this)"
+              onmouseout="cacherImage(this)"
+                data-bs-toggle="tooltip"
+               data-bs-placement="top"
+               title="Porte SWAP, intervertit 2 qBits"
+            >
+              SWAP
+               <img id="SWAP" class="afficheprioritaire" style="display:none" src="assets/gates/SWAP.JPG"  >
+            </button>
+            
+            
+            <button
+              type="button"
+              class="btn btn-success btn-sm p-0 d-flex align-items-center justify-content-center"
+              id="type15"
+              style="font-weight: bold; margin-right: 5px; width: 55px; height: 25px;"
+              onfocus="choix_type(this)"
+                    onmouseover="afficheImage(this)"
+              onmouseout="cacherImage(this)"
+                data-bs-toggle="tooltip"
+               data-bs-placement="top"
+               title="Racine carré de la Porte SWAP"
+            >
+              SWAP<sup>1/2</sup>
+               <img id="Rswap" class="afficheprioritaire" style="display:none" src="assets/gates/Rswap.JPG"  >
+            </button>
+           
+
+            
+            
+          </div>
+          
+           <hr style="margin: 2px 0;" /><!--fait une marge de 2 px-->
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          <div class="d-inline-flex">
+            <!--affiche sur une même ligne-->
+            
+            <button
+              type="button"
+              class="btn btn-primary btn-sm p-0 d-flex align-items-center justify-content-center"
+              id="type7"
+              style="font-weight: bold; margin-right: 5px; width: 25px; height: 25px;"
+              onfocus="choix_type(this)"
+                   onmouseover="afficheImage(this)"
+              onmouseout="cacherImage(this)" 
+                data-bs-toggle="tooltip"
+               data-bs-placement="top"
+               title="Porte à changement de phase (Double-Clic pour changer &#934)"
+            >
+             R<sub>&#934 </sub>
+               <img id="Rphi" class="afficheprioritaire" style="display:none" src="assets/gates/Rphi.JPG"  >
+            </button>
+            
+            
+            
+            
+            
+            
+            
+            <button
+              type="button"
+              class="btn btn-success btn-sm p-0 d-flex align-items-center justify-content-center"
+              id="type10"
+              style="font-weight: bold; margin-right: 5px; width: 25px; height: 25px;"
+              onfocus="choix_type(this)"
+                    
+                data-bs-toggle="tooltip"
+               data-bs-placement="top"
+               title="Oracle à qubit auxiliaire (Double-Clic pour changer f(x))"
+            >
+             O<sub>f</sub>
+            </button>
+            
+            
+            
+            <button
+              type="button"
+              class="btn btn-warning btn-sm p-0 d-flex align-items-center justify-content-center"
+              id="type11"
+              style="font-weight: bold; margin-right: 5px; width: 60px; height: 25px;"
+              onfocus="choix_type(this)"
+                    
+                data-bs-toggle="tooltip"
+               data-bs-placement="top"
+               title="Operateur de diffusion de Grover"
+            >
+              2|ψ⟩⟨ψ|-I
+            </button>
+            
+            
+            
+            
+          
+          </div>
+          
+          
+         
+          
+          
+          
+           <div class="titre-palette" id="titrePalette3">Contrôles et affichage</div><!--fait une marge de 2 px-->
+          
+          
+          
+
+          <!-- <div class="d-flex justify-content-center align-items-center"> pour forcer les 3 boutons a etre sur la meme ligne mais centre-->
+          <div class="d-inline-flex">
+            <!--affiche sur une même ligne-->
+            
+            <label for="type16" class="form-label">Control</label>
+            
+            <button
+              class="btn btn-dark rounded-circle p-0"
+              id="type16"
+              style="width: 10px; height: 10px; font-weight: bold;margin-right: 5px;" 
+              onfocus="choix_type(this)"
+               data-bs-toggle="tooltip"
+               data-bs-placement="top"
+               title="Controle : agit sur un qubit cible si le qubit de contrôle est dans l'état |1⟩ "
+            ></button>
+
+            <button
+              class="btn btn-secondary rounded-circle p-0"
+              style="width: 10px; height: 10px; margin-right: 5px;"
+              id="type17" 
+              onfocus="choix_type(this)"
+                    
+                data-bs-toggle="tooltip"
+               data-bs-placement="top"
+               title="Anticontrole : agit sur un qubit cible si le qubit de contrôle est dans l'état |0⟩"
+            ></button>
+            
+            
+            
+             <button
+              type="button"
+              class="btn btn-secondary btn-sm p-0 "
+              id="type64" 
+              style="font-weight: bold; width: 20px; height: 20px; margin-right: 5px;"
+              onfocus="choix_type(this)"
+                     
+               data-bs-toggle="tooltip"
+               data-bs-placement="top"
+               title="Etat du Qbit et probabilités" 
+                
+                     
+                     
+            >
+             %
+            </button>
+            
+            
+            
+            <button
+          type="button"
+          id="boutongraphic"
+                   class="btn btn-warning btn-sm p-0 d-flex align-items-center justify-content-center"
+          style="font-weight: bold; width: 20px; height: 20px;  "
+          onclick="graphique()"
+          data-bs-toggle="tooltip"
+               data-bs-placement="top"
+               title="Visualiser les graphiques"
+        >
+         <img src="assets/img/courbe.png" alt="Image" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+        </button>   
+             
+            
+          </div>
+          
+           <hr style="margin: 2px 0;" /><!--fait une marge de 2 px-->
+          
+
+          <div class="d-inline-flex">
+            <!--affiche sur une même ligne-->
+          
+          <button
+            type="button"
+            class="btn btn-warning  btn-sm p-0 d-flex align-items-center justify-content-center"
+          
+              style="font-weight: bold; width: 35px; height: 30px;  margin-right: 5px;"
+            onclick="fenetre_affichage_generale()"
+            id="typepara"
+            data-bs-toggle="tooltip"
+               data-bs-placement="top"
+               title="Paramètres d'affichage"
+          >
+           <img src="assets/img/parametres.png" alt="Image" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+          </button>
+            
+            
+            
+             <select class="form-control selecttrespetit" id="languageSelect"  onclick="changeLanguage(this)">
+            <option value="1">FR</option>
+            <option value="2">EN</option>
+         
+          
+        </select>   
+            
+            
+            <button
+            type="button" 
+                   class="btn btn-white btn-sm p-0 d-flex align-items-center justify-content-center"
+              style="font-weight: bold; width: 30px; height: 30px;"
+            id="boutondrapeau"
+            
+            data-bs-toggle="tooltip"
+               data-bs-placement="top"
+               title="français"
+                    onclick="changeLanguage(this)"
+          >
+              
+              <a id="imagedrapeau">
+            <img src="assets/img/petitfrance.png" alt="Image" style="max-width: 100%; max-height: 100%; object-fit: contain;" /></a>
+          </button>
+            
+            
+           
+            
+            
+            
+            
+          
+          
+          
+        
+          
+      
+            
+             
+ 
+   
+            
+            
+          
+           <!-- 
+          <button
+            type="button" 
+                   class="btn btn-success btn-sm p-0 d-flex align-items-center justify-content-center"
+              style="font-weight: bold; width: 50px; height: 30px;"
+            
+            onclick="afficheQbit()"
+            data-bs-toggle="tooltip"
+               data-bs-placement="top"
+               title="Affiche l'état du n-Qbits et les probabilités pour chaque état"
+          >
+            n-Qbit
+          </button>
+            -->
+
+            </div>
+            <!--fin de affiche sur une même ligne-->
+            
+            <div class="titre-palette" id="titrePalette4">Circuit et mesures</div>
+          
+         <div class="d-inline-flex">
+            <!--affiche sur une même ligne--> 
+          
+          <button
+            type="button"
+                   class="btn btn-danger btn-sm p-0 d-flex align-items-center justify-content-center"
+                  style="font-weight: bold; width: 40px; height: 30px;  margin-right: 2px;"
+            
+                  id="init"
+                  onclick="bouton_efface_tout()"
+                  data-bs-toggle="tooltip"
+               data-bs-placement="top"
+               title="initialise le circuit quantique"
+          >
+            Reset
+          
+          
+           </button>
+            
+           
+           <div  id="boutonmesuretotale" style="display:inline;">
+           <button
+            type="button"
+                   class="btn btn-success btn-sm p-0 d-flex align-items-center justify-content-center"
+                  style="font-weight: bold; width: 55px; height: 30px;  margin-right: 5px; "
+                   id="mesuretout"
+            onclick="initialise_mesures()"
+                  data-bs-toggle="tooltip"
+               data-bs-placement="top"
+               title="Effectue les mesures de tous les Qbits"
+                 
+          >
+            Mesure
+          </button>
+           </div>
+            
+         <section id="boutoneffacemesures_et_mesurespartielles" style="display:none;" >
+           <div class="d-inline-flex">
+           <button
+            type="button"
+                   class="btn btn-primary btn-sm p-0 d-flex align-items-center justify-content-center"
+                  style=" font-weight: bold; width: 40px; height: 30px;  margin-right: 2px;"
+                  
+            onclick="initialise_mesures()"
+                  data-bs-toggle="tooltip"
+               data-bs-placement="top"
+                   id="effaceqbits"
+               title="Efface les dernières mesures de Qbits"
+          >
+            Clear
+          </button>
+           
+           <button
+            type="button"
+                   class="btn btn-success btn-sm p-0 d-flex align-items-center justify-content-center"
+                  style="font-weight: bold; width: 40px; height: 30px;  margin-right: 2px;"
+                   id="refaitmesures"
+            onclick="Bouton_relance_mesures()"
+                  data-bs-toggle="tooltip"
+               data-bs-placement="top"
+               title="Refait les dernières mesures de Qbits"
+          >
+            Retry
+          </button>
+           </div>
+          </section>
+           
+           
+           
+
+          
+          
+           </div>
+            <!--fin de affiche sur une même ligne-->
+          
+          
+            <div class="titre-palette" id="titrePalette5">Personnages</div>
+          
+         <div class="d-inline-flex">
+            <!--affiche sur une même ligne--> 
+           
+           
+           <button
+  type="button"
+  class="btn btn-primary btn-sm p-0 d-flex align-items-center justify-content-center"
+  id="type128"
+  style="font-weight: bold; margin-right: 5px; width: 30px; height: 30px;"
+  onfocus="choix_type(this)"
+  data-bs-toggle="tooltip"
+  data-bs-placement="top"
+  title="Alice"
+>
+  <img src="assets/img/ptiteAlice.png" alt="Image" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+</button>
+            <button
+  type="button"
+  class="btn btn-primary btn-sm p-0 d-flex align-items-center justify-content-center"
+  id="type129"
+  style="font-weight: bold; margin-right: 5px; width: 30px; height: 30px;"
+  onfocus="choix_type(this)"
+  data-bs-toggle="tooltip"
+  data-bs-placement="top"
+  title="Bob"
+>
+  <img src="assets/img/ptitBob.png" alt="Image" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+</button>
+       <button
+  type="button"
+  class="btn btn-primary btn-sm p-0 d-flex align-items-center justify-content-center"
+  id="type130"
+  style="font-weight: bold; margin-right: 5px; width: 30px; height: 30px;"
+  onfocus="choix_type(this)"
+  data-bs-toggle="tooltip"
+  data-bs-placement="top"
+  title="Gerard le pirate"
+>
+  <img src="assets/img/ptitgerard.png" alt="Image" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+</button>       
+           
+           
+         
+          </div>
+            <!--fin de affiche sur une même ligne-->
+          
+          <div class="titre-palette" id="titrePalette6">Outils</div>
+           
+           <div class="d-inline-flex">
+            <!--affiche sur une même ligne--> 
+             <button
+          type="button"
+                     
+          id="boutonaide"
+                   class="btn btn-warning btn-sm p-0 d-flex align-items-center justify-content-center"
+          style="font-weight: bold; width: 35px; height: 30px; margin-right: 5px; "
+          onclick="affichageCommande(this)"
+          data-bs-toggle="tooltip"
+               data-bs-placement="top"
+               title="Description des commandes générales"
+        >
+          Aide
+        </button>
+             
+             
+               <button
+          type="button"
+          id="boutonTexte"
+                   class="btn btn-primary btn-sm p-0 d-flex align-items-center justify-content-center"
+          style="font-weight: bold; width: 35px; height: 30px; margin-right: 5px; "
+          onclick="affichageCommande(this)"
+          data-bs-toggle="tooltip"
+               data-bs-placement="top"
+               title="Texte pour décrire le principe de ton algorithme"
+        >
+          Info
+        </button>
+             
+          <button
+          type="button"
+                     
+          id="boutonbloch"
+                   class="btn btn-danger btn-sm p-0 d-flex align-items-center justify-content-center"
+          style="font-weight: bold; width: 35px; height: 30px; margin-right: 5px; "
+          onclick="simuleBloch()"
+          data-bs-toggle="tooltip"
+               data-bs-placement="top"
+               title="Simulation avec la sphère de Bloch"
+        >
+          Bloch
+        </button>
+             
+             
+             
+           
+          </div>
+            <!--fin de affiche sur une même ligne-->
+          
+          <hr class="my-1" />
+
+          
+          
+          
+         
+          
+          
+          
+          
+          
+          
+          
+<div class="d-inline-flex"><!--debut zoom-->
+  
+        <!-- Deuxième paire de boutons avec label -->
+        <div class="text-center">
+            <label for="bouton2+" class="form-label">Zoom</label>
+            <div class="d-inline-flex">
+               <button type="button" id="bouton2-" class="btn btn-danger btn-sm p-0 d-flex align-items-center justify-content-center"
+                        style="font-weight: bold; width: 15px; height: 15px;"
+                        onclick="zoom(this)"
+                        data-bs-toggle="tooltip"
+               data-bs-placement="top"
+               title="Change la dimension des portes"
+                        >
+                    -
+                </button>
+                <button type="button" id="bouton2+" class="btn btn-primary btn-sm p-0 d-flex align-items-center justify-content-center"
+                        style="font-weight: bold; width: 15px; height: 15px;"
+                       
+                        onclick="zoom(this)"
+                        data-bs-toggle="tooltip"
+               data-bs-placement="top"
+               title="Change la dimension des portes"
+                        >
+                    +
+                </button>
+               
+            </div>
+        </div>
+  
+  
+  
+  
+  
+    </div><!--FIN zoom-->
+          
+          
+          <div class="d-inline-flex">
+            <label class="form-check-label" for="toggleGrayscale">Color</label>
+          <div class="form-check form-switch">
+            
+        <input class="form-check-input" type="checkbox" id="toggleGrayscale" onchange="toggleGrayscale()" checked>
+        
+    </div>
+            
+            
+          </div>
+          
+          <hr class="my-1" />
+          
+          
+          
+          
+          <button
+          type="button"
+                     
+          id="boutonporte"
+                   class="btn btn-warning btn-sm p-0 d-flex align-items-center justify-content-center"
+          style="font-weight: bold; width: 90px; height: 30px; margin-right: 5px; "
+          onclick="affichageCreationPorte(this)"
+          data-bs-toggle="tooltip"
+               data-bs-placement="top"
+               title="Créer une porte quantique à partir de sa matrice"
+        >
+          Créer/porte
+        </button>
+
+          <div class="d-inline-flex" style="margin-top: 6px;">
+            <button
+            type="button"
+            id="boutonAnnuler"
+                     class="btn btn-warning btn-sm p-0 d-flex align-items-center justify-content-center"
+            style="font-weight: bold; width: 35px; height: 30px; margin-right: 5px; "
+            onclick="annuleCircuit()"
+            data-bs-toggle="tooltip"
+                 data-bs-placement="top"
+                 title="Annuler la dernière action (Ctrl+Z)"
+            disabled
+          >
+            &#8630;
+          </button>
+            <button
+            type="button"
+            id="boutonRefaire"
+                     class="btn btn-warning btn-sm p-0 d-flex align-items-center justify-content-center"
+            style="font-weight: bold; width: 35px; height: 30px;"
+            onclick="refaisCircuit()"
+            data-bs-toggle="tooltip"
+                 data-bs-placement="top"
+                 title="Refaire l'action annulée (Ctrl+Y)"
+            disabled
+          >
+            &#8631;
+          </button>
+          </div>
+          
+          <hr class="my-1" />
+           <!--debut code generer des boutons-->
+<div class="d-inline-flex flex-wrap" id="button-container">
+  <!--<div class="d-inline-flex" id="button-container">-->
+            <!--affiche sur une même ligne--> 
+             
+ 
+    
+   
+    
+          </div><!-- fin de sur une meme ligne->> 
+
+   <!--fin du code generer des boutons-->
+          
+          
+           <!--elements dans le canvas p5 js dont j ai besoins-->
+<!--si je les mets dans le canvas ça ralentit de ouf l affichage , bug p5js !-->
+<select style="display:none" id="monSelect" onchange="mySelectEvent()">
+  <option value="Phase">Phase</option>
+  <option value="Prob" selected>Prob</option>
+  <option value="Re(amplitude)">Re(amplitude)</option>
+  <option value="Im(amplitude)">Im(amplitude)</option> 
+</select>
+          
+          
+          
+ <div style="display:none" id="textcontainer1" ><div class="text-content">Texte du container 1</div></div>  
+  <div style="display:none" id="textcontainer2" ><div class="text-content">Texte du container 1</div></div>
+          
+          
+<!--fin de elements-->
+  
+          
+          
+          
+         
+        </div><!--fin colonne 1 du menu-->
+
+        <div class="col-auto mx-auto" id="parentducanvas"></div>
+      </div><!--FIN des deux colonnes menu,canvas-->
+    </div><!--FIN du container de toute la page (en dessous deu menu)-->
+  </body>
+</html>

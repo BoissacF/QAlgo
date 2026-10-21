@@ -1,0 +1,57 @@
+# ============================================================================
+#  QAlgo — fichiers non versionnes
+#  Ces fichiers existent sur le poste de developpement ou sur le serveur,
+#  mais ne font pas partie du depot.
+# ============================================================================
+
+# --- Notes personnelles : jamais publiees -----------------------------------
+# Notes et documents de travail : ils restent sur le poste de developpement.
+# Le depot public ne porte que le README.
+docs/
+
+# --- Anciennes versions et sauvegardes manuelles ---------------------------
+# Remplacees par l'historique git.
+archive/
+
+# --- Copie locale de p5.js (4,3 Mo) ----------------------------------------
+# L'application charge p5.js depuis un CDN. Cette copie ne sert qu'a un
+# usage hors ligne et se retelecharge depuis https://p5js.org/download/
+vendor/p5/
+
+# --- Donnees d'execution du serveur ----------------------------------------
+# Valeur courante du compteur de visites : etat, pas code source.
+server/compteurquantique.txt
+
+# --- Copies ponctuelles de fichiers ----------------------------------------
+* - Copie.*
+*copie*.js
+*Copie*.js
+*_avant_obfuscator.js
+
+# --- Systeme / editeur -----------------------------------------------------
+Thumbs.db
+desktop.ini
+.DS_Store
+*.swp
+*~
+.vscode/
+.idea/
+
+# --- Fichiers verrous LibreOffice (crees quand un .odt est ouvert) ---------
+.~lock.*#
+
+# --- Mesure d'audience -----------------------------------------------------
+# L'identifiant de mesure Google Analytics appartient a l'exploitant du site :
+# le modele documente (analytics.js.exemple) est versionne, jamais le fichier
+# reel.
+analytics.js
+
+# --- Coordonnees du serveur de publication ---------------------------------
+# Le modele documente (publie.conf.exemple) est versionne, jamais le fichier
+# reel : il porte l'adresse du serveur, son port SSH et le compte utilise.
+outils/publie.conf
+
+# --- Secrets : identifiants et cles API ------------------------------------
+.env
+.env.*
+!.env.exemple

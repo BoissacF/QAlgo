@@ -1,0 +1,13 @@
+25!0#1#0;0;55;63;35;150;0;!65;0;708;66;35;150;0;!0#1#0;1;51;117;35;150;0;!65;1;706;119;35;150;0;!0#1#0;2;51;172;35;150;0;!65;2;706;171;35;150;0;!0#1#0;3;48;218;35;150;0;!65;3;705;218;35;150;0;!0#0#1;4;43;276;35;150;0;!65;4;390;277;10;50;0;!5;0;164;63;35;100,255,100;0;!5;1;164;116;35;100,255,100;0;!5;2;163;172;35;100,255,100;0;!5;3;162;220;35;100,255,100;0;!5;4;163;275;35;100,255,100;0;!10;0;286;65;35;244,102,27;12;function f(X) {
+            if (X%2==0) return 0@
+            return 1@
+        }!5;0;447;63;35;100,255,100;0;!5;1;447;119;35;100,255,100;0;!5;2;447;172;35;100,255,100;0;!5;3;448;219;35;100,255,100;0;!64;0;579;65;35;150;0;!64;1;580;118;35;150;0;!64;2;580;170;35;150;0;!?!64;3;580;219;35;150;0;!S;0;10;1;0;55;164;63;63!S;10;15;1;0;164;285;63;63!S;15;16;1;0;285;447;63;63!S;16;20;1;0;447;579;63;65!S;20;1;1;0;579;708;65;66!S;2;11;1;0;51;164;117;116!S;11;15;1;0;164;285;116;117!S;15;17;1;0;285;447;117;119!S;17;21;1;0;447;580;119;118!S;21;3;1;0;580;706;118;119!S;4;12;1;0;51;163;172;172!S;12;15;1;0;163;285;172;172!S;15;18;1;0;285;447;172;172!S;18;22;1;0;447;580;172;170!S;22;5;1;0;580;706;170;171!S;6;13;1;0;48;162;218;220!S;13;15;1;0;162;285;220;219!S;15;19;1;0;285;448;219;219!S;19;24;1;0;448;580;219;219!S;24;7;1;0;580;705;219;218!S;8;14;4;255,0,0;43;163;276;275!S;14;15;1;0;163;285;275;276!S;15;9;1;0;285;390;276;277!T;In the case of the Deutsch-Jozsa problem, we have a quantum black box, known as an oracle, which implements a mathematical function f(X) that returns 0 or 1 (X is the decimal number corresponding to n input bits, e.g., X = 3 for 011).
+
+We know that this function is either constant (the output is always 0 or always 1 for all inputs) or balanced (the output is 0 in half of the cases and 1 in the other half).
+
+The goal of the problem is to determine whether the function is constant or balanced using the oracle.
+
+When measuring the first (n-1) qubits, we obtain 1 if the function is balanced and 0 if it is constant.
+In this example, we have a balanced function that returns 1 if the input number X is even and 0 otherwise.
+The algorithm measures 0001 on the first 4 qubits.
+You can modify this function by double-clicking on the oracle to perform other tests.

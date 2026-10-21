@@ -1,0 +1,36 @@
+34!0#1#0#0#0;0;60;70;35;150;0;!65;0;785;70;35;150;0;!0#1#0#0#0;1;59;120;35;150;0;!65;1;785;120;35;150;0;!0#1#0#0#0;2;60;160;35;150;0;!65;2;785;160;35;150;0;!0#1#0#0#0;3;57;208;35;150;0;!65;3;785;208;35;150;0;!0#1#0#0#0;4;56;274;35;150;0;!65#0;4;785;274;35;150;0;!0#1#0#0#0;5;53;309;35;150;0;!65#0;5;785;309;35;150;0;!0#1#0#0#0;6;57;341;35;150;0;!65#1;6;785;341;35;150;0;!0#1#0#0#0;7;54;374;35;150;0;!65#0;7;785;374;35;150;0;!5;0;132;72;35;27,187,104;0;!5;1;133;118;35;28,186,104;0;!5;2;134;159;35;33,196,112;0;!5;3;134;208;35;37,208,120;0;!10#4;0;230;80;35;127,108,172;16;function f(X) {
+
+        return (2**X)%15@
+    }!64;0;332;71;35;150;0;!64;1;334;120;35;150;0;!64;2;328;160;35;150;0;!64;3;321;208;35;150;0;!64;4;501;274;35;150;0;!64;5;440;309;35;150;0;!64;6;385;341;35;150;0;!64;7;341;374;35;150;0;!14;0;473;70;35;209,204,35;7;!64;0;596;70;35;150;0;!64;1;612;120;35;150;0;!64;2;614;160;35;150;0;!64;3;611;208;35;150;0;!S;0;16;1;0;60;105;70;72!S;16;20;1;0;157;230;72;71!S;20;21;1;0;230;332;71;70!S;21;29;1;0;332;473;70;70!S;29;30;1;0;473;596;70;70!S;30;1;1;0;596;785;70;70!S;2;17;1;0;59;106;120;118!S;17;20;1;0;158;230;118;119!S;20;22;1;0;230;333;119;120!S;22;29;1;0;333;473;120;120!S;29;31;1;0;473;612;120;120!S;31;3;1;0;612;785;120;120!S;4;18;1;0;60;107;160;159!S;18;20;1;0;159;230;159;159!S;20;23;1;0;230;327;159;160!S;23;29;1;0;327;473;160;160!S;29;32;1;0;473;614;160;160!S;32;5;1;0;614;785;160;160!S;6;19;1;0;57;107;208;208!S;19;20;1;0;159;230;208;208!S;20;24;1;0;230;320;208;208!S;24;29;1;0;320;473;208;208!S;29;33;1;0;473;611;208;208!S;33;7;1;0;611;785;208;208!S;8;20;1;0;55;230;274;274!S;20;25;1;0;230;500;274;274!S;25;9;1;0;500;785;274;274!S;10;20;1;0;52;230;309;309!S;20;26;1;0;230;439;309;309!S;26;11;1;0;439;785;309;309!S;12;20;1;0;56;230;341;341!S;20;27;1;0;230;384;341;341!S;27;13;1;0;384;785;341;341!S;14;20;1;0;53;230;374;374!S;20;28;1;0;230;340;374;374!S;28;15;1;0;340;785;374;374!T; BUT : On veut trouver les facteurs premiers de N = 15, donc 3 et 5
+L'algorithme de Shor est probabiliste, on ne trouve pas forcémment ces facteurs dès la première mesure.
+
+L'algorithme doit trouver l'ordre r qui pour un entier a<15 soit le plus petit k tel que a**k≡ 1 (mod 15)
+On choisit un entier a tel que a>1 et a<N
+Première possibilité : On gagne au loto . On trouve un diviseur de N par hasard, l'algorithme s'arrête.
+Sinon :
+Dans cette simulation  a et r doivent satisfaire aux 3 hypothèses ci dessous :
+- hyp 1 :  r est pair 
+- hyp 2 : a **(r/2) + 1 ne doit pas être divisible par 15
+- hyp 3 : l'ordre r doit diviser 2**n   ou n est le nombre de qbits, ici 4
+Pour cette simulation, si une de ces 3 hypothèses n'est pas vérifiée,  on choisit une autre valeur de a et on recommence. 
+En ce qui concerne l'hypothèse 3, une solution existe pour trouver l'ordre, mais ne sera pas expliquée ici.
+
+Pratique : 
+- on doit changer la fonction de l'oracle avec la valeur de a choisie (ex :  pour a=2 on écrit return (2**X)%15,)
+- on fait une mesure partielle du deuxième registre (les 4 derniers bits)
+- Pour le premier registre, on regarde les mesures m possibles dans la fenêtre "Probas"
+- On calcule pour les différentes mesures m possibles : la valeur m/(2**n), 3 situations :
+   1- si on obtient un entier c'est perdu... on recommence
+   2- si on obtient une fraction irréductible, r est le dénominateur
+   3- Si on obtient une fraction non irréductible, on la simplifie et on regarde  si le dénominateur k vérifie
+  a**k≡ 1 (mod 15). 
+          3.1 Si c'est le cas , k  est l'ordre r recherché.
+          3.2 Sinon k divise r mais n'est pas égal à r, on poursuit avec d'autres mesures pour déterminer r
+Une fois r déterminé, on obtient deux facteurs  d1 et d2  de N tels que :
+d1 = PGCD(a**r/2 +1) et d2 = PGCD(a**r/2 -1)
+ donc ici : 3 et 5
+
+Dans cette simulation tu peux choisir d'autres valeurs de a pour tester :
+- Si a est dans (3,5,6,9,10,12) l'hyp 1 n'est pas vérifiée mais on obtient un diviseur de 15 qui est PGCD(a,15).
+- Si a est dans (4,11,14) l'ordre est r= 2 mais pour 14 l'hyp 2 n'est pas vérifiée.
+- Si a est dans (2,7,8,13) l'ordre est r= 4

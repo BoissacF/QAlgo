@@ -1,0 +1,12 @@
+18!0#1#0;1;39;398;35;150;0;!65;1;1068;393;35;150;0;!0#1#0;0;42;315;35;150;0;!65;0;1065;323;35;150;0;!5;0;127;315;35;244,102,27;0;!16;0;228;315;35;0;0;!3;1;230;396;35;100,255,100;0;!64;1;514;398;35;150;0;!64;0;362;116;35;150;0;!64;0;659;113;35;150;0;!16;0;769;321;35;0;0;!3;1;770;394;35;100,255,100;0;!5;0;878;321;35;244,102,27;0;!64;0;971;322;35;150;0;!64;1;975;393;35;150;0;!128;-1;314;53;35;244,102,27;0;!129;-1;973;213;35;244,102,27;0;!130;-1;515;317;35;244,102,27;0;!S;2;4;1;0;42;127;315;315!S;4;5;1;0;127;228;315;315!S;5;8;4;255,0,0;228;362;315;116!S;8;9;5;244,102,27;362;659;116;113!S;9;10;4;244,102,27;659;769;113;321!S;10;12;6;150;769;878;321;321!S;12;13;5;150;878;971;321;322!S;13;3;1;0;971;1065;322;323!S;0;6;1;0;39;203.64999389648438;398;396!S;6;7;4;255,0,0;256.1499938964844;514;396;398!S;7;11;4;255,0,0;514;743.6499938964844;398;394!S;11;14;5;150;796.1499938964844;975;394;393!S;14;1;1;0;975;1068;393;393!C;5;6;2;255,0,0;228;229.89999389648438;315;396!C;10;11;2;255,0,0;769;769.8999938964844;321;394!T;Alice wants to send a message to Bob. She will encode it (for example, using the ASCII code) and send her message in packets of two bits of information.
+
+The algorithm starts with the entanglement of two qubits, which are sent to Alice and Bob.
+On the path of her entangled qubit, Alice will apply gates according to the two bits she wants to send:
+
+- To send 00: No gate
+- To send 01: an X gate
+- To send 10: a Z gate
+- To send 11: an X gate and a Z gate
+By measuring his qubits, Bob will obtain the bits sent by Alice.
+
+The eavesdropper, Gerard, cannot do anything. If he measures a qubit, he destroys the entanglement, and nothing works anymore.
