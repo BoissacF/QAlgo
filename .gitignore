@@ -40,12 +40,6 @@ desktop.ini
 # --- Fichiers verrous LibreOffice (crees quand un .odt est ouvert) ---------
 .~lock.*#
 
-# --- Mesure d'audience -----------------------------------------------------
-# L'identifiant de mesure Google Analytics appartient a l'exploitant du site :
-# le modele documente (analytics.js.exemple) est versionne, jamais le fichier
-# reel.
-analytics.js
-
 # --- Coordonnees du serveur de publication ---------------------------------
 # Le modele documente (publie.conf.exemple) est versionne, jamais le fichier
 # reel : il porte l'adresse du serveur, son port SSH et le compte utilise.

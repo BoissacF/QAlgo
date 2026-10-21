@@ -6,12 +6,6 @@
  * Copyright (C) 2025-2026 Frédéric Boissac
  * Logiciel libre sous licence GNU AGPL version 3 ou ultérieure ;
  * voir le fichier LICENSE à la racine du dépôt.
- *
- * MODÈLE. Copier ce fichier en analytics.js et remplacer G-XXXXXXXXXX par
- * son propre identifiant de mesure. analytics.js n'est pas versionné : un
- * identifiant de mesure appartient à celui qui exploite le site. Sans ce
- * fichier, les pages signalent une erreur de console sans gravité et le
- * simulateur fonctionne normalement.
  */
 // analytics.js - Code complet pour Google Analytics avec Web Worker
 
@@ -24,7 +18,7 @@ window.addEventListener('load', function() {
     // Charger GA de façon traditionnelle avec timeout de sécurité
     const script = document.createElement('script');
     script.async = true;
-    script.src = 'https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX';
+    script.src = 'https://www.googletagmanager.com/gtag/js?id=G-L2VNGMV6YS';
     
     const timeout = setTimeout(() => {
       console.log('Timeout de chargement GA');
@@ -38,7 +32,7 @@ window.addEventListener('load', function() {
       window.dataLayer = window.dataLayer || [];
       function gtag() { dataLayer.push(arguments); }
       gtag('js', new Date());
-      gtag('config', 'G-XXXXXXXXXX');
+      gtag('config', 'G-L2VNGMV6YS');
     };
     
     document.head.appendChild(script);

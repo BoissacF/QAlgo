@@ -158,7 +158,7 @@ chacune.
 |---|---|
 | `index.html` | Page de l'application, version anglaise |
 | `indexFR.html` | Page de l'application, version française |
-| `analytics.js.exemple` | Modèle du script de mesure d'audience, à copier en `analytics.js` |
+| `analytics.js` | Chargement différé de Google Analytics, abandonné au bout de 2 s |
 | `src/` | **Le code JavaScript** : les fichiers que l'on modifie, et ceux que le navigateur charge |
 | `assets/css/style.css` | Feuille de style de l'application |
 | `assets/img/favicon.svg` | Icône de l'onglet : sphère de Bloch stylisée |
@@ -308,12 +308,6 @@ QAlgo est un site statique : il n'y a ni base de données, ni code à compiler.
 1. Copier le contenu du dépôt à la racine du site, ou dans un sous-dossier.
 2. C'est tout. Aucune configuration, aucun secret, aucune dépendance à
    installer ; p5.js et Bootstrap sont chargés depuis un CDN.
-
-La mesure d'audience est facultative : `analytics.js` n'est pas versionné,
-puisqu'un identifiant de mesure appartient à celui qui exploite le site. Pour
-l'activer, copier `analytics.js.exemple` en `analytics.js` et y mettre son
-propre identifiant. Sans ce fichier, les pages signalent une erreur de console
-sans gravité et le simulateur fonctionne normalement.
 
 PHP n'est utile que pour `server/compteurquantique.php`, un compteur de visites
 qui écrit dans un fichier `compteurquantique.txt` placé à côté de lui. Le code
