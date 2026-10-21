@@ -1,357 +1,357 @@
 # QAlgo
 
-**Un simulateur de circuits quantiques dans le navigateur, pour la classe.**
+**English** · [Français](README.fr.md)
 
-QAlgo permet de construire un circuit quantique à la souris, de voir en direct
-l'état de chaque qubit, les amplitudes et les probabilités de sortie, puis de
-faire des mesures. Rien à installer : une page web suffit. L'outil est pensé
-pour l'enseignement — découverte de l'informatique quantique en lycée, en BTS
-ou en début de supérieur — et volontairement plus simple d'abord que les
-simulateurs destinés à la recherche.
+**A quantum circuit simulator in the browser, for the classroom.**
 
-👉 **Utiliser QAlgo : <https://www.qalgo.org>**
+QAlgo lets you build a quantum circuit with the mouse, watch the state of every
+qubit live along with the output amplitudes and probabilities, then take
+measurements. Nothing to install: a web page is enough. The tool is built for
+teaching — a first encounter with quantum computing in upper secondary school,
+in technical colleges or in early undergraduate courses — and is deliberately
+simpler at first sight than simulators aimed at research.
 
-| Version | Adresse |
+👉 **Use QAlgo: <https://www.qalgo.org>**
+
+| Version | Address |
 |---|---|
-| Français | <https://www.qalgo.org/indexFR.html> |
 | English | <https://www.qalgo.org/index.html> |
+| Français | <https://www.qalgo.org/indexFR.html> |
 
-Une série de vidéos de démonstration (en français) est disponible sur
-[cette liste de lecture YouTube](https://www.youtube.com/playlist?list=PLRB_NPOpDF7c1ls7fDW1XJaqxqoHdImrc).
+A set of demonstration videos (in French) is available on
+[this YouTube playlist](https://www.youtube.com/playlist?list=PLRB_NPOpDF7c1ls7fDW1XJaqxqoHdImrc).
 
-L'usage est libre et gratuit. Aucun compte n'est nécessaire.
-
----
-
-## Sommaire
-
-- [Ce que permet QAlgo](#ce-que-permet-qalgo)
-- [Les portes disponibles](#les-portes-disponibles)
-- [Commandes](#commandes)
-- [Les exemples fournis](#les-exemples-fournis)
-- [Architecture technique](#architecture-technique)
-- [Organisation du dépôt](#organisation-du-dépôt)
-- [Modifier le code](#modifier-le-code)
-- [Installer sa propre instance](#installer-sa-propre-instance)
-- [Limites connues](#limites-connues)
-- [Auteur, contact et licence](#auteur-contact-et-licence)
+Use is free and unrestricted. No account is required.
 
 ---
 
-## Ce que permet QAlgo
+## Contents
 
-- **Dessiner un circuit à la souris.** On dépose des qubits d'entrée et des
-  portes sur le canvas, on les relie, on les déplace, on les redimensionne. Le
-  circuit est recalculé à chaque modification.
-- **Voir l'état en direct.** Coefficients de chaque qubit, amplitudes complexes
-  et probabilités du registre complet, affichés au fil du circuit. Les états de
-  superposition peuvent être animés.
-- **Choisir sa notation.** Coefficients en forme algébrique, trigonométrique ou
-  en angles de Bloch ; angles en degrés, en radians ou en multiples de π ;
-  états de base en binaire ou en décimal ; précision réglable.
-- **Mesurer.** Mesure de tout le registre, ou **mesure partielle** d'une seule
-  ligne quantique, avec effondrement de l'état et renormalisation du reste —
-  c'est ce qui rend lisibles la téléportation et le codage superdense. Les
-  tirages peuvent être relancés autant de fois qu'on veut.
-- **Écrire son propre oracle.** La fonction `f(x)` d'un oracle s'écrit
-  directement en JavaScript dans une fenêtre de l'interface ; elle est tabulée
-  sur toutes les entrées possibles.
-- **Créer ses propres portes.** Un éditeur de matrice permet de définir une
-  porte quelconque (jusqu'à 8 lignes quantiques) ; elle est normalisée
-  automatiquement et vient s'ajouter à la palette avec le symbole choisi.
-- **Transformer un circuit entier en une seule porte.** QAlgo injecte
-  successivement chaque état de base pour reconstruire, colonne par colonne, la
-  matrice du circuit affiché, et en fait une porte réutilisable.
-- **Visualiser sur la sphère de Bloch.** Deux vues 3D orientables, en entrée et
-  après mesure, pour un circuit à une seule ligne quantique.
-- **Tracer les amplitudes.** Un graphique donne, pour chaque état de base, la
-  phase, la probabilité, la partie réelle ou la partie imaginaire de
-  l'amplitude.
-- **Enregistrer et partager.** Un circuit s'enregistre dans un fichier texte,
-  accompagné de son explication pédagogique, et se recharge à l'identique. Les
-  amplitudes s'exportent en CSV pour un tableur.
-- **Revenir en arrière.** `Ctrl+Z` annule, `Ctrl+Y` refait, sur une soixantaine
-  d'étapes ; les deux boutons ↶ et ↷ de la palette font la même chose, et
-  s'éteignent quand il n'y a rien à annuler. Le circuit en cours est aussi enregistré dans le navigateur : s'il
-  en reste un de la dernière visite, QAlgo propose de le reprendre.
-- **Travailler en grand.** Un bouton « Plein écran » masque la barre du
-  navigateur ; le canvas s'agrandit d'autant.
-- **Travailler en français ou en anglais**, toute l'interface basculant d'un
-  clic.
+- [What QAlgo does](#what-qalgo-does)
+- [Available gates](#available-gates)
+- [Controls](#controls)
+- [Bundled examples](#bundled-examples)
+- [Technical architecture](#technical-architecture)
+- [Repository layout](#repository-layout)
+- [Working on the code](#working-on-the-code)
+- [Running your own instance](#running-your-own-instance)
+- [Known limitations](#known-limitations)
+- [Author, contact and licence](#author-contact-and-licence)
 
-## Les portes disponibles
+---
 
-| Famille | Éléments |
+## What QAlgo does
+
+- **Draw a circuit with the mouse.** Drop input qubits and gates onto the
+  canvas, connect them, move them, resize them. The circuit is recomputed on
+  every change.
+- **Watch the state live.** The coefficients of each qubit, and the complex
+  amplitudes and probabilities of the whole register, displayed along the
+  circuit. Superposition states can be animated.
+- **Choose your notation.** Coefficients in algebraic or trigonometric form, or
+  as Bloch angles; angles in degrees, radians or multiples of π; basis states in
+  binary or decimal; adjustable precision.
+- **Measure.** Measure the whole register, or take a **partial measurement** of
+  a single quantum line, collapsing the state and renormalising the rest — this
+  is what makes teleportation and superdense coding readable. Draws can be
+  repeated as often as you like.
+- **Write your own oracle.** The `f(x)` function of an oracle is written
+  directly in JavaScript in a panel of the interface; it is then tabulated over
+  every possible input.
+- **Create your own gates.** A matrix editor lets you define an arbitrary gate
+  (up to 8 quantum lines); it is normalised automatically and joins the palette
+  under the symbol you choose.
+- **Turn a whole circuit into a single gate.** QAlgo feeds in each basis state
+  in turn to rebuild the matrix of the displayed circuit column by column, and
+  makes a reusable gate out of it.
+- **Visualise on the Bloch sphere.** Two orientable 3D views, at the input and
+  after measurement, for a circuit with a single quantum line.
+- **Plot the amplitudes.** A chart gives, for each basis state, the phase, the
+  probability, or the real or imaginary part of the amplitude.
+- **Save and share.** A circuit is saved to a text file along with its teaching
+  notes, and reloads identically. Amplitudes can be exported as CSV for a
+  spreadsheet.
+- **Undo.** `Ctrl+Z` undoes and `Ctrl+Y` redoes, over some sixty steps; the ↶
+  and ↷ buttons in the palette do the same, and grey out when there is nothing
+  to undo. The current circuit is also saved in the browser: if one is left from
+  your last visit, QAlgo offers to pick it up again.
+- **Work large.** A "Full screen" button hides the browser bar; the canvas grows
+  accordingly.
+- **Work in French or English**, the whole interface switching with one click.
+
+## Available gates
+
+| Family | Elements |
 |---|---|
-| Qubits d'entrée | ∣0⟩, ∣1⟩, (∣0⟩+∣1⟩)/√2, (∣0⟩−∣1⟩)/√2, ou tout qubit défini par ses coefficients |
-| Portes à un qubit | X, Y, Z, H, R<sub>Φ</sub> (phase réglable), √X |
-| Portes à deux qubits | SWAP, √SWAP |
-| Portes à n qubits | Transformée de Fourier quantique et son inverse, oracle O<sub>f</sub>, diffuseur de Grover 2∣ψ⟩⟨ψ∣−I |
-| Contrôles | Contrôle et anti-contrôle, applicables à n'importe quelle porte |
-| Sorties | Sonde d'état et de probabilité, mesure |
-| Décor | Personnages Alice, Bob et Gérard, pour les protocoles de communication |
+| Input qubits | ∣0⟩, ∣1⟩, (∣0⟩+∣1⟩)/√2, (∣0⟩−∣1⟩)/√2, or any qubit given by its coefficients |
+| Single-qubit gates | X, Y, Z, H, R<sub>Φ</sub> (adjustable phase), √X |
+| Two-qubit gates | SWAP, √SWAP |
+| n-qubit gates | Quantum Fourier transform and its inverse, oracle O<sub>f</sub>, Grover diffusion operator 2∣ψ⟩⟨ψ∣−I |
+| Controls | Control and anti-control, applicable to any gate |
+| Outputs | State and probability probe, measurement |
+| Decoration | Alice, Bob and Gérard characters, for communication protocols |
 
-Toute porte définie par une matrice unitaire peut être ajoutée à cette liste
-depuis l'interface, sans toucher au code.
+Any gate defined by a unitary matrix can be added to this list from the
+interface, without touching the code.
 
-## Commandes
+## Controls
 
-| Action | Commande |
+| Action | Command |
 |---|---|
-| Déposer ou retirer un qubit ou une porte | Cliquer-glisser |
-| Sélectionner et déplacer | Clic gauche |
-| Modifier la taille | Clic gauche + molette |
-| Modifier la couleur | Clic droit |
-| Modifier les coefficients d'un qubit | Double-clic |
-| Modifier le `f(x)` d'un oracle | Double-clic |
-| Modifier le Φ d'une porte R<sub>Φ</sub> | Double-clic |
-| Mesure partielle | Double-clic sur une mesure |
-| Supprimer | Touche `Suppr` |
-| Annuler, refaire | `Ctrl+Z`, `Ctrl+Y`, ou les boutons ↶ et ↷ |
+| Drop or remove a qubit or a gate | Click and drag |
+| Select and move | Left click |
+| Change the size | Left click + scroll wheel |
+| Change the colour | Right click |
+| Change a qubit's coefficients | Double click |
+| Change an oracle's `f(x)` | Double click |
+| Change the Φ of an R<sub>Φ</sub> gate | Double click |
+| Partial measurement | Double click on a measurement |
+| Delete | `Delete` key |
+| Undo, redo | `Ctrl+Z`, `Ctrl+Y`, or the ↶ and ↷ buttons |
 
-## Les exemples fournis
+## Bundled examples
 
-Accessibles depuis le menu **Exemples**, en français et en anglais. Chacun
-embarque son texte d'explication, affiché dans l'interface.
+Available from the **Examples** menu, in French and in English. Each one
+carries its own explanatory text, shown in the interface.
 
-| Exemple | Ce qu'il montre |
+| Example | What it shows |
 |---|---|
-| États de Bell ∣Φ+⟩, ∣Φ−⟩, ∣Ψ+⟩, ∣Ψ−⟩ | Intrication de deux qubits |
-| Porte de Toffoli | Porte universelle classique, double contrôle |
-| Codage superdense | Deux bits classiques transmis par un qubit |
-| Algorithme de Deutsch-Jozsa | Fonction constante ou équilibrée, en un seul appel |
-| Algorithme de Grover, 3 et 6 qubits | Recherche dans une liste non triée |
-| Téléportation quantique | Transfert d'un état par mesures partielles |
-| Algorithme de Shor pour 15 et pour 21 | Factorisation, transformée de Fourier |
+| Bell states ∣Φ+⟩, ∣Φ−⟩, ∣Ψ+⟩, ∣Ψ−⟩ | Entanglement of two qubits |
+| Toffoli gate | Classical universal gate, double control |
+| Superdense coding | Two classical bits carried by one qubit |
+| Deutsch-Jozsa algorithm | Constant or balanced function, in a single call |
+| Grover's algorithm, 3 and 6 qubits | Search in an unsorted list |
+| Quantum teleportation | Transfer of a state through partial measurements |
+| Shor's algorithm for 15 and for 21 | Factoring, Fourier transform |
 
-## Architecture technique
+## Technical architecture
 
-| Couche | Technologies |
+| Layer | Technologies |
 |---|---|
-| Interface | JavaScript sans framework, Bootstrap 5 |
-| Rendu et interactions | p5.js (canvas 2D, et WEBGL pour la sphère de Bloch) |
-| Moteur de calcul | JavaScript, vecteur d'état complet (2<sup>n</sup> amplitudes complexes) |
-| Serveur | Aucun : tout s'exécute dans le navigateur du visiteur |
+| Interface | Plain JavaScript, no framework, Bootstrap 5 |
+| Rendering and interaction | p5.js (2D canvas, and WEBGL for the Bloch sphere) |
+| Compute engine | JavaScript, full state vector (2<sup>n</sup> complex amplitudes) |
+| Server | None: everything runs in the visitor's browser |
 
-**Le circuit est modélisé comme un graphe orienté.** Chaque élément posé sur le
-canvas est un sommet (qubit d'entrée, porte, contrôle, sonde, mesure) et chaque
-fil est une arête ; les fils de contrôle forment une liste distincte. Un
-parcours du graphe reconstruit les lignes quantiques et l'ordre d'application
-des portes. C'est ce qui permet de dessiner librement tout en obtenant un
-circuit calculable.
+**The circuit is modelled as a directed graph.** Every element placed on the
+canvas is a vertex (input qubit, gate, control, probe, measurement) and every
+wire is an edge; control wires form a separate list. A traversal of the graph
+rebuilds the quantum lines and the order in which the gates apply. That is what
+makes it possible to draw freely and still obtain a computable circuit.
 
-**La simulation est exacte**, par vecteur d'état : chaque porte transforme les
-2<sup>n</sup> amplitudes complexes du registre. Les contrôles ne sont pas des
-portes particulières, mais une condition appliquée aux composantes du vecteur,
-si bien que n'importe quelle porte peut être contrôlée.
+**The simulation is exact**, by state vector: each gate transforms the
+2<sup>n</sup> complex amplitudes of the register. Controls are not particular
+gates but a condition applied to the components of the vector, so that any gate
+can be controlled.
 
-Le format de fichier des circuits, le catalogue des types de sommets et la
-chaîne de calcul sont documentés en commentaire dans les fichiers concernés :
-`src/outils.js` pour la sérialisation, `src/sommetaretes.js` pour les types,
-`src/calculsQuantiques.js` pour le moteur. Chaque fichier de `src/` s'ouvre sur
-une section `//INTERFACE` qui liste ses fonctions avec une ligne d'explication
-chacune.
+The circuit file format, the catalogue of vertex types and the compute chain are
+documented in comments inside the relevant files: `src/outils.js` for
+serialisation, `src/sommetaretes.js` for the types, `src/calculsQuantiques.js`
+for the engine. Every file in `src/` opens with an `//INTERFACE` section listing
+its functions with a one-line description each.
 
-## Organisation du dépôt
+Note that the source code and its comments are written in French.
 
-| Chemin | Rôle |
+## Repository layout
+
+| Path | Role |
 |---|---|
-| `index.html` | Page de l'application, version anglaise |
-| `indexFR.html` | Page de l'application, version française |
-| `analytics.js` | Chargement différé de Google Analytics, abandonné au bout de 2 s |
-| `src/` | **Le code JavaScript** : les fichiers que l'on modifie, et ceux que le navigateur charge |
-| `assets/css/style.css` | Feuille de style de l'application |
-| `assets/img/favicon.svg` | Icône de l'onglet : sphère de Bloch stylisée |
-| `assets/img/` | Images de l'interface : Alice, Bob, Gérard, drapeaux, curseurs |
-| `assets/gates/` | Vignettes des portes affichées dans la palette |
-| `assets/fonts/regular.ttf` | Police utilisée par le rendu 3D de la sphère de Bloch |
+| `index.html` | Application page, English version |
+| `indexFR.html` | Application page, French version |
+| `analytics.js` | Deferred loading of Google Analytics, abandoned after 2 s |
+| `src/` | **The JavaScript code**: the files you edit, and the ones the browser loads |
+| `assets/css/style.css` | Style sheet of the application |
+| `assets/img/favicon.svg` | Tab icon: a stylised Bloch sphere |
+| `assets/img/` | Interface images: Alice, Bob, Gérard, flags, cursors |
+| `assets/gates/` | Gate thumbnails shown in the palette |
+| `assets/fonts/regular.ttf` | Font used by the 3D rendering of the Bloch sphere |
 | `vendor/bootstrap/` | Bootstrap 5 |
-| `vendor/p5/` | Copie locale de p5.js, facultative et non versionnée |
-| `examples/fr/`, `examples/en/` | Circuits d'exemple chargés par le menu |
-| `examples/circuitouverture.txt` | Circuit affiché au démarrage |
-| `server/compteurquantique.php` | Compteur de visites, actuellement désactivé |
-| `outils/test_algos.js` | Rejoue les 24 circuits d'exemple et compare les amplitudes |
-| `outils/test_interface.js` | Vérifie le plein écran et l'historique du circuit |
-| `outils/references_algos.json` | Résultats de référence des 24 circuits |
-| `outils/verifie_pages.py` | Contrôle que les deux pages n'ont pas divergé |
-| `outils/publie.sh` | Envoie au serveur les seuls fichiers qui ont changé |
-| `outils/publie.conf.exemple` | Modèle des coordonnées du serveur de publication |
+| `vendor/p5/` | Local copy of p5.js, optional and not versioned |
+| `examples/fr/`, `examples/en/` | Example circuits loaded from the menu |
+| `examples/circuitouverture.txt` | Circuit shown on start-up |
+| `server/compteurquantique.php` | Visit counter, currently disabled |
+| `outils/test_algos.js` | Replays the 24 example circuits and compares the amplitudes |
+| `outils/test_interface.js` | Checks full screen and the circuit history |
+| `outils/references_algos.json` | Reference results of the 24 circuits |
+| `outils/verifie_pages.py` | Checks that the two pages have not drifted apart |
+| `outils/publie.sh` | Sends the server only the files that changed |
+| `outils/publie.conf.exemple` | Template for the publishing server's details |
 
-Le détail des sources :
+The sources in detail:
 
-| Fichier | Rôle |
+| File | Role |
 |---|---|
-| `src/sketch.js` | Boucle p5.js : canvas, souris, clavier, menu contextuel, zoom |
-| `src/graphe.js` | Classe `Graph` : le circuit, ses lignes quantiques, l'enchaînement des calculs |
-| `src/sommetaretes.js` | Classes `Sommet` (qubit, porte, mesure) et `Arete` (fil, fil de contrôle) |
-| `src/calculsQuantiques.js` | Moteur : vecteur d'état, application des portes, mesures, oracle |
-| `src/affichage.js` | Fenêtres de l'interface, éditeur de matrice, portes créées par l'utilisateur |
-| `src/outils.js` | Réglages, nombres complexes, enregistrement et chargement, export CSV |
-| `src/bloch.js` | Sphère de Bloch 3D et ses curseurs |
-| `src/Graphic.js` | Graphique phase / probabilité / partie réelle / partie imaginaire |
-| `src/traduction.js` | Bascule français ↔ anglais de toute l'interface |
-| `src/plein_ecran.js` | Bouton « Plein écran » de la barre de menu |
-| `src/historique.js` | Annulation, sauvegarde automatique du circuit |
+| `src/sketch.js` | p5.js loop: canvas, mouse, keyboard, context menu, zoom |
+| `src/graphe.js` | `Graph` class: the circuit, its quantum lines, the chain of computations |
+| `src/sommetaretes.js` | `Sommet` (qubit, gate, measurement) and `Arete` (wire, control wire) classes |
+| `src/calculsQuantiques.js` | Engine: state vector, gate application, measurements, oracle |
+| `src/affichage.js` | Interface panels, matrix editor, user-created gates |
+| `src/outils.js` | Settings, complex numbers, saving and loading, CSV export |
+| `src/bloch.js` | 3D Bloch sphere and its sliders |
+| `src/Graphic.js` | Phase / probability / real part / imaginary part chart |
+| `src/traduction.js` | French ↔ English switching of the whole interface |
+| `src/plein_ecran.js` | "Full screen" button in the menu bar |
+| `src/historique.js` | Undo, and automatic saving of the circuit |
 
-## Modifier le code
+Names in the code are French, as are the comments: `sommet` is a vertex, `arete`
+an edge, `porte` a gate, `ligne quantique` a quantum line, `mesure` a
+measurement.
 
-**Il n'y a ni compilation ni étape de génération** : les fichiers de `src/` sont
-à la fois les sources et ce que le navigateur exécute. On modifie, on
-rafraîchit.
+## Working on the code
 
-Les dix scripts sont chargés dans un ordre qui compte — ils partagent des
-variables globales et aucun n'est un module — et cet ordre est fixé en tête du
-`<body>` des deux pages.
+**There is neither compilation nor a build step**: the files in `src/` are both
+the sources and what the browser runs. Edit, refresh.
 
-Les pages ajoutent un numéro de version aux scripts (`?v=21.4`) pour forcer le
-rechargement chez les visiteurs après une mise en ligne ; il est à incrémenter
-à chaque publication.
+The ten scripts are loaded in an order that matters — they share global
+variables and none of them is a module — and that order is fixed at the top of
+the `<body>` of both pages.
 
-Pour travailler en local, servir le dossier :
+The pages append a version number to the scripts (`?v=21.4`) to force a reload
+in visitors' browsers after a deployment; it must be incremented on every
+publication.
+
+To work locally, serve the folder:
 
 ```bash
 python -m http.server 8000
-# puis ouvrir http://localhost:8000/indexFR.html
+# then open http://localhost:8000/index.html
 ```
 
-Un simple double-clic sur `indexFR.html` ne suffit pas : les exemples sont
-chargés par requête HTTP, ce que le navigateur refuse depuis un fichier local.
+Opening `index.html` by double-clicking it is not enough: the examples are
+fetched over HTTP, which browsers refuse from a local file.
 
-### La règle des deux pages
+### The two-page rule
 
-Il y a deux pages parce qu'un moteur de recherche associe **une langue à une
-URL** : chacune a donc son propre `<head>`, avec son titre, sa description et
-ses balises Open Graph dans sa langue, les deux se déclarant mutuellement par
-`hreflang`.
+There are two pages because a search engine ties **one language to one URL**:
+each therefore has its own `<head>`, with its title, description and Open Graph
+tags in its own language, the two declaring each other through `hreflang`.
 
-En revanche **le corps des deux pages doit rester identique**. Il est écrit en
-français ; `index.html` ajoute `onload="changeLanguage()"` sur sa balise
-`<body>`, et `src/traduction.js` traduit l'interface entière au chargement.
+**The body of the two pages, however, must stay identical.** It is written in
+French; `index.html` adds `onload="changeLanguage()"` to its `<body>` tag, and
+`src/traduction.js` translates the whole interface on load.
 
-En pratique :
+In practice:
 
-1. toute modification de l'interface se fait dans `indexFR.html` ;
-2. elle se recopie dans `index.html`, dont seul le `<head>` lui est propre ;
-3. tout texte visible passe par `src/traduction.js`, dans les deux langues.
+1. every interface change is made in `indexFR.html`;
+2. it is then copied into `index.html`, whose `<head>` alone is its own;
+3. every visible string goes through `src/traduction.js`, in both languages.
 
-Un script contrôle cet invariant, et vérifie au passage que chaque identifiant
-visé par `traduction.js` existe bien dans la page :
+A script checks this invariant, and verifies along the way that every identifier
+`traduction.js` addresses does exist in the page:
 
 ```bash
 python outils/verifie_pages.py
 ```
 
-### Vérifier qu'aucun algorithme n'a bougé
+### Checking that no algorithm has moved
 
-Avant et après toute modification du moteur :
+Before and after any change to the engine:
 
 ```bash
 node outils/test_algos.js
 ```
 
-Ce test recharge les fichiers de `src/` — **le vrai moteur, sans aucune
-réimplémentation** — puis rejoue les 24 circuits d'exemple et compare les
-amplitudes obtenues à `outils/references_algos.json`. Il tourne hors
-navigateur : des substituts minimaux remplacent p5.js et le DOM, et rien n'est
-dessiné. Comptez une vingtaine de secondes, dont dix pour Shor à 21 et ses
-262 144 amplitudes ; `--rapide` écarte ce dernier.
+This test reloads the files from `src/` — **the real engine, with no
+reimplementation whatsoever** — then replays the 24 example circuits and
+compares the amplitudes obtained against `outils/references_algos.json`. It runs
+outside the browser: minimal stubs stand in for p5.js and the DOM, and nothing
+is drawn. Expect some twenty seconds, ten of which are Shor for 21 and its
+262,144 amplitudes; `--rapide` leaves that one out.
 
-La comparaison porte sur une empreinte SHA-256 des amplitudes complexes, pas
-seulement sur les probabilités : une erreur de phase, invisible à l'écran, est
-donc détectée. Le test affiche aussi les états les plus probables de chaque
-circuit, ce qui indique du même coup *quel* algorithme a changé et comment.
+The comparison is made on a SHA-256 fingerprint of the complex amplitudes, not
+just on the probabilities: a phase error, invisible on screen, is therefore
+caught. The test also prints the most probable states of each circuit, which
+tells you at once *which* algorithm changed, and how.
 
-Après une modification **voulue** d'un calcul :
+After a **deliberate** change to a computation:
 
 ```bash
 node outils/test_algos.js --enregistre
 ```
 
-puis relire le diff de `references_algos.json` pour vérifier que seuls les
-algorithmes concernés ont bougé.
+then read the diff of `references_algos.json` to confirm that only the
+algorithms concerned have moved.
 
-Les modules d'interface ont leur propre test, qui recharge aussi le vrai
-moteur :
+The interface modules have their own test, which also reloads the real engine:
 
 ```bash
 node outils/test_interface.js
 ```
 
-Node.js n'est nécessaire que pour ces tests ; le site lui-même n'en a pas
-besoin.
+Node.js is needed only for these tests; the site itself does not require it.
 
-### Publier sur le serveur
+### Publishing to the server
 
-Copier d'abord `outils/publie.conf.exemple` en `outils/publie.conf` et y
-mettre l'adresse du serveur, son port SSH, le dossier de destination et
-l'adresse publique correspondante. **`publie.conf` n'est pas versionné** : les
-coordonnées d'un serveur n'ont pas à figurer dans un dépôt public.
+First copy `outils/publie.conf.exemple` to `outils/publie.conf` and fill in the
+server address, its SSH port, the destination folder and the matching public
+address. **`publie.conf` is not versioned**: a server's details have no place in
+a public repository.
 
 ```bash
-sh outils/publie.sh --liste    # ce qui a changé, sans rien envoyer
-sh outils/publie.sh            # lance les tests, montre, demande, publie
+sh outils/publie.sh --liste    # what changed, without sending anything
+sh outils/publie.sh            # runs the tests, shows, asks, publishes
 ```
 
-Le script demande au serveur l'empreinte MD5 de chacun des 64 fichiers du
-site et n'envoie que ceux qui manquent ou qui diffèrent, en une seule
-archive. Il **refuse de publier si un test échoue**, vérifie ensuite par
-HTTP que le serveur rend bien le nouveau contenu, et signale les fichiers
-présents sur le serveur web qui n'ont rien à y faire.
+The script asks the server for the MD5 checksum of each of the 65 files of the
+site and sends only those that are missing or differ, in a single archive. It
+**refuses to publish if a test fails**, then verifies over HTTP that the server
+really serves the new content, and reports any file present on the web server
+that has no business being there.
 
-La liste de ce qui compose le site est une **liste blanche**, en tête du
-script : ce qui n'y figure pas reste sur le poste de développement.
+The list of what makes up the site is an **allow-list**, at the top of the
+script: anything not in it stays on the development machine.
 
-## Installer sa propre instance
+## Running your own instance
 
-QAlgo est un site statique : il n'y a ni base de données, ni code à compiler.
+QAlgo is a static site: there is no database and no code to compile.
 
-1. Copier le contenu du dépôt à la racine du site, ou dans un sous-dossier.
-2. C'est tout. Aucune configuration, aucun secret, aucune dépendance à
-   installer ; p5.js et Bootstrap sont chargés depuis un CDN.
+1. Copy the contents of the repository to the root of the site, or into a
+   subfolder.
+2. That is all. No configuration, no secret, no dependency to install; p5.js and
+   Bootstrap are loaded from a CDN.
 
-PHP n'est utile que pour `server/compteurquantique.php`, un compteur de visites
-qui écrit dans un fichier `compteurquantique.txt` placé à côté de lui. Le code
-qui l'appelait est aujourd'hui désactivé dans `src/sketch.js`.
+PHP is only needed for `server/compteurquantique.php`, a visit counter that
+writes to a `compteurquantique.txt` file next to it. The code that called it is
+disabled today in `src/sketch.js`.
 
-## Limites connues
+## Known limitations
 
-- **18 qubits au maximum.** Au-delà, le vecteur d'état (2<sup>18</sup>
-  amplitudes) ne se calcule plus assez vite pour rester interactif.
-- **La sphère de Bloch ne s'affiche que pour un circuit à une seule ligne
-  quantique** : l'état d'un qubit intriqué n'est pas un point de la sphère.
-- **L'oracle exécute le code JavaScript saisi dans l'interface.** C'est voulu :
-  c'est ce qui permet d'écrire librement `f(x)`. Mais comme un fichier de
-  circuit enregistre cette fonction, **il ne faut pas ouvrir un fichier de
-  circuit reçu d'une source inconnue.**
-- Les pages sont écrites en français et traduites en anglais au chargement par
-  `src/traduction.js` : le texte anglais n'est donc pas présent dans le HTML
-  livré, ce qui limite le référencement de la version anglaise.
-- p5.js est chargé dans sa version 0.10.2, celle avec laquelle le rendu a été
-  réglé.
+- **18 qubits at most.** Beyond that, the state vector (2<sup>18</sup>
+  amplitudes) no longer computes fast enough to stay interactive.
+- **The Bloch sphere is only shown for a circuit with a single quantum line**:
+  the state of an entangled qubit is not a point on the sphere.
+- **The oracle runs the JavaScript typed into the interface.** This is
+  deliberate: it is what allows `f(x)` to be written freely. But since a circuit
+  file records that function, **do not open a circuit file from an unknown
+  source.**
+- The pages are written in French and translated into English on load by
+  `src/traduction.js`: the English text is therefore absent from the delivered
+  HTML, which limits the search engine ranking of the English version.
+- p5.js is loaded in version 0.10.2, the one the rendering was tuned against.
 
-## Auteur, contact et licence
+## Author, contact and licence
 
-QAlgo est développé par **Frédéric Boissac**, professeur de physique et
-d'informatique.
+QAlgo is developed by **Frédéric Boissac**, a physics and computer science
+teacher.
 
-- Contact : <prof.boissac@gmail.com>
-- Un bogue, une idée, une suggestion : ouvrir un ticket sur ce dépôt ou écrire
-  à l'adresse ci-dessus.
-- Du même auteur : [Dariush](https://physalgo.fr/Dariush/), un environnement de
-  programmation Python, SQL et Linux dans le navigateur.
+- Contact: <prof.boissac@gmail.com>
+- A bug, an idea, a suggestion: open an issue on this repository, or write to the
+  address above.
+- By the same author: [Dariush](https://physalgo.fr/Dariush/), a Python, SQL and
+  Linux programming environment in the browser.
 
 ### Licence
 
 Copyright © 2025-2026 Frédéric Boissac
 
-QAlgo est un logiciel libre, distribué sous la licence
-[GNU Affero General Public License, version 3](LICENSE) (AGPL-3.0). Vous pouvez
-l'utiliser, l'étudier, le modifier et le redistribuer. En contrepartie, toute
-version modifiée, y compris proposée comme service en ligne, doit rester sous
-cette même licence, avec son code source accessible à ses utilisateurs et la
-mention de l'auteur conservée.
+QAlgo is free software, distributed under the
+[GNU Affero General Public License, version 3](LICENSE) (AGPL-3.0). You may use
+it, study it, modify it and redistribute it. In return, any modified version —
+including one offered as an online service — must remain under this same
+licence, with its source code available to its users and the author's
+attribution preserved.
 
-Les bibliothèques tierces embarquées restent sous leurs licences respectives.
+The third-party libraries included keep their respective licences.
 
-QAlgo s'appuie sur des logiciels libres, que leurs auteurs soient remerciés :
-[p5.js](https://p5js.org) et [Bootstrap](https://getbootstrap.com).
+QAlgo stands on free software, and thanks are due to its authors:
+[p5.js](https://p5js.org) and [Bootstrap](https://getbootstrap.com).
