@@ -25,7 +25,17 @@ let transparencetitre = 255;
 
 let menuCouleurVisible = false;
 
-let nbre_qbits_max =20;
+/* Nombre maximal de lignes quantiques qu une porte multiple -- oracle,
+   transformee de Fourier, diffuseur, porte creee -- peut traverser. C est lui
+   qui dimensionne, dans le constructeur de Sommet, les tableaux Qbit,
+   num_ligne, mesure et val_instant_mesure de ces portes.
+
+   C etait le vrai plafond du simulateur : un oracle a 21 entrees debordait de
+   ses emplacements et le calcul s arretait sur une erreur, bien avant que la
+   memoire du vecteur d etat pose probleme. Porte de 20 a 24 le 21 octobre
+   2026, ce qui coute quatre tableaux de quatre cases par porte multiple --
+   rien. */
+let nbre_qbits_max =24;
 /*
 
 let menuCouleurX, menuCouleurY;

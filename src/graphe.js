@@ -115,6 +115,13 @@ let debug_affiche_creation_daretes=false;
 let debug_affiche_listegenere_lignesquantiques=false;
 let debug_affiche_nQbits=false;
 
+/* Nombre maximal d etats listes dans la fenetre des coefficients.
+
+   Au dela, la liste n est de toute facon plus lisible, et la chaine produite ne
+   tient plus en memoire : 2,2 Mo de texte a 18 qbits, 40 Mo a 22. Les etats
+   omis sont comptes et annonces a la fin de la liste. */
+let nombre_max_etats_affiches=2000;
+
 let Change_textes_des_Qbits = 0; //0 ou 1, c est le 1er etat ou le deuxieme etat possible du Qbit qui est affiché
 let temps_superposition = 0; //c est le temps depuis le dernier affichage d un etat de superposition
 let periode_affichage_superposition = 100; //c est la periode a laquelle on change la ffichage de l etat en ms
@@ -3086,13 +3093,34 @@ affiche_du_nQbit_de_sortie_et_des_probas() {
     
  
     //affichage du n_Qbits et des probabilités de chaque etat
+    /* Deux precautions, sans lesquelles cet affichage coute plus cher que tout
+       le calcul des qu on depasse une vingtaine de qbits :
+
+       - la probabilite est comparee a zero EN NOMBRE, avant toute conversion en
+         texte. La version precedente fabriquait une chaine pour chacun des 2^n
+         etats, y compris ceux qu elle jetait aussitot : a 22 qbits cela faisait
+         quatre millions de chaines, et 1,3 Go de memoire pour une liste qui
+         ressortait souvent vide, les amplitudes d une superposition large etant
+         toutes inferieures au seuil d arrondi.
+       - le nombre d etats listes est borne, voir nombre_max_etats_affiches. */
+    let etats_omis=0;
+    let nbre_etats_listes=0;
+
     for (let i = 0; i < n_Qbit_a_afficher.length; i++) {
       
       
      //if (n_Qbit_a_afficher[i] .proba==0) continue;
-      let proba=String(abs(roundToDecimals(100 * n_Qbit_a_afficher.pr[i], precision_proba)));
+      let proba_nombre=abs(roundToDecimals(100 * n_Qbit_a_afficher.pr[i], precision_proba));
+      if (proba_nombre==0) continue;//amplitude negligeable a la precision demandee
 
-      if (proba==0) continue;
+      if (nbre_etats_listes>=nombre_max_etats_affiches){
+        etats_omis=etats_omis+1;
+        continue;
+      }
+
+      let proba=String(proba_nombre);
+
+
 
       //complexe_au_rang rend un objet reutilise d un rang a l autre : on en lit
       //le texte tout de suite, on ne le conserve pas
@@ -3115,8 +3143,16 @@ affiche_du_nQbit_de_sortie_et_des_probas() {
       texte=texte+coeff+ "|" + etat + "⟩"+" ";
           
       texte2 =texte2 +"|" +etat +"⟩ : " +proba +"% ; ";
+
+      nbre_etats_listes=nbre_etats_listes+1;
   
       
+    }
+
+    if (etats_omis>0){
+      let suite=" … et "+etats_omis+" autre(s) état(s) de probabilité non nulle";
+      texte=texte+suite;
+      texte2=texte2+suite;
     }
 
    
