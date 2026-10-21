@@ -1326,82 +1326,59 @@ function applique_Porte_H(n_Qbits,index,nbre_Qbits,L_aretes_controle){//applique
 
 //calcule le nQbit apres une mesure surun des qbit
 function applique_Porte_BitMesure(BitMesure,n_Qbits,index,nbre_Qbits){//applique le bit mesure
- // print("c est parti, vla le Qbit de depart",n_Qbits)
-   
-  //cree le nouveau n_Qbit de même taille initailsé à -1
- 
-  
-  /*
-  let nouveau_n_Qbits=[];
-  for (let i = 0; i <n_Qbits.length; i++) { 
-    nouveau_n_Qbits.push(new complexe(0,0));
-  }
-  */
-  
+
   let nouveau_n_Qbits=new Array(n_Qbits.length);
-  
-  //let array = new Array(100000);//cree un tableau qui contient rien , a undefined
-  //let array = new Array(100000).fill(null);//cree un tableauinitialisé a null, un peu plus long..
-  
-  
+
   let somme_carre=0;
   BitMesure=String(BitMesure);
-  
-  //print("ici bit mesure est",BitMesure)
-  //on parcourt chaque etat du n_qbit
-  for (let i = 0; i <n_Qbits.length; i++) 
 
-  
+  //cree un masque 0001000000 ou 1 est la position du qbit mesure : c est
+  //beaucoup plus rapide que de convertir chaque etat en chaine binaire pour y
+  //lire un seul caractere
+  let  masque_index_a_traiter = 2**(nbre_Qbits-1-index);
+
+  //valeur que doit avoir le bit mesure. L ancien code comparait le caractere
+  //lu, "0" ou "1", a String(BitMesure) : si BitMesure ne vaut ni 0 ni 1, la
+  //comparaison echouait toujours et aucun etat n etait conserve. On garde ce
+  //comportement avec -1, qui ne peut egaler aucun bit.
+  let bit_voulu;
+  if (BitMesure=="0") bit_voulu=0;
+  else if (BitMesure=="1") bit_voulu=1;
+  else bit_voulu=-1;
+
+  //on parcourt chaque etat du n_qbit
+  for (let i = 0; i <n_Qbits.length; i++)
   {
-    
+
     if (n_Qbits[i]==undefined) {
-      nouveau_n_Qbits[i]=undefined;//a deja été supprimé avant
+      nouveau_n_Qbits[i]=undefined;//a deja ete supprime avant
       continue;
-    } 
-    
-    let numero_etat;
-   
-    
-    let etat=convertit_nombreDecimal_En_StringNombre_binaire(i,nbre_Qbits);
-    
-   //  print("etat",etat,"index",index,"etat[index]",etat[index])
-    if (etat[index]!=BitMesure) {
-     
-       
-      
-      nouveau_n_Qbits[i]=undefined;//on le supprimme new complexe(0,0);
+    }
+
+    let bit_de_letat=((masque_index_a_traiter&i)!=0)?1:0;
+
+    if (bit_de_letat!=bit_voulu) {
+      nouveau_n_Qbits[i]=undefined;//on le supprimme
     }
     else{
-     nouveau_n_Qbits[i]=new complexe(n_Qbits[i].x,n_Qbits[i].y);
-      
-     // nouveau_n_Qbits[i].coeff_complexe(n_Qbits[i].x,n_Qbits[i].y); 
+      nouveau_n_Qbits[i]=new complexe(n_Qbits[i].x,n_Qbits[i].y);
       somme_carre=somme_carre+nouveau_n_Qbits[i].proba;
-     
     }
-    
-    
-   
-    
+
   }
-  
-  
-  
-   //print("somme carre",somme_carre)
-  //on normalise le nouveau Qbit 
+
+  //on normalise le nouveau Qbit
+  let norme=sqrt(somme_carre);
    for (let i = 0; i <n_Qbits.length; i++) {
      if (nouveau_n_Qbits[i]!=undefined)
      if ((nouveau_n_Qbits[i].x!=0)||(nouveau_n_Qbits[i].y!=0))
-    //if (nouveau_n_Qbits[i]!=0)
-     //nouveau_n_Qbits[i]=nouveau_n_Qbits[i]/sqrt(somme_carre);
-     
-     nouveau_n_Qbits[i].coeff_complexe(nouveau_n_Qbits[i].x/sqrt(somme_carre),nouveau_n_Qbits[i].y/sqrt(somme_carre));
+
+     nouveau_n_Qbits[i].coeff_complexe(nouveau_n_Qbits[i].x/norme,nouveau_n_Qbits[i].y/norme);
    }
-  
- // print("ligne a modifier = ",index," bit a imposer=",BitMesure," nouveau nQbit=",nouveau_n_Qbits)
-  
+
  return nouveau_n_Qbits;
-  
-  
+
+
 }
 
 
