@@ -292,63 +292,72 @@ this.ancienGraphique_visible=false;
 }
 
 class complexe {// c est un des coefficient du qbit de la forme x+yi
+  //champs : xbrut, ybrut (avant arrondi), x, y (arrondis a 10 decimales), proba
+  //accesseurs calcules a la lecture : r (module), theta_rad, theta_deg, k
   constructor(x,y=undefined) {
-    /*
-    this.x =undefined;
-    this.y=undefined;
-    this.proba=undefined;
-    this.r=undefined;
-    this.theta_rad =undefined;
-    this.theta_deg=undefined;
-    this.k=undefined;//coeff multiplicateur de pi
-    */
     this.coeff_complexe(x,y);
     
   }
   
   
-  //modifie les coefficients et recalcule tout
+  //modifie les coefficients. Seuls x, y et proba sont calcules tout de suite :
+  //le module et l argument ne servent qu a l affichage, ils sont calcules a la
+  //lecture par les accesseurs ci dessous. Un sqrt et un atan2 par complexe,
+  //sur les 3,7 millions que cree un circuit a 18 qbits, coutaient 75% du temps.
   coeff_complexe(x,y=undefined){
-    this.x = x;
+    
+    //x et y AVANT arrondi : proba, le module et l argument s en servent, et le
+    //test x==0 de l argument doit porter sur la valeur brute, pas sur l arrondi
+    this.xbrut = x;
+    this.ybrut = y;
     
     if (x==undefined){
+      this.x=undefined;
       this.y=undefined;
-    this.proba=undefined;
-    this.r=undefined;
-    this.theta_rad =undefined;
-    this.theta_deg=undefined;
-      this.k=undefined;
+      this.proba=undefined;
       return;
     }
     
-    this.x=roundToDecimals(x, 10);
-    this.y=roundToDecimals(y, 10);
+    this.x=Math.round(x*1e10)/1e10;
+    this.y=Math.round(y*1e10)/1e10;
     
     this.proba=x*x+y*y;
     
-    // Calcul du module r
-   this.r = Math.sqrt(this.proba);
-    
-    
-   if (x==0) this.theta_rad = Math.acos(x);
-    else
-  // Calcul de l'argument theta en radians
-  this.theta_rad = Math.atan2(y, x);
-    
-    
-    //print("x,y",x,y)
-   // print(this.theta_rad)
-
-  // Conversion de l'argument en degrés
-  this.theta_deg = this.theta_rad * (180 / Math.PI);
-    
-   this.theta_rad = this.theta_rad%(2*Math.PI);
-    this.theta_deg = this.theta_deg = this.theta_deg%(360); 
-    
-    
-    
-  this.k=this.theta_rad/Math.PI;
-    
+  }
+  
+  
+  //l argument non reduit, en radians. Sert aux trois accesseurs qui suivent
+  argument_brut(){
+    if (this.xbrut==0) return Math.acos(this.xbrut);
+    return Math.atan2(this.ybrut, this.xbrut);
+  }
+  
+  
+  //le module
+  get r(){
+    if (this.xbrut==undefined) return undefined;
+    return Math.sqrt(this.proba);
+  }
+  
+  
+  //l argument en radians, ramene dans ]-2pi,2pi[
+  get theta_rad(){
+    if (this.xbrut==undefined) return undefined;
+    return this.argument_brut()%(2*Math.PI);
+  }
+  
+  
+  //l argument en degres, ramene dans ]-360,360[
+  get theta_deg(){
+    if (this.xbrut==undefined) return undefined;
+    return (this.argument_brut()*(180/Math.PI))%360;
+  }
+  
+  
+  //l argument en multiples de pi, pour l affichage trigonometrique
+  get k(){
+    if (this.xbrut==undefined) return undefined;
+    return (this.argument_brut()%(2*Math.PI))/Math.PI;
   }
   
   
