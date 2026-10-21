@@ -268,8 +268,9 @@ function change_menu(){
    
     document.getElementById('shor9bits').textContent="Shor's Algorithm for 21";
     document.getElementById('shor11bits').textContent="Shor's Algorithm for 39";
-    document.getElementById('texteLimiteCoefficients1').textContent="Show only the 1000 strongest coefficients";
-    document.getElementById('texteLimiteCoefficients2').textContent="Show only the 1000 strongest coefficients";
+    document.getElementById('texteLimiteCoefficients').textContent="Show only the 1000 strongest coefficients";
+    document.getElementById('texteBandeauPrecision').textContent="Precision";
+    document.getElementById('texteBandeauDecimal').textContent="Decimal notation";
     
     document.getElementById('t2').textContent="File";
     
@@ -340,8 +341,9 @@ document.getElementById('t10').textContent= "Export to amplitudes.csv";
   
     document.getElementById('shor9bits').textContent="Algorithme de Shor pour 21";
     document.getElementById('shor11bits').textContent="Algorithme de Shor pour 39";
-    document.getElementById('texteLimiteCoefficients1').textContent="Afficher seulement les 1000 coefficients les plus forts";
-    document.getElementById('texteLimiteCoefficients2').textContent="Afficher seulement les 1000 coefficients les plus forts";
+    document.getElementById('texteLimiteCoefficients').textContent="Afficher seulement les 1000 coefficients les plus forts";
+    document.getElementById('texteBandeauPrecision').textContent="Précision";
+    document.getElementById('texteBandeauDecimal').textContent="Notation décimale";
     
  
     document.getElementById('t2').textContent="Fichier";

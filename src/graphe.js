@@ -126,15 +126,45 @@ let nombre_max_etats_affiches=1000;
 let limite_affichage_coefficients=true;
 
 
-/* Appelee par les deux cases a cocher, en tete des fenetres de coefficients.
-   Elles montrent le meme reglage : on les garde donc accordees. */
+/* Les trois reglages du bandeau, en tete de la fenetre des probabilites.
+
+   Les deux derniers existent aussi dans la fenetre « parametres », qui reste
+   la reference : le bandeau y ecrit, puis demande un reaffichage. Le chemin
+   inverse est assure par accorde_bandeau_sur_les_parametres(), appelee a
+   chaque reaffichage -- et fermer la fenetre « parametres » en declenche un.
+   Les deux endroits montrent donc toujours la meme chose. */
 function changeLimiteCoefficients(element){
   limite_affichage_coefficients=element.checked;
-  for (const id of ['limiteCoefficients1','limiteCoefficients2']){
-    let autre=document.getElementById(id);
-    if ((autre!=undefined)&&(autre!==element)) autre.checked=element.checked;
-  }
   G.affiche_du_nQbit_de_sortie_et_des_probas();
+}
+
+
+function changePrecisionBandeau(element){
+  let reference=document.getElementById("precisionChiffresApresVirgule");
+  if (reference!=undefined) reference.value=element.value;
+  G.affiche_du_nQbit_de_sortie_et_des_probas();
+}
+
+
+function changeDecimalBandeau(element){
+  //dans la fenetre « parametres » le reglage est un couple de boutons radio
+  let oui=document.getElementById("radioOuidecimal");
+  let non=document.getElementById("radioNondecimal");
+  if (oui!=undefined) oui.checked=element.checked;
+  if (non!=undefined) non.checked=!element.checked;
+  R.affiche_decimal=element.checked;
+  G.affiche_du_nQbit_de_sortie_et_des_probas();
+}
+
+
+//recopie dans le bandeau ce que porte la fenetre « parametres »
+function accorde_bandeau_sur_les_parametres(){
+  let precision=document.getElementById("precisionBandeau");
+  let reference=document.getElementById("precisionChiffresApresVirgule");
+  if ((precision!=undefined)&&(reference!=undefined)) precision.value=reference.value;
+
+  let decimal=document.getElementById("decimalBandeau");
+  if (decimal!=undefined) decimal.checked=(R.affiche_decimal==true);
 }
 
 
@@ -3074,6 +3104,10 @@ class Graph {
   */
      //Methode affiche coefficients du nQBIT de sortie ou de celui mesuré partiellement
 affiche_du_nQbit_de_sortie_et_des_probas() {
+  
+  //le bandeau de la fenetre des probabilites montre deux reglages qui vivent
+  //aussi dans la fenetre « parametres » : on le remet d accord avec elle
+  accorde_bandeau_sur_les_parametres();
   
  
     print("yo je lance l affichage, onfaitlesmesures=",OnFaitLesMesures);
