@@ -126,6 +126,24 @@ let nombre_max_etats_affiches=1000;
 let limite_affichage_coefficients=true;
 
 
+/* En dessous de ce nombre de qbits, la case « seulement les plus forts » n est
+   pas montree et la borne ne s applique pas : 2^11 = 2048 lignes se listent
+   sans peine, et amputer une liste de cette taille n aurait aucun profit. La
+   case n apparait donc qu a partir du moment ou elle sert, et la liste est
+   complete en dessous. */
+let nombre_qbits_min_limite_coefficients=12;
+
+
+/* Vrai quand la liste des coefficients doit etre bornee : il faut que la case
+   soit cochee, que le circuit ait assez de qbits pour que la question se pose,
+   et qu il y ait effectivement plus d etats que la borne. */
+function limite_des_coefficients_applicable(nbre_etats){
+  if (limite_affichage_coefficients==false) return false;
+  if (nbre_etats<Math.pow(2,nombre_qbits_min_limite_coefficients)) return false;
+  return (nbre_etats>nombre_max_etats_affiches);
+}
+
+
 /* Les trois reglages du bandeau, en tete de la fenetre des probabilites.
 
    Les deux derniers existent aussi dans la fenetre « parametres », qui reste
@@ -165,6 +183,14 @@ function accorde_bandeau_sur_les_parametres(){
 
   let decimal=document.getElementById("decimalBandeau");
   if (decimal!=undefined) decimal.checked=(R.affiche_decimal==true);
+
+  //la case « seulement les plus forts » n est montree qu a partir du nombre de
+  //qbits ou elle sert, voir nombre_qbits_min_limite_coefficients
+  let option=document.getElementById("optionLimiteCoefficients");
+  if (option!=undefined){
+    let assez_de_qbits=(G.lignes_quantiques.length>=nombre_qbits_min_limite_coefficients);
+    option.style.display=(assez_de_qbits==true)?"":"none";
+  }
 }
 
 
@@ -3240,7 +3266,7 @@ affiche_du_nQbit_de_sortie_et_des_probas() {
        comme nulle, a la precision demandee par l utilisateur. */
     let seuil=0.5*Math.pow(10,-precision_proba)/100;
     let rangs=null;
-    if ((limite_affichage_coefficients==true)&&(n_Qbit_a_afficher.length>nombre_max_etats_affiches)){
+    if (limite_des_coefficients_applicable(n_Qbit_a_afficher.length)==true){
       let choix=rangs_des_plus_fortes_probabilites(n_Qbit_a_afficher,nombre_max_etats_affiches,seuil);
       rangs=choix.rangs;
       etats_omis=Math.max(0,choix.au_dessus_du_seuil-nombre_max_etats_affiches);
