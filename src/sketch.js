@@ -1191,20 +1191,37 @@ if (G.TabSommets.length>2) graf3DBloch2.affiche();
         
         if (doit_lancer_calcul_LignesQuantiQues_nQbitsEntree_nQbitsSortie==true) {
 
-        /* Sur un gros circuit ce recalcul tient plusieurs secondes -- 5 s a 22
-           qbits, 22 s a 24 -- et le navigateur ne repeint rien pendant tout ce
-           temps. On peint donc le message d attente et on rend la main : le
-           recalcul aura lieu a l image suivante, le message etant alors
-           visible. Sans cela l interface semble simplement gelee. */
-        if ((G.lignes_quantiques.length>=NOMBRE_QBITS_POUR_MESSAGE_DATTENTE)
-            &&(message_dattente_deja_peint==false)){
+        /* Ce drapeau n est consomme que dans cette branche, celle ou rien n est
+           selectionne : pendant un glissement rien n est donc calcule, et le
+           calcul attend le declic. */
+
+        if (signature_du_circuit(G)===G.signature_du_dernier_calcul){
+
+          /* Le dessin a bouge, mais pas de quoi changer le resultat : un qbit
+             deplace sans que l ordre des lignes change, une porte
+             redimensionnee sur les memes lignes. Inutile de refaire un calcul
+             qui tient 5 s a 22 qbits et 22 s a 24. */
+          doit_lancer_calcul_LignesQuantiQues_nQbitsEntree_nQbitsSortie=false;
+          message_dattente_deja_peint=false;
+
+        }
+        else if ((G.lignes_quantiques.length>=NOMBRE_QBITS_POUR_MESSAGE_DATTENTE)
+                 &&(message_dattente_deja_peint==false)){
+
+          /* La, il faut vraiment recalculer, et sur un gros circuit cela tient
+             plusieurs secondes pendant lesquelles le navigateur ne repeint
+             rien. On peint donc le message d attente et on rend la main : le
+             calcul aura lieu a l image suivante, le message etant alors
+             visible. Sans cela l interface semble simplement gelee. */
           message_dattente_deja_peint=true;
           affichemessagedattente();
           return;
-        }
-        message_dattente_deja_peint=false;
 
-        G.calcul_LignesQuantiQues_nQbitsEntree_nQbitsSortie();
+        }
+        else {
+          message_dattente_deja_peint=false;
+          G.calcul_LignesQuantiQues_nQbitsEntree_nQbitsSortie();
+        }
 
       }
       

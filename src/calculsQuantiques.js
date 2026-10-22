@@ -440,6 +440,45 @@ function point_de_la_droite_le_plus_proche(xA, yA, xB, yB, X, Y){
 }
 
 */
+/* Signature de tout ce dont depend le vecteur d etat : la suite des sommets
+   traverses par chaque ligne quantique, dans l ordre, et les fils de controle.
+
+   Les lignes quantiques sont DEDUITES du dessin. Deplacer un qbit d entree sans
+   changer l ordre des lignes, ou redimensionner une porte sans changer les
+   lignes qu elle traverse, donne donc exactement le meme resultat : comparer
+   deux signatures evite un calcul qui tient 5 s a 22 qbits et 22 s a 24.
+
+   Le cout est celui d un parcours du graphe, O(sommets) -- quelques dizaines
+   d operations, a comparer aux millions du calcul evite.
+
+   Ne depend volontairement pas des coordonnees : seul l ORDRE compte. Et pas
+   non plus des coefficients des qbits ni des parametres des portes, qui sont
+   modifies par d autres chemins, lesquels relancent le calcul directement. */
+function signature_du_circuit(C){
+
+  let L=retourne_liste_lignes_quantiques(C);
+
+  let morceaux=[];
+  for (let i = 0; i <L.length; i++){
+    let ligne=L[i];
+    let numeros=[];
+    for (let j = 0; j <ligne.length; j++) numeros.push(ligne[j].numeroSommet);
+    morceaux.push(numeros.join(","));
+  }
+
+  //un fil de controle agit par la ligne ou se trouve son depart : on le retient
+  let controles=[];
+  for (let i = 0; i <C.TabSommets.length; i++){
+    let S=C.TabSommets[i];
+    if (S==undefined) continue;
+    for (let j = 0; j <S.nAretes_controle; j++)
+      controles.push(i+"<"+S.aretes_controle[j].numSommetDepart);
+  }
+
+  return morceaux.join(";")+"|"+controles.join(",");
+}
+
+
 function retourne_liste_lignes_quantiques(C){//C est un circuit quantique de type graph, comme G
   
   //une ligne quantique peut etre definit comme ceci:

@@ -268,6 +268,10 @@ class Graph {
   
     this.n_Qbits_sortie = []; //sera le vecteur du produit tensoriel des n q bits de sortie
     this.n_Qbits_mesure=[];//sera le nqbits si mesure partielle ou totale
+    /* Structure du circuit telle qu elle etait au dernier calcul complet du
+       vecteur d etat. Sert a ne pas recalculer quand le dessin a bouge sans
+       rien changer au resultat -- voir signature_du_circuit(). */
+    this.signature_du_dernier_calcul="";
     this.Qbits_pouraffichage_graphics=[];//meme chose que this.n_Qbits_mesure mais on a supprimé les etats mesurés, donc nqbit plus court
     this.Probas_mesure=[];//sera les probas lors d une mesure partielle ou totale d avoir tel ou tel état. donc ce sont les coeffs de this.n_Qbits_mesure au carré
     this.Liste_ordonnee_pour_intrication=[];//liste ordonnee de tous les éléments du graphe, placés dans l, ordre, de facon à gerr les controles , portes multiples et autres intrication
@@ -2812,6 +2816,9 @@ class Graph {
      let t3=millis();//2.6s
    
     this.calcul_les_Qbits_de_sorties_de_tous_les_elements();
+
+    //on retient la structure sur laquelle ce calcul a porte
+    this.signature_du_dernier_calcul=signature_du_circuit(this);
     
    // print(" nqbit sorite=",G.n_Qbits_sortie)
     
