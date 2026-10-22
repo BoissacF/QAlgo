@@ -582,7 +582,22 @@ class Graph {
      }
     
     
-   if (option_fichier==false) this.calcul_LignesQuantiQues_nQbitsEntree_nQbitsSortie();
+   /* Poser un element demande deux choses de nature tres differente.
+
+      La numerotation des lignes quantiques est un simple parcours du graphe :
+      on la fait tout de suite, parce que CodeGraphEnString en a besoin des
+      maintenant -- l historique relit l etat du circuit juste apres la pose, et
+      sans cela annuler et refaire ne retombent plus sur le meme texte.
+
+      Le vecteur d etat, lui, coute 2^n : on se contente de lever le drapeau et
+      c est draw() qui s en charge, apres avoir peint le message d attente si le
+      circuit est gros. Depuis un gestionnaire de souris ce message serait
+      impossible a montrer, le navigateur ne repeignant rien avant la fin du
+      calcul. */
+   if (option_fichier==false) {
+     this.lignes_quantiques = retourne_liste_lignes_quantiques(this);
+     doit_lancer_calcul_LignesQuantiQues_nQbitsEntree_nQbitsSortie=true;
+   }
     
     
     
