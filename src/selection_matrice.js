@@ -44,6 +44,7 @@ var SelectionCircuit = (function () {
   var MAX_LIGNES = 9;        // le plafond de l'éditeur de matrice
   var MARGE = 34;            // hauteur prise au-dessus et en dessous d'une ligne
   var POIGNEE = 11;          // côté des carrés de redimensionnement
+  var BORD = 9;              // épaisseur sensible d'un bord, hors des carrés
   var DUREE_MESSAGE = 2500;  // ms d'affichage d'un refus
 
   var actif = false;
@@ -297,6 +298,35 @@ var SelectionCircuit = (function () {
     return null;
   }
 
+  /* Quels bords la souris désigne, par leur initiale : "" si elle ne désigne
+     aucun bord. Les carrés passent d'abord, puis le bord **sur toute sa
+     longueur**.
+
+     Sans cela, redimensionner verticalement était presque impossible, et
+     l'échec n'avait rien d'évident : le carré du haut est posé au milieu
+     horizontal du cadre, et ce cadre fait souvent plusieurs centaines de
+     pixels de large, alors qu'il n'est haut que d'une centaine. Viser le carré
+     du bord gauche, lui, demandait de tomber au milieu d'une hauteur courte :
+     on y arrivait par accident. En manquant le carré du haut, on attrapait
+     l'intérieur du cadre, donc un déplacement d'ensemble — qui ne pouvait pas
+     bouger non plus, puisque le cadre de départ couvre déjà tout le circuit.
+     Le cadre paraissait donc bloqué en vertical et libre en horizontal. */
+  function bordsSousLaSouris() {
+    var p = poigneeSousLaSouris();
+    if (p) return p.bords;
+
+    var g = xMin, d = xMax, h = yHaut(), b = yBas();
+    if (mouseX < g - BORD || mouseX > d + BORD) return "";
+    if (mouseY < h - BORD || mouseY > b + BORD) return "";
+
+    var bords = "";
+    if (Math.abs(mouseX - g) <= BORD) bords = bords + "g";
+    else if (Math.abs(mouseX - d) <= BORD) bords = bords + "d";
+    if (Math.abs(mouseY - h) <= BORD) bords = bords + "h";
+    else if (Math.abs(mouseY - b) <= BORD) bords = bords + "b";
+    return bords;
+  }
+
   // --- dessin ------------------------------------------------------------
 
   function dessine() {
@@ -343,11 +373,18 @@ var SelectionCircuit = (function () {
       line(s0.x + rayon * 0.62, s0.y - rayon * 0.62, s0.x - rayon * 0.62, s0.y + rayon * 0.62);
     }
 
-    // les poignées
+    /* Les poignées. Celle du bord que la souris tient — ou, à défaut, qu'elle
+       survole — est pleine : c'est le seul signe qui dise « tu l'as » avant
+       que le cadre ne bouge, et un bord vertical ne bouge que d'un interligne
+       à la fois, donc après un bon centimètre de souris. */
     var p = poignees();
-    stroke(60, 90, 160); strokeWeight(1); fill(255);
-    for (i = 0; i < p.length; i++)
+    var tenus = prise ? prise.bords : bordsSousLaSouris();
+    stroke(60, 90, 160); strokeWeight(1);
+    for (i = 0; i < p.length; i++) {
+      if (tenus !== "" && p[i].bords === tenus) fill(60, 90, 160);
+      else fill(255);
       rect(p[i].x - POIGNEE / 2, p[i].y - POIGNEE / 2, POIGNEE, POIGNEE);
+    }
 
     // le compte des lignes retenues, dans le coin du cadre
     noStroke(); fill(60, 90, 160);
@@ -397,8 +434,8 @@ var SelectionCircuit = (function () {
   // --- déplacement et redimensionnement ----------------------------------
 
   function attrape() {
-    var p = poigneeSousLaSouris();
-    if (p) {
+    var bords = bordsSousLaSouris();
+    if (bords !== "") {
       /* On retient l'écart entre la souris et la ligne que le bord suit.
          La poignée est posée à MARGE au-dessus (ou en dessous) de cette
          ligne, et l'écart entre deux lignes quantiques n'est pas constant :
@@ -410,7 +447,7 @@ var SelectionCircuit = (function () {
          aussitôt en place — la poignée paraîtrait morte. En suivant
          l'écart, attraper sans bouger ne change rien, et déplacer la souris
          d'un interligne déplace le bord d'une ligne. */
-      prise = { bords: p.bords,
+      prise = { bords: bords,
                 dyH: mouseY - yLigne(ligneHaut),
                 dyB: mouseY - yLigne(ligneBas) };
       return true;

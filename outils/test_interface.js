@@ -781,6 +781,40 @@ function testeSelectionCircuit() {
           e.ligneHaut === 0 && e.ligneBas === 8, "q" + e.ligneHaut + " à q" + e.ligneBas);
     dans("SelectionCircuit.declic();");
 
+    /* Le bord compte sur toute sa longueur, pas seulement au carré posé en son
+       milieu. C'est ce qui rendait le redimensionnement vertical introuvable :
+       le carré du haut est au milieu horizontal d'un cadre large de plusieurs
+       centaines de pixels, et le manquer attrapait l'intérieur, donc un
+       déplacement d'ensemble qui ne pouvait pas bouger. */
+    dans(`(function(){ let et = SelectionCircuit._etat();
+      mouseX = et.xMin + 25;
+      mouseY = G.lignes_quantiques[et.ligneHaut][0].y - 34; })()`);
+    verif("le bord haut s'attrape loin de son carré, près du coin gauche",
+          dans("SelectionCircuit.clic()") === true);
+    dans("mouseY = mouseY + " + interligne + ";");
+    dans("SelectionCircuit.suit();");
+    e = dans("SelectionCircuit._etat()");
+    verif("et il redimensionne bien, sans déplacer le cadre",
+          e.ligneHaut === 1 && e.ligneBas === 8, "q" + e.ligneHaut + " à q" + e.ligneBas);
+    dans("SelectionCircuit.declic();");
+
+    /* Au centre du cadre, aucun bord : c'est un déplacement d'ensemble. Et
+       comme shor9bits a dix-huit lignes pour neuf sélectionnées, le cadre a
+       de la place pour descendre. */
+    dans("SelectionCircuit._cadre(0, 8, -100000, 100000);");
+    dans(`(function(){ let et = SelectionCircuit._etat();
+      mouseX = (et.xMin + et.xMax) / 2;
+      mouseY = (G.lignes_quantiques[0][0].y + G.lignes_quantiques[8][0].y) / 2; })()`);
+    verif("le centre du cadre s'attrape", dans("SelectionCircuit.clic()") === true);
+    dans("mouseY = mouseY + " + (2 * 21) + ";");
+    dans("SelectionCircuit.suit();");
+    e = dans("SelectionCircuit._etat()");
+    verif("et le cadre descend sans changer de hauteur",
+          e.ligneHaut > 0 && e.ligneBas - e.ligneHaut === 8,
+          "q" + e.ligneHaut + " à q" + e.ligneBas);
+    dans("SelectionCircuit.declic();");
+    dans("SelectionCircuit._cadre(0, 8, -100000, 100000);");
+
     dans(`(function(){ let et = SelectionCircuit._etat();
       mouseX = (et.xMin + et.xMax) / 2;
       mouseY = G.lignes_quantiques[et.ligneBas][0].y + 34; })()`);
