@@ -64,7 +64,7 @@ function changerdestextesicioula(){//a faire en dernier
      
      document.getElementById('tradicioula1').textContent="Creation of a quantum gate";
      document.getElementById('tradicioula2').textContent="Number of quantum lines (1 to 9)";
-     document.getElementById('tradboutonselection').textContent="Generate the matrix of a selection on the circuit";
+     document.getElementById('tradboutonselection').textContent="Select and generate the matrix of a part (or all) of the circuit.";
 document.getElementById('tradicioula3').textContent="Symbol";
 document.getElementById('tradicioula4').textContent="Coefficient format";
 document.getElementById('boutonOkmatrice').textContent="Validate";
@@ -82,7 +82,7 @@ document.getElementById('boutonAnnulermatrice').textContent="Cancel";
      
      document.getElementById('tradicioula1').textContent="Création d'une porte quantique";
       document.getElementById('tradicioula2').textContent="Nombre de lignes quantiques (1 à 9)";
-      document.getElementById('tradboutonselection').textContent="Générer la matrice d'une sélection sur le circuit";
+      document.getElementById('tradboutonselection').textContent="Sélectionner et générer la matrice d'une partie (ou de tout) du circuit.";
      document.getElementById('tradicioula3').textContent="Symbole";
      document.getElementById('tradicioula4').textContent="Format des coefficients";
      document.getElementById('boutonOkmatrice').textContent="Valider";

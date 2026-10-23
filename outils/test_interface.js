@@ -549,14 +549,6 @@ function memeMatrice(a, b) {
   return "";
 }
 
-// combien d'éléments bloquent la validation, pour une cause donnée
-function bloque(etat, cause) {
-  let n = 0;
-  for (let i = 0; i < etat.bloquantes.length; i++)
-    if (etat.bloquantes[i].cause === cause) n++;
-  return n;
-}
-
 // compare à une matrice attendue, écrite ligne par ligne en parties réelles
 function colleAuxReels(M, attendue) {
   if (M.cote * M.cote !== attendue.length) return "taille";
@@ -637,78 +629,91 @@ function testeSelectionCircuit() {
 
     dans("SelectionCircuit._cadre(0, G.lignes_quantiques.length-1, -100000, 100000);");
     let e = dans("SelectionCircuit._etat()");
-    verif("cadre sur tout toffoli : aucun lien hors sélection",
-          bloque(e, "lien") === 0,
-          e.portes.length + " portes, " + bloque(e, "lien") + " lien(s)");
+    verif("cadre sur tout toffoli : rien ne bloque",
+          e.bloquantes.length === 0,
+          e.portes.length + " portes, " + e.bloquantes.length + " bloquante(s)");
 
     dans("SelectionCircuit._cadre(0, G.lignes_quantiques.length-2, -100000, 100000);");
     e = dans("SelectionCircuit._etat()");
     verif("en coupant la ligne du bas, la porte est dehors et ne bloque pas",
-          bloque(e, "lien") === 0,
-          e.portes.length + " portes, " + bloque(e, "lien") + " lien(s)");
+          e.bloquantes.length === 0,
+          e.portes.length + " portes, " + e.bloquantes.length + " bloquante(s)");
 
     dans("SelectionCircuit._cadre(1, G.lignes_quantiques.length-1, -100000, 100000);");
     e = dans("SelectionCircuit._etat()");
     verif("en coupant la ligne du haut, la porte dont un contrôle sort bloque",
-          bloque(e, "lien") === 1,
-          e.portes.length + " portes, " + bloque(e, "lien") + " lien(s)");
+          e.bloquantes.length === 1,
+          e.portes.length + " portes, " + e.bloquantes.length + " bloquante(s)");
     verif("et c'est bien le X à deux contrôles",
           dans(`(function(){ let et = SelectionCircuit._etat();
-            for (let i = 0; i < et.bloquantes.length; i++) {
-              let b = et.bloquantes[i];
-              if (b.cause === "lien" && b.sommet.type === 3 &&
-                  b.sommet.aretes_controle.length === 2) return true;
-            }
-            return false; })()`) === true);
-    verif("la cause annoncée est le lien, et son message le dit",
-          e.cause === "lien");
+            return et.bloquantes[0].type === 3 &&
+                   et.bloquantes[0].aretes_controle.length === 2; })()`) === true);
 
     // la porte bloquante n'entre pas dans le calcul : elle n'est pas retenue
     verif("la porte bloquante n'est pas retenue pour le calcul",
           dans(`(function(){ let et = SelectionCircuit._etat();
-            for (let i = 0; i < et.bloquantes.length; i++)
-              if (et.bloquantes[i].cause === "lien" &&
-                  et.retenues.indexOf(et.bloquantes[i].sommet) >= 0) return false;
-            return true; })()`) === true);
+            return et.retenues.indexOf(et.bloquantes[0]) < 0; })()`) === true);
   }
 
-  /* 3 bis. Un lecteur de probabilités n'est pas une porte : il ne change rien
-     à l'état, il ne doit être ni compté ni cerclé. Un point de contrôle non
-     plus : il fait partie de la porte qu'il commande. bell1 contient deux
-     lecteurs (type 64) et un contrôle (type 16). */
+  /* 3 bis. Ce qu'une sélection ne prend pas, et qui ne bloque rien pour
+     autant : les qubits d'entrée, les lecteurs de probabilités et les mesures.
+     Aucun des trois n'est lié à une autre ligne quantique, donc aucun ne peut
+     rendre la sélection impossible. Un point de contrôle n'est pas compté non
+     plus, mais pour une autre raison : il fait partie de la porte qu'il
+     commande. bell1 contient les quatre. */
   {
     const { dans } = bacSelection("bell1");
     dans("SelectionCircuit._cadre(0, 1, -100000, 100000);");
     const e = dans("SelectionCircuit._etat()");
 
-    verif("le circuit contient bien des lecteurs et un contrôle",
-          dans(`(function(){ let l = 0, c = 0;
+    verif("bell1 contient bien qubits, lecteurs, mesures et contrôle",
+          dans(`(function(){ let q = 0, l = 0, m = 0, c = 0;
             for (let i = 0; i < G.TabSommets.length; i++) { let s = G.TabSommets[i];
               if (s === undefined) continue;
+              if (s.type <= 2) q++;
               if (s.type === 64) l++;
+              if (s.type === 65) m++;
               if (s.type === 16 || s.type === 17) c++; }
-            return l >= 1 && c >= 1; })()`) === true);
+            return q >= 1 && l >= 1 && m >= 1 && c >= 1; })()`) === true);
 
-    verif("aucun lecteur de probabilités n'est compté comme porte",
-          dans(`(function(){ let et = SelectionCircuit._etat();
-            for (let i = 0; i < et.portes.length; i++)
-              if (et.portes[i].type === 64) return false;
-            return true; })()`) === true);
-    verif("aucun point de contrôle n'est compté comme porte",
-          dans(`(function(){ let et = SelectionCircuit._etat();
-            for (let i = 0; i < et.portes.length; i++)
-              if (et.portes[i].type === 16 || et.portes[i].type === 17) return false;
-            return true; })()`) === true);
-    verif("aucun lecteur n'est même retenu pour le calcul",
-          dans(`(function(){ let et = SelectionCircuit._etat();
-            for (let i = 0; i < et.retenues.length; i++)
-              if (et.retenues[i].type === 64) return false;
-            return true; })()`) === true);
+    for (const [quoi, type] of [["un qubit d'entrée", 0],
+                                ["un lecteur de probabilités", 64],
+                                ["une mesure", 65],
+                                ["un point de contrôle", 16]]) {
+      verif(quoi + " ne compte pas comme porte",
+            dans(`(function(){ let et = SelectionCircuit._etat();
+              for (let i = 0; i < et.portes.length; i++)
+                if (et.portes[i].type === ${type}) return false;
+              return true; })()`) === true);
+    }
+
+    verif("et aucun des trois ne bloque la sélection",
+          e.bloquantes.length === 0, e.bloquantes.length + " bloquante(s)");
+
+    for (const [quoi, type] of [["un qubit d'entrée", 0],
+                                ["un lecteur de probabilités", 64],
+                                ["une mesure", 65]]) {
+      verif(quoi + " n'entre pas dans le calcul",
+            dans(`(function(){ let et = SelectionCircuit._etat();
+              for (let i = 0; i < et.retenues.length; i++)
+                if (et.retenues[i].type === ${type}) return false;
+              return true; })()`) === true);
+    }
+
     verif("le contrôle, lui, reste retenu : son ordre compte pour l'intrication",
           dans(`(function(){ let et = SelectionCircuit._etat();
             for (let i = 0; i < et.retenues.length; i++)
               if (et.retenues[i].type === 16) return true;
             return false; })()`) === true);
+
+    /* Puisque les mesures ne bloquent plus, un cadre posé sur tout bell1 doit
+       maintenant se valider et rendre la matrice des seules portes. */
+    dans("matrice_generee = undefined;");
+    dans("SelectionCircuit.demarre();");
+    dans("SelectionCircuit._cadre(0, 1, -100000, 100000);");
+    dans("SelectionCircuit._valide();");
+    verif("tout bell1 se valide malgré ses mesures, et rend une matrice 4×4",
+          dans("matrice_generee !== undefined && matrice_generee.cote === 4"));
 
     /* Un contrôle suit sa porte même si le cadre coupe son abscisse. Sans
        cela, la porte aurait été appliquée sans condition et la matrice aurait
@@ -759,33 +764,29 @@ function testeSelectionCircuit() {
           dans("SelectionCircuit.estActif()") === false);
   }
 
-  /* 5. Une mesure dans la sélection n'a pas de matrice : `valide()` doit
-     refuser sans rien calculer. */
+  /* 5. Une porte liée hors sélection interdit de valider : `valide()` ne doit
+     rien calculer, et le message doit le dire. */
   {
-    const { dans } = bacSelection("bell1");
+    const { dans } = bacSelection("toffoli");
     dans("SelectionCircuit.demarre();");
-    dans("SelectionCircuit._cadre(0, 1, -100000, 100000);");
-    let e = dans("SelectionCircuit._etat()");
-    verif("le cadre sur tout bell1 contient des mesures, et elles bloquent",
-          bloque(e, "mesure") > 0, bloque(e, "mesure") + " mesure(s)");
-    verif("la cause annoncée est la mesure", e.cause === "mesure");
+    dans("SelectionCircuit._cadre(1, G.lignes_quantiques.length-1, -100000, 100000);");
+    verif("le cadre laisse une porte liée dehors",
+          dans("SelectionCircuit._etat().bloquantes.length") === 1);
     dans("matrice_generee = undefined;");
     dans("SelectionCircuit._valide();");
     verif("valider refuse et ne calcule rien",
           dans("matrice_generee === undefined"));
-    verif("et le message explique pourquoi",
-          dans("SelectionCircuit._etat().message").indexOf("mesure") >= 0,
+    verif("et le message parle bien des lignes hors sélection",
+          dans("SelectionCircuit._etat().message").indexOf("hors") > 0,
           dans("SelectionCircuit._etat().message"));
 
-    /* Un cadre serré sur le seul H ne contient aucune mesure : la validation
-       doit alors aboutir et remplir matrice_generee. */
-    dans("SelectionCircuit._cadre(0, 0, 100, 220);");
-    e = dans("SelectionCircuit._etat()");
-    verif("un cadre sans mesure ne bloque plus rien",
-          e.bloquantes.length === 0, e.portes.length + " porte(s)");
+    // en rendant la ligne manquante, la validation aboutit
+    dans("SelectionCircuit._cadre(0, G.lignes_quantiques.length-1, -100000, 100000);");
+    verif("en rendant la ligne, plus rien ne bloque",
+          dans("SelectionCircuit._etat().bloquantes.length") === 0);
     dans("SelectionCircuit._valide();");
-    verif("et la validation calcule bien la matrice",
-          dans("matrice_generee !== undefined && matrice_generee.cote === 2"));
+    verif("et la validation calcule la matrice 8×8",
+          dans("matrice_generee !== undefined && matrice_generee.cote === 8"));
   }
 
   /* 6. Le dessin et les hameçons ne doivent jamais lever, mode actif ou non :
