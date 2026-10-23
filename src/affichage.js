@@ -1308,9 +1308,14 @@ function generateMatrix(matrice_deja_faite=undefined) {
   
      if (matrice_deja_faite!=undefined){
        
-       matrice_generee=matrice_deja_faite;
-       
-       
+       /* Une COPIE, et non la matrice du bouton elle meme : les cases que l on
+          remplit ne doivent pas modifier la porte avant le clic sur OK. Sans
+          cela « Annuler » n annulait rien -- les coefficients etaient deja
+          appliques a toutes les portes posees, qui partagent la matrice du
+          bouton -- et les etats intermediaires de la saisie entraient dans
+          l historique du circuit. La copie n est reversee dans le bouton qu au
+          clic sur OK, par mise_a_jour_des_portes_generees_deja_placees(). */
+       matrice_generee=copie_matrice(matrice_deja_faite);
        
      }else
        
@@ -1437,6 +1442,7 @@ function affichageCreationPorte(element){
     Bouton_mis_a_jour_matrice.symbole=document.getElementById("symboleportecree").value;
     
     Bouton_mis_a_jour_matrice.matrice= matrice_generee;
+    Bouton_mis_a_jour_matrice.oublie_chaine_matrice();//la matrice a change
    
   // print(Bouton_mis_a_jour_matrice,liste_boutons_crees[Bouton_mis_a_jour_matrice.numero])
    
@@ -1719,6 +1725,19 @@ function modifie_champs_html_sichangementFormatMatrice(C1,champs1=false,champs2=
 
 
 
+//Une copie independante d une matrice de complexes : les deux matrices ne
+//partagent plus aucun objet, on peut modifier l une sans toucher a l autre.
+function copie_matrice(matrice){
+  let copie=[];
+  for (let i = 0; i < matrice.length; i++) {
+    copie.push([]);
+    for (let j = 0; j < matrice.length; j++)
+      copie[i][j]=new complexe(matrice[i][j].x,matrice[i][j].y);
+  }
+  return copie;
+}
+
+
 class BoutonPorte {// c est une porte qui a été créé
   constructor(numero,matrice,symbole=undefined,nAretes_max=undefined) {
     
@@ -1729,13 +1748,8 @@ class BoutonPorte {// c est une porte qui a été créé
     this.symbole=document.getElementById('symboleportecree').value;
     
     if (this.symbole=="") this.symbole=numero.toString();
-    this.matrice=[];
-          for (let i = 0; i < matrice.length; i++) {
-                this.matrice.push([]);
-                for (let j = 0; j < matrice.length; j++)
-                     this.matrice[i][j]=new complexe(matrice[i][j].x,matrice[i][j].y);
-                     
-               }
+    this.matrice=copie_matrice(matrice);
+    this.cache_chaine=null;//voir chaine_matrice()
     
     if (nAretes_max!=undefined) this.nAretes_max=nAretes_max; else
     this.nAretes_max=parseInt(document.getElementById("nombrelignequantique").value);
@@ -1790,6 +1804,33 @@ newButton.addEventListener('dblclick', function() {
     
     
   }
+  
+  
+  /* La matrice en texte, telle que CodeGraphEnString() l attend, gardee en
+     cache. L historique releve le circuit entier toutes les 800 ms : reecrire
+     les 4^n coefficients a chaque relevé coutait 350 ms a 10 qbits, en pure
+     perte puisque la matrice d un bouton ne change presque jamais. On ne la
+     reconstruit donc qu apres oublie_chaine_matrice(). */
+  chaine_matrice(){
+    if (this.cache_chaine===null){
+      let M=this.matrice;
+      let chaine="";
+      for (let u = 0; u < M.length; u++) 
+            for (let v = 0; v <M.length; v++){
+                 chaine=chaine+M[u][v].x.toString()+";"
+                 chaine=chaine+M[u][v].y.toString()+";"
+                 
+           }
+      this.cache_chaine=chaine;
+    }
+    return this.cache_chaine;
+  }
+  
+  
+  //a appeler des que la matrice du bouton a change
+  oublie_chaine_matrice(){
+    this.cache_chaine=null;
+  }
 }
   
   
@@ -1811,6 +1852,12 @@ function EffaceButton(buttonId) {
       
       let nbre=liste_boutons_crees.length;
       liste_boutons_crees.push(new BoutonPorte(nbre,matrice_generee));
+      
+      /* Le constructeur en a pris une copie : garder la notre doublait la
+         memoire d une porte creee (276 Mo au lieu de 138 a 10 qbits) jusqu a
+         la prochaine ouverture de la fenetre. La fenetre est fermee, et toute
+         reouverture repasse par generateMatrix(), qui la reconstruit. */
+      matrice_generee=[];
       
      
     }

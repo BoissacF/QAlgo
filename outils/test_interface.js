@@ -268,9 +268,158 @@ function testeHistorique() {
         !avertit);
 }
 
+// ================================================== portes créées au bouton
+// Les portes du bouton « Créer/porte » sont les seules du simulateur à porter
+// une matrice explicite de 4^n coefficients. Aucun circuit d'`examples/` n'en
+// contient, donc `test_algos.js` ne les voit pas : c'est ici qu'on vérifie le
+// cache de sa chaîne, l'indépendance de la fenêtre d'édition, et que le codage
+// du circuit reste identique au caractère près.
+
+function testePortesCreees() {
+  titre("portes créées au bouton : cache, édition, mémoire");
+
+  const bac = harnais.fabriqueSandbox();
+  vm.createContext(bac);
+  vm.runInContext(harnais.sourceMoteur(), bac, { filename: "moteur.js" });
+  const dans = (expr) => vm.runInContext(expr, bac);
+
+  // amorçage équivalent à celui de setup(), puis un circuit réel pour que G existe
+  dans(`
+    langue = 0;
+    R = new Reglages();
+    liste_boutons_crees = [];
+    typeSelectionne = -1;
+    demarrage = true;
+    textContainer1 = document.getElementById('textcontainer1');
+    textContainer2 = document.getElementById('textcontainer2');
+    Monselect = document.getElementById('monSelect');
+    Graphes_nQbits = new Graphique();
+    graf3DBloch1 = new GraphiqueBloch(true);
+    graf3DBloch2 = new GraphiqueBloch(false);
+    document.getElementById('nombrelignequantique').value = "3";
+    document.getElementById('symboleportecree').value = "U";
+    // le <select> de la page vaut "1" par défaut, et affichageCreationPorte()
+    // l'y ramène : sans cela les coefficients relus des champs html sont undefined
+    document.getElementById('selectnotationcoeff').value = "1";
+  `);
+  const bell = fs.readFileSync(path.join(RACINE, "examples/fr/bell1.txt"), "utf8");
+  dans(`DeCodeStringEnGraph(${JSON.stringify(bell)})`);
+
+  // une matrice 8x8 aux coefficients variés : zéros, négatifs, irrationnels
+  dans(`
+    globalThis.matriceEssai = function () {
+      let M = [];
+      for (let i = 0; i < 8; i++) { M.push([]);
+        for (let j = 0; j < 8; j++) {
+          if (i == j) M[i][j] = new complexe(Math.SQRT1_2, -0.5);
+          else if ((i + j) % 3 == 0) M[i][j] = new complexe(0, 0);
+          else M[i][j] = new complexe(-1 / 3, Math.PI / 7);
+        }
+      }
+      return M;
+    };
+    // la boucle qu'employait CodeGraphEnString avant le cache, mot pour mot
+    globalThis.chaineDirecte = function (M) {
+      let code = "";
+      for (let u = 0; u < M.length; u++)
+        for (let v = 0; v < M.length; v++) {
+          code = code + M[u][v].x.toString() + ";"
+          code = code + M[u][v].y.toString() + ";"
+        }
+      return code;
+    };
+    liste_boutons_crees = [];
+    liste_boutons_crees.push(new BoutonPorte(0, matriceEssai(), "U", 3));
+    globalThis.bouton = liste_boutons_crees[0];
+  `);
+
+  verif("la chaîne du cache est identique à celle de l'ancienne boucle",
+        dans("bouton.chaine_matrice() === chaineDirecte(bouton.matrice)"),
+        dans("bouton.chaine_matrice().length") + " caractères");
+  verif("le cache est rempli après le premier appel",
+        dans("bouton.cache_chaine !== null"));
+
+  // on modifie la matrice sans prévenir : la chaîne ne doit pas bouger, c'est
+  // la preuve qu'elle n'est pas reconstruite à chaque appel
+  dans("bouton.matrice[0][0].coeff_complexe(0.125, 0.25);");
+  verif("sans invalidation, la chaîne n'est pas reconstruite",
+        dans('bouton.chaine_matrice().indexOf("0.125;0.25;") === -1'));
+  dans("bouton.oublie_chaine_matrice();");
+  verif("après oublie_chaine_matrice(), la chaîne suit la modification",
+        dans('bouton.chaine_matrice().indexOf("0.125;0.25;") === 0'));
+  verif("et elle reste identique à l'ancienne boucle",
+        dans("bouton.chaine_matrice() === chaineDirecte(bouton.matrice)"));
+
+  // --- aller-retour complet du circuit
+  dans(`liste_boutons_crees = [];
+        liste_boutons_crees.push(new BoutonPorte(0, matriceEssai(), "U", 3));`);
+  const codeA = dans("CodeGraphEnString()");
+  dans(`DeCodeStringEnGraph(${JSON.stringify(codeA)})`);
+  const codeB = dans("CodeGraphEnString()");
+  verif("coder, décoder, recoder redonne la même chaîne", codeA === codeB,
+        codeA.length + " caractères");
+  verif("le bouton relu garde son symbole et son nombre de lignes",
+        dans(`liste_boutons_crees.length === 1 &&
+              liste_boutons_crees[0].symbole === "U" &&
+              liste_boutons_crees[0].nAretes_max === 3`));
+  verif("les 64 coefficients de la matrice relue sont identiques",
+        dans(`(function () {
+          let M = liste_boutons_crees[0].matrice, N = matriceEssai();
+          if (M.length !== 8) return false;
+          for (let i = 0; i < 8; i++) for (let j = 0; j < 8; j++)
+            if (M[i][j].x !== N[i][j].x || M[i][j].y !== N[i][j].y) return false;
+          return true;
+        })()`));
+
+  // --- la fenêtre d'édition travaille sur une copie
+  dans(`Bouton_mis_a_jour_matrice = liste_boutons_crees[0];
+        generateMatrix(Bouton_mis_a_jour_matrice.matrice);`);
+  verif("matrice_generee n'est plus la matrice du bouton",
+        dans("matrice_generee !== Bouton_mis_a_jour_matrice.matrice"));
+  verif("ni aucun de ses coefficients",
+        dans("matrice_generee[0][0] !== Bouton_mis_a_jour_matrice.matrice[0][0]"));
+  verif("mais elle en porte les mêmes valeurs",
+        dans(`matrice_generee[2][5].x === Bouton_mis_a_jour_matrice.matrice[2][5].x &&
+              matrice_generee[2][5].y === Bouton_mis_a_jour_matrice.matrice[2][5].y`));
+
+  const avant = dans("Bouton_mis_a_jour_matrice.matrice[1][1].x");
+  dans("matrice_generee[1][1].coeff_complexe(0.75, 0);");
+  verif("saisir un coefficient ne touche pas à la porte (« Annuler » annule)",
+        dans("Bouton_mis_a_jour_matrice.matrice[1][1].x") === avant,
+        "reste à " + avant);
+  verif("et le circuit codé ne bouge pas tant qu'on n'a pas validé",
+        dans("CodeGraphEnString()") === codeB);
+
+  dans("mise_a_jour_des_portes_generees_deja_placees();");   // clic sur OK
+  verif("après OK, la porte prend la nouvelle valeur",
+        dans("Bouton_mis_a_jour_matrice.matrice[1][1].x === 0.75"));
+  verif("et le circuit codé change enfin",
+        dans("CodeGraphEnString()") !== codeB);
+  verif("le cache a été invalidé puis reconstruit à l'identique",
+        dans(`liste_boutons_crees[0].chaine_matrice() ===
+              chaineDirecte(liste_boutons_crees[0].matrice)`));
+
+  // --- la matrice de travail est relâchée après la création
+  dans(`liste_boutons_crees = [];
+        Bouton_mis_a_jour_matrice = undefined;
+        generateMatrix();
+        globalThis.tailleAvant = matrice_generee.length;
+        CreationPorte();`);
+  verif("generateMatrix() avait bien construit une matrice 8x8",
+        dans("tailleAvant === 8"));
+  verif("matrice_generee est relâchée après la création",
+        dans("matrice_generee.length === 0"));
+  verif("la porte créée garde pourtant sa matrice complète",
+        dans(`liste_boutons_crees.length === 1 &&
+              liste_boutons_crees[0].matrice.length === 8`));
+  verif("et le circuit se code toujours",
+        typeof dans("CodeGraphEnString()") === "string");
+}
+
 console.log("QAlgo — test des modules d'interface");
 testePleinEcran();
 testeHistorique();
+testePortesCreees();
 console.log("");
 if (echecs) {
   console.log(echecs + " contrôle(s) en échec sur " + total + ".");

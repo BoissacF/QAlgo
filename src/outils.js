@@ -1738,14 +1738,8 @@ function CodeGraphEnString() {
     code=code+Bouton.numero.toString()+";"
     code=code+Bouton.nAretes_max.toString()+";"
     code=code+Bouton.symbole+";"
-    let M=Bouton.matrice;
-    
-          for (let u = 0; u < M.length; u++) 
-                for (let v = 0; v <M.length; v++){
-                     code=code+M[u][v].x.toString()+";"
-                     code=code+M[u][v].y.toString()+";"
-                     
-               }
+    //la matrice en texte vient du cache du bouton : voir chaine_matrice()
+    code=code+Bouton.chaine_matrice();
     
     
     
