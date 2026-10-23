@@ -549,6 +549,14 @@ function memeMatrice(a, b) {
   return "";
 }
 
+// combien d'éléments bloquent la validation, pour une cause donnée
+function bloque(etat, cause) {
+  let n = 0;
+  for (let i = 0; i < etat.bloquantes.length; i++)
+    if (etat.bloquantes[i].cause === cause) n++;
+  return n;
+}
+
 // compare à une matrice attendue, écrite ligne par ligne en parties réelles
 function colleAuxReels(M, attendue) {
   if (M.cote * M.cote !== attendue.length) return "taille";
@@ -629,24 +637,95 @@ function testeSelectionCircuit() {
 
     dans("SelectionCircuit._cadre(0, G.lignes_quantiques.length-1, -100000, 100000);");
     let e = dans("SelectionCircuit._etat()");
-    verif("cadre sur tout toffoli : rien n'est refusé", e.refusees.length === 0,
-          e.retenues.length + " retenues, " + e.refusees.length + " refusées");
+    verif("cadre sur tout toffoli : aucun lien hors sélection",
+          bloque(e, "lien") === 0,
+          e.portes.length + " portes, " + bloque(e, "lien") + " lien(s)");
 
     dans("SelectionCircuit._cadre(0, G.lignes_quantiques.length-2, -100000, 100000);");
     e = dans("SelectionCircuit._etat()");
-    verif("en coupant la ligne du bas, la porte est dehors et non refusée",
-          e.refusees.length === 0,
-          e.retenues.length + " retenues, " + e.refusees.length + " refusées");
+    verif("en coupant la ligne du bas, la porte est dehors et ne bloque pas",
+          bloque(e, "lien") === 0,
+          e.portes.length + " portes, " + bloque(e, "lien") + " lien(s)");
 
     dans("SelectionCircuit._cadre(1, G.lignes_quantiques.length-1, -100000, 100000);");
     e = dans("SelectionCircuit._etat()");
-    verif("en coupant la ligne du haut, la porte dont un contrôle sort est refusée",
-          e.refusees.length === 1,
-          e.retenues.length + " retenues, " + e.refusees.length + " refusée(s)");
+    verif("en coupant la ligne du haut, la porte dont un contrôle sort bloque",
+          bloque(e, "lien") === 1,
+          e.portes.length + " portes, " + bloque(e, "lien") + " lien(s)");
     verif("et c'est bien le X à deux contrôles",
           dans(`(function(){ let et = SelectionCircuit._etat();
-            return et.refusees[0].type === 3 &&
-                   et.refusees[0].aretes_controle.length === 2; })()`));
+            for (let i = 0; i < et.bloquantes.length; i++) {
+              let b = et.bloquantes[i];
+              if (b.cause === "lien" && b.sommet.type === 3 &&
+                  b.sommet.aretes_controle.length === 2) return true;
+            }
+            return false; })()`) === true);
+    verif("la cause annoncée est le lien, et son message le dit",
+          e.cause === "lien");
+
+    // la porte bloquante n'entre pas dans le calcul : elle n'est pas retenue
+    verif("la porte bloquante n'est pas retenue pour le calcul",
+          dans(`(function(){ let et = SelectionCircuit._etat();
+            for (let i = 0; i < et.bloquantes.length; i++)
+              if (et.bloquantes[i].cause === "lien" &&
+                  et.retenues.indexOf(et.bloquantes[i].sommet) >= 0) return false;
+            return true; })()`) === true);
+  }
+
+  /* 3 bis. Un lecteur de probabilités n'est pas une porte : il ne change rien
+     à l'état, il ne doit être ni compté ni cerclé. Un point de contrôle non
+     plus : il fait partie de la porte qu'il commande. bell1 contient deux
+     lecteurs (type 64) et un contrôle (type 16). */
+  {
+    const { dans } = bacSelection("bell1");
+    dans("SelectionCircuit._cadre(0, 1, -100000, 100000);");
+    const e = dans("SelectionCircuit._etat()");
+
+    verif("le circuit contient bien des lecteurs et un contrôle",
+          dans(`(function(){ let l = 0, c = 0;
+            for (let i = 0; i < G.TabSommets.length; i++) { let s = G.TabSommets[i];
+              if (s === undefined) continue;
+              if (s.type === 64) l++;
+              if (s.type === 16 || s.type === 17) c++; }
+            return l >= 1 && c >= 1; })()`) === true);
+
+    verif("aucun lecteur de probabilités n'est compté comme porte",
+          dans(`(function(){ let et = SelectionCircuit._etat();
+            for (let i = 0; i < et.portes.length; i++)
+              if (et.portes[i].type === 64) return false;
+            return true; })()`) === true);
+    verif("aucun point de contrôle n'est compté comme porte",
+          dans(`(function(){ let et = SelectionCircuit._etat();
+            for (let i = 0; i < et.portes.length; i++)
+              if (et.portes[i].type === 16 || et.portes[i].type === 17) return false;
+            return true; })()`) === true);
+    verif("aucun lecteur n'est même retenu pour le calcul",
+          dans(`(function(){ let et = SelectionCircuit._etat();
+            for (let i = 0; i < et.retenues.length; i++)
+              if (et.retenues[i].type === 64) return false;
+            return true; })()`) === true);
+    verif("le contrôle, lui, reste retenu : son ordre compte pour l'intrication",
+          dans(`(function(){ let et = SelectionCircuit._etat();
+            for (let i = 0; i < et.retenues.length; i++)
+              if (et.retenues[i].type === 16) return true;
+            return false; })()`) === true);
+
+    /* Un contrôle suit sa porte même si le cadre coupe son abscisse. Sans
+       cela, la porte aurait été appliquée sans condition et la matrice aurait
+       été fausse. */
+    const xPorte = dans(`(function(){
+      for (let i = 0; i < G.TabSommets.length; i++) { let s = G.TabSommets[i];
+        if (s !== undefined && s.type === 3) return Math.round(s.x); }
+      return 0; })()`);
+    dans(`SelectionCircuit._cadre(0, 1, ${xPorte - 2}, ${xPorte + 2});`);
+    verif("le contrôle suit sa porte même si le cadre coupe son abscisse",
+          dans(`(function(){ let et = SelectionCircuit._etat();
+            let porte = false, ctrl = false;
+            for (let i = 0; i < et.retenues.length; i++) {
+              if (et.retenues[i].type === 3) porte = true;
+              if (et.retenues[i].type === 16) ctrl = true; }
+            return porte && ctrl; })()`) === true,
+          "cadre serré sur x = " + xPorte);
   }
 
   /* 4. Le plafond de neuf lignes, éprouvé en tirant vraiment une poignée :
@@ -686,11 +765,10 @@ function testeSelectionCircuit() {
     const { dans } = bacSelection("bell1");
     dans("SelectionCircuit.demarre();");
     dans("SelectionCircuit._cadre(0, 1, -100000, 100000);");
-    verif("le cadre sur tout bell1 contient une mesure",
-          dans(`(function(){ let et = SelectionCircuit._etat();
-            for (let i = 0; i < et.retenues.length; i++)
-              if (et.retenues[i].type === 65) return true;
-            return false; })()`) === true);
+    let e = dans("SelectionCircuit._etat()");
+    verif("le cadre sur tout bell1 contient des mesures, et elles bloquent",
+          bloque(e, "mesure") > 0, bloque(e, "mesure") + " mesure(s)");
+    verif("la cause annoncée est la mesure", e.cause === "mesure");
     dans("matrice_generee = undefined;");
     dans("SelectionCircuit._valide();");
     verif("valider refuse et ne calcule rien",
@@ -698,6 +776,16 @@ function testeSelectionCircuit() {
     verif("et le message explique pourquoi",
           dans("SelectionCircuit._etat().message").indexOf("mesure") >= 0,
           dans("SelectionCircuit._etat().message"));
+
+    /* Un cadre serré sur le seul H ne contient aucune mesure : la validation
+       doit alors aboutir et remplir matrice_generee. */
+    dans("SelectionCircuit._cadre(0, 0, 100, 220);");
+    e = dans("SelectionCircuit._etat()");
+    verif("un cadre sans mesure ne bloque plus rien",
+          e.bloquantes.length === 0, e.portes.length + " porte(s)");
+    dans("SelectionCircuit._valide();");
+    verif("et la validation calcule bien la matrice",
+          dans("matrice_generee !== undefined && matrice_generee.cote === 2"));
   }
 
   /* 6. Le dessin et les hameçons ne doivent jamais lever, mode actif ou non :

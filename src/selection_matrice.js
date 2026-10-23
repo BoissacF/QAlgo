@@ -51,8 +51,8 @@ var SelectionCircuit = (function () {
   var xMin = 0, xMax = 0;            // bornes horizontales, en pixels du canvas
   var prise = null;                  // ce que la souris tient : voir attrape()
   var message = "", messageJusqua = 0;
-  var retenues = [];                 // sommets pris dans la matrice
-  var refusees = [];                 // sommets dans le cadre, mais non prenables
+  var retenues = [];                 // sommets que le calcul applique
+  var bloquantes = [];               // [{sommet, cause}] : ce qui interdit de valider
 
   // --- les textes, dans les deux langues --------------------------------
 
@@ -63,9 +63,9 @@ var SelectionCircuit = (function () {
       aide: "Déplace le cadre, ou tire ses poignées. Entrée pour valider, Échap pour annuler.",
       tropDeLignes: "Tu ne peux pas sélectionner plus que " + MAX_LIGNES + " lignes quantiques.",
       vide: "La sélection ne contient aucune porte.",
-      mesure: "Une sélection qui contient une mesure n'a pas de matrice : une mesure n'est pas réversible.",
+      mesure: "Sélection impossible : une mesure n'a pas de matrice, elle n'est pas réversible.",
       pasDeCircuit: "Il n'y a pas encore de ligne quantique à sélectionner.",
-      refusee: "Porte refusée : son contrôle vient d'une ligne hors du cadre.",
+      lien: "Sélection impossible car une des portes est liée à d'autres lignes quantiques hors sélection.",
     };
     var en = {
       valider: "✓ Use this selection",
@@ -73,9 +73,9 @@ var SelectionCircuit = (function () {
       aide: "Move the frame, or drag its handles. Enter to confirm, Esc to cancel.",
       tropDeLignes: "You cannot select more than " + MAX_LIGNES + " quantum lines.",
       vide: "The selection contains no gate.",
-      mesure: "A selection containing a measurement has no matrix: a measurement is not reversible.",
+      mesure: "Selection impossible: a measurement has no matrix, it is not reversible.",
       pasDeCircuit: "There is no quantum line to select yet.",
-      refusee: "Gate refused: its control comes from a line outside the frame.",
+      lien: "Selection impossible: one of the gates is linked to other quantum lines outside the selection.",
     };
     return (typeof langue !== "undefined" && langue === 1) ? en[cle] : fr[cle];
   }
@@ -140,33 +140,99 @@ var SelectionCircuit = (function () {
 
   /* Un élément participe au calcul s'il a un type qui agit sur l'état. Les
      personnages (128, 129, 130) sont du décor, les qubits d'entrée (type <= 2)
-     sont l'état de départ et non une porte. */
+     sont l'état de départ et non une porte, et le lecteur de probabilités
+     (type 64) ne fait que lire : il ne change rien à l'état, il n'a donc
+     aucune raison d'être compté ni cerclé. */
   function participeAuCalcul(sommet) {
-    return (sommet.type > 2) && ((sommet.type & 128) === 0);
+    return (sommet.type > 2) && ((sommet.type & 128) === 0) && (sommet.type !== 64);
   }
 
-  /* Recalcule `retenues` et `refusees`. Un élément est dans le cadre si son
-     abscisse y est et si sa ligne principale est dans la bande ; il est retenu
-     si, en plus, toutes les lignes qu'il touche sont dans la bande. */
+  //les points de contrôle et d'anticontrôle
+  function estUnControle(sommet) {
+    return (sommet.type === 16) || (sommet.type === 17);
+  }
+
+  /* Ce que l'utilisateur appelle une porte : ni un point de contrôle, qui fait
+     partie de la porte qu'il commande, ni un lecteur de probabilités. C'est
+     cette liste qu'on cercle en vert et qu'on compte. */
+  function estUnePorte(sommet) {
+    return participeAuCalcul(sommet) && !estUnControle(sommet);
+  }
+
+  function estBloquante(sommet) {
+    for (var i = 0; i < bloquantes.length; i++)
+      if (bloquantes[i].sommet === sommet) return true;
+    return false;
+  }
+
+  //les portes à cercler de vert : retenues, et qui ne bloquent rien
+  function portesCerclees() {
+    var liste = [];
+    for (var i = 0; i < retenues.length; i++)
+      if (estUnePorte(retenues[i]) && !estBloquante(retenues[i]))
+        liste.push(retenues[i]);
+    return liste;
+  }
+
+  //la cause à annoncer : un lien hors sélection passe avant une mesure
+  function causeBloquante() {
+    var i;
+    for (i = 0; i < bloquantes.length; i++)
+      if (bloquantes[i].cause === "lien") return "lien";
+    for (i = 0; i < bloquantes.length; i++)
+      if (bloquantes[i].cause === "mesure") return "mesure";
+    return "";
+  }
+
+  /* Recalcule `retenues`, ce que le calcul applique, et `bloquantes`, ce qui
+     interdit de valider.
+
+     Une porte est dans le cadre si son abscisse y est et si sa ligne
+     principale est dans la bande. Elle est alors retenue si TOUTES les lignes
+     qu'elle touche sont dans la bande ; sinon elle bloque, pour cause de lien.
+     Une mesure, elle, est retenue — le moteur l'appliquerait — mais bloque
+     aussi : elle n'est pas réversible, elle n'a pas de matrice.
+
+     Les points de contrôle ne sont jamais examinés pour eux-mêmes : ils
+     viennent avec la porte qu'ils commandent, MÊME si le cadre coupe leur
+     abscisse. Sans cela une porte contrôlée pouvait être appliquée sans son
+     contrôle, donc inconditionnellement, et la matrice était fausse. */
   function recalculeSelection() {
     retenues = [];
-    refusees = [];
+    bloquantes = [];
     if (!nbLignes()) return;
 
-    for (var i = 0; i < G.TabSommets.length; i++) {
+    var compagnons = [];
+    var i, j;
+
+    for (i = 0; i < G.TabSommets.length; i++) {
       var s = G.TabSommets[i];
       if (s === undefined) continue;
       if (!participeAuCalcul(s)) continue;
+      if (estUnControle(s)) continue;
       if (s.x < xMin || s.x > xMax) continue;
       if (!dansLaBande(s.num_ligne[0])) continue;
 
       var lignes = lignesTouchees(s);
       var complet = true;
-      for (var j = 0; j < lignes.length; j++)
+      for (j = 0; j < lignes.length; j++)
         if (!dansLaBande(lignes[j])) { complet = false; break; }
 
-      if (complet) retenues.push(s); else refusees.push(s);
+      if (!complet) { bloquantes.push({ sommet: s, cause: "lien" }); continue; }
+
+      retenues.push(s);
+      if (s.type === 65) bloquantes.push({ sommet: s, cause: "mesure" });
+
+      if (s.aretes_controle)
+        for (j = 0; j < s.aretes_controle.length; j++) {
+          var depart = G.TabSommets[s.aretes_controle[j].numSommetDepart];
+          if (depart && depart !== s && compagnons.indexOf(depart) < 0)
+            compagnons.push(depart);
+        }
     }
+
+    for (i = 0; i < compagnons.length; i++)
+      if (retenues.indexOf(compagnons[i]) < 0) retenues.push(compagnons[i]);
   }
 
   // --- le cadre de départ : tout le circuit, dans la limite des 9 lignes --
@@ -262,16 +328,32 @@ var SelectionCircuit = (function () {
     stroke(60, 90, 160); strokeWeight(2);
     rect(g, h, d - g, b - h);
 
-    // les anneaux autour des portes
-    strokeWeight(3);
+    /* Les anneaux verts, autour des seules portes : ni les points de
+       contrôle, qui font partie de la porte qu'ils commandent, ni les lecteurs
+       de probabilités, qui ne changent rien à l'état. */
     var i;
-    for (i = 0; i < retenues.length; i++) {
-      stroke(30, 160, 70);
-      ellipse(retenues[i].x, retenues[i].y, retenues[i].diametre * 1.45);
-    }
-    for (i = 0; i < refusees.length; i++) {
-      stroke(210, 50, 50);
-      ellipse(refusees[i].x, refusees[i].y, refusees[i].diametre * 1.45);
+    var vertes = portesCerclees();
+    strokeWeight(3); noFill();
+    stroke(30, 160, 70);
+    for (i = 0; i < vertes.length; i++)
+      ellipse(vertes[i].x, vertes[i].y, vertes[i].diametre * 1.45);
+
+    /* Ce qui interdit de valider : un anneau rouge épais, et une croix rouge
+       par-dessus la porte. Elle doit sauter aux yeux, c'est elle qui explique
+       le message. */
+    for (i = 0; i < bloquantes.length; i++) {
+      var s0 = bloquantes[i].sommet;
+      var rayon = s0.diametre * 0.80;
+
+      noFill(); stroke(200, 25, 25); strokeWeight(5);
+      ellipse(s0.x, s0.y, rayon * 2);
+
+      strokeWeight(7); stroke(255, 255, 255, 200);
+      line(s0.x - rayon * 0.62, s0.y - rayon * 0.62, s0.x + rayon * 0.62, s0.y + rayon * 0.62);
+      line(s0.x + rayon * 0.62, s0.y - rayon * 0.62, s0.x - rayon * 0.62, s0.y + rayon * 0.62);
+      strokeWeight(5); stroke(200, 25, 25);
+      line(s0.x - rayon * 0.62, s0.y - rayon * 0.62, s0.x + rayon * 0.62, s0.y + rayon * 0.62);
+      line(s0.x + rayon * 0.62, s0.y - rayon * 0.62, s0.x - rayon * 0.62, s0.y + rayon * 0.62);
     }
 
     // les poignées
@@ -284,32 +366,42 @@ var SelectionCircuit = (function () {
     noStroke(); fill(60, 90, 160);
     textSize(15); textAlign(LEFT, BOTTOM);
     var k = ligneBas - ligneHaut + 1;
+    var np = vertes.length;
     text("q" + ligneHaut + " → q" + ligneBas + "  (" + k +
-         (k > 1 ? " lignes" : " ligne") + ", " + retenues.length +
-         (retenues.length > 1 ? " portes)" : " porte)"), g + 4, h - 4);
+         (k > 1 ? " lignes" : " ligne") + ", " + np +
+         (np > 1 ? " portes)" : " porte)"), g + 4, h - 4);
 
     // les boutons et l'aide
     var bo = boites();
-    dessineBouton(bo.valider, texte("valider"), dansBoite(bo.valider) ?
-                  color(30, 140, 60) : color(40, 110, 50));
+    if (bloquantes.length > 0)
+      dessineBouton(bo.valider, texte("valider"), color(140, 140, 140));
+    else
+      dessineBouton(bo.valider, texte("valider"), dansBoite(bo.valider) ?
+                    color(30, 140, 60) : color(40, 110, 50));
     dessineBouton(bo.annuler, texte("annuler"), dansBoite(bo.annuler) ?
                   color(150, 60, 60) : color(110, 50, 50));
 
     noStroke(); fill(70); textSize(14); textAlign(CENTER, TOP);
     text(texte("aide"), width / 2, bo.valider.y + bo.valider.h + 6);
 
-    // un refus éventuel, en rouge, au milieu
-    if (message !== "" && millis() < messageJusqua) {
+    /* Le message rouge. Celui d'une porte qui bloque reste affiché tant
+       qu'elle bloque : c'est lui qui dit pourquoi « Valider » ne répond pas.
+       Les autres, comme le plafond de neuf lignes, s'effacent au bout de deux
+       secondes et demie. */
+    var aDire = "";
+    if (bloquantes.length > 0) aDire = texte(causeBloquante());
+    else if (message !== "" && millis() < messageJusqua) aDire = message;
+    else message = "";
+
+    if (aDire !== "") {
       textSize(20); textAlign(CENTER, CENTER);
-      var l = textWidth(message) + 30;
+      var l = textWidth(aDire) + 30;
       noStroke(); fill(255, 240, 240, 245);
       rect(width / 2 - l / 2, 78, l, 40, 6);
       stroke(190, 40, 40); strokeWeight(1.5); noFill();
       rect(width / 2 - l / 2, 78, l, 40, 6);
       noStroke(); fill(170, 30, 30);
-      text(message, width / 2, 98);
-    } else if (message !== "") {
-      message = "";
+      text(aDire, width / 2, 98);
     }
 
     pop();
@@ -455,14 +547,14 @@ var SelectionCircuit = (function () {
     prise = null;
     message = "";
     retenues = [];
-    refusees = [];
+    bloquantes = [];
   }
 
   function valide() {
-    if (!retenues.length) { annonce("vide"); return; }
-
-    for (var i = 0; i < retenues.length; i++)
-      if (retenues[i].type === 65) { annonce("mesure"); return; }
+    /* Tant qu'une porte bloque, on ne calcule rien : sa croix rouge et le
+       message disent déjà pourquoi. */
+    if (bloquantes.length > 0) { annonce(causeBloquante()); return; }
+    if (!portesCerclees().length) { annonce("vide"); return; }
 
     var k = ligneBas - ligneHaut + 1;
     noLoop();
@@ -539,8 +631,9 @@ var SelectionCircuit = (function () {
     // pour les tests
     _etat: function () {
       return { actif: actif, ligneHaut: ligneHaut, ligneBas: ligneBas,
-               xMin: xMin, xMax: xMax, retenues: retenues, refusees: refusees,
-               message: message };
+               xMin: xMin, xMax: xMax, retenues: retenues,
+               bloquantes: bloquantes, portes: portesCerclees(),
+               cause: causeBloquante(), message: message };
     },
     _cadre: function (h, b, g, d) {
       ligneHaut = h; ligneBas = b; xMin = g; xMax = d; recalculeSelection();
