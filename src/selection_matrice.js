@@ -61,7 +61,7 @@ var SelectionCircuit = (function () {
     var fr = {
       valider: "✓ Valider la sélection",
       annuler: "✗ Annuler",
-      aide: "Déplace le cadre, ou tire ses poignées. Entrée pour valider, Échap pour annuler.",
+      aide: "Déplace le cadre, ou tire ses bords. Entrée pour valider ; Échap, ou un clic hors du cadre, pour sortir.",
       tropDeLignes: "Tu ne peux pas sélectionner plus que " + MAX_LIGNES + " lignes quantiques.",
       vide: "La sélection ne contient aucune porte.",
       pasDeCircuit: "Il n'y a pas encore de ligne quantique à sélectionner.",
@@ -70,7 +70,7 @@ var SelectionCircuit = (function () {
     var en = {
       valider: "✓ Use this selection",
       annuler: "✗ Cancel",
-      aide: "Move the frame, or drag its handles. Enter to confirm, Esc to cancel.",
+      aide: "Move the frame, or drag its edges. Enter to confirm; Esc, or a click outside the frame, to leave.",
       tropDeLignes: "You cannot select more than " + MAX_LIGNES + " quantum lines.",
       vide: "The selection contains no gate.",
       pasDeCircuit: "There is no quantum line to select yet.",
@@ -626,11 +626,21 @@ var SelectionCircuit = (function () {
     M.setMatrixColor(0, 0, true);
   }
 
-  function annule() {
+  /* On quitte la sélection sans rien calculer, et **sans revenir** dans la
+     fenêtre de création : le cadre disparaît, la fenêtre reste fermée, et la
+     matrice en cours d'édition est libérée. C'est ce que fait « Annuler »,
+     et c'est aussi ce que fait toute autre action — un clic hors du cadre,
+     une touche, le chargement d'un exemple, l'ouverture d'une autre fenêtre.
+
+     Au moindre doute on sort. Rester dans un mode qui avale les clics serait
+     bien pire qu'en sortir une fois de trop : le cadre se repose d'un clic. */
+  function abandonne() {
+    if (!actif) return;
     arrete();
-    ouvre_fenetre_met_a_jour_parametres();
-    document.getElementById("affichagematrice").style.display = "inline";
-    generateMatrix();
+    document.getElementById("affichagematrice").style.display = "none";
+    ferme_fenetre_met_a_jour_parametres();
+    matrice_generee = undefined;
+    loop();
   }
 
   // --- ce que sketch.js vient demander ------------------------------------
@@ -642,9 +652,14 @@ var SelectionCircuit = (function () {
     if (!actif) return false;
     var bo = boites();
     if (dansBoite(bo.valider)) { valide(); return true; }
-    if (dansBoite(bo.annuler)) { annule(); return true; }
-    attrape();
-    return true;
+    if (dansBoite(bo.annuler)) { abandonne(); return true; }
+    if (attrape()) return true;
+
+    /* Un clic ailleurs qu'au cadre veut dire autre chose : poser un qbit,
+       déplacer une porte, en supprimer une. On sort du mode, et on laisse le
+       clic passer pour que le geste compte du premier coup. */
+    abandonne();
+    return false;
   }
 
   function declic() {
@@ -656,8 +671,17 @@ var SelectionCircuit = (function () {
   function touche(code) {
     if (!actif) return false;
     if (code === 13) { valide(); return true; }    // Entrée
-    if (code === 27) { annule(); return true; }    // Échap
-    return true;                                   // on avale tout le reste
+    if (code === 27) { abandonne(); return true; }  // Échap
+
+    /* Maj, Ctrl et Alt seules ne font rien : les avaler sans sortir évite de
+       perdre le cadre parce qu'un doigt s'est posé à côté. */
+    if (code === 16 || code === 17 || code === 18) return true;
+
+    /* Toute autre touche veut dire autre chose — Suppr pour effacer une porte,
+       une lettre pour un raccourci. On sort, et on la laisse reprendre son
+       rôle dans le circuit. */
+    abandonne();
+    return false;
   }
 
   return {
@@ -668,6 +692,7 @@ var SelectionCircuit = (function () {
     clic: clic,
     declic: declic,
     touche: touche,
+    abandonne: abandonne,
     // pour les tests
     _etat: function () {
       return { actif: actif, ligneHaut: ligneHaut, ligneBas: ligneBas,
@@ -675,6 +700,7 @@ var SelectionCircuit = (function () {
                bloquantes: bloquantes, portes: portesCerclees(),
                message: message };
     },
+    _boites: boites,
     _cadre: function (h, b, g, d) {
       ligneHaut = h; ligneBas = b; xMin = g; xMax = d; recalculeSelection();
     },

@@ -1360,6 +1360,9 @@ function transforme_arobase_pointvirgule(chaine){
 
 //FUNCTION 1
 function DeCodeStringEnGraph(code) {
+  /* Un cadre de sélection ouvert n'a plus de sens dès qu'on fait autre chose :
+     on en sort, et le circuit reprend la main. Voir selection_matrice.js. */
+  if (typeof SelectionCircuit !== "undefined") SelectionCircuit.abandonne();
   
  // noLoop();
 //il faut descativer l affichge pour les gros calculs  print("ouverture")

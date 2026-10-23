@@ -279,6 +279,9 @@ let phi = document.getElementById('phiPhaseR').value;
 
 function ouvre_fenetre_met_a_jour_parametres(){
   print("ouvrefenetre")
+  /* Un cadre de sélection ouvert n'a plus de sens dès qu'on fait autre chose :
+     on en sort, et le circuit reprend la main. Voir selection_matrice.js. */
+  if (typeof SelectionCircuit !== "undefined") SelectionCircuit.abandonne();
   R.on_est_dans_une_fenetre=true;
   if (R.affiche_coefficients_et_Probas_nQbit==true) Efface_affichage_Qbit_et_Probas();
   

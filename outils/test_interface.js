@@ -858,6 +858,79 @@ function testeSelectionCircuit() {
           dans("matrice_generee !== undefined && matrice_generee.cote === 8"));
   }
 
+  /* 6. On sort du mode dès qu'on fait autre chose, et on ne revient pas dans
+     la fenêtre de création. Trois chemins : « Annuler », un clic hors du
+     cadre, une touche quelconque. Dans les deux derniers cas le hameçon doit
+     rendre `false`, pour que le geste atteigne le circuit du premier coup. */
+  {
+    const { dans } = bacSelection("bell1");
+    const fenetre = 'document.getElementById("affichagematrice").style.display';
+
+    // « Annuler » : le bouton est dessiné sur le canvas, on clique dedans
+    dans("SelectionCircuit.demarre();");
+    dans(`(function(){ let b = SelectionCircuit._boites().annuler;
+      mouseX = b.x + b.l / 2; mouseY = b.y + b.h / 2; })()`);
+    verif("le clic sur « Annuler » est consommé",
+          dans("SelectionCircuit.clic()") === true);
+    verif("et il sort du mode sélection",
+          dans("SelectionCircuit.estActif()") === false);
+    verif("sans rouvrir la fenêtre de création",
+          dans(fenetre) === "none", dans(fenetre));
+
+    // un clic hors du cadre : on sort, et le clic passe au circuit
+    dans("matrice_generee = new matrice_porte(2);");
+    dans("SelectionCircuit.demarre();");
+    dans(`(function(){ let et = SelectionCircuit._etat();
+      mouseX = et.xMax + 400;
+      mouseY = G.lignes_quantiques[0][0].y + 400; })()`);
+    verif("un clic hors du cadre n'est pas consommé",
+          dans("SelectionCircuit.clic()") === false);
+    verif("il sort du mode",
+          dans("SelectionCircuit.estActif()") === false);
+    verif("il laisse la fenêtre de création fermée",
+          dans(fenetre) === "none", dans(fenetre));
+    verif("et il libère la matrice en cours d'édition",
+          dans("matrice_generee === undefined"));
+    verif("le cadre n'a plus rien de retenu",
+          dans("SelectionCircuit._etat().retenues.length") === 0);
+
+    // une touche quelconque : on sort, et la touche reprend son rôle
+    dans("SelectionCircuit.demarre();");
+    verif("la touche Suppr n'est pas consommée",
+          dans("SelectionCircuit.touche(46)") === false);
+    verif("et elle sort du mode",
+          dans("SelectionCircuit.estActif()") === false);
+
+    // Maj seule ne fait rien : on garde le cadre
+    dans("SelectionCircuit.demarre();");
+    verif("Maj est avalée", dans("SelectionCircuit.touche(16)") === true);
+    verif("mais ne fait pas sortir du mode",
+          dans("SelectionCircuit.estActif()") === true);
+
+    // Échap sort aussi, sans rouvrir la fenêtre
+    verif("Échap est consommé", dans("SelectionCircuit.touche(27)") === true);
+    verif("il sort du mode", dans("SelectionCircuit.estActif()") === false);
+    verif("sans rouvrir la fenêtre",
+          dans(fenetre) === "none", dans(fenetre));
+
+    /* Charger un exemple passe par DeCodeStringEnGraph, qui doit sortir du
+       mode : sans cela le cadre survivrait à un circuit qui n'existe plus. */
+    dans("SelectionCircuit.demarre();");
+    verif("le mode est bien actif avant le chargement",
+          dans("SelectionCircuit.estActif()") === true);
+    dans(`DeCodeStringEnGraph(${JSON.stringify(
+      fs.readFileSync(path.join(RACINE, "examples/fr", "toffoli.txt"), "utf8").trim())})`);
+    verif("charger un circuit sort du mode sélection",
+          dans("SelectionCircuit.estActif()") === false);
+
+    /* Ouvrir n'importe quelle autre fenêtre en sort aussi. */
+    dans("G.calcul_LignesQuantiQues_nQbitsEntree_nQbitsSortie();");
+    dans("SelectionCircuit.demarre();");
+    dans("ouvre_fenetre_met_a_jour_parametres();");
+    verif("ouvrir une autre fenêtre sort du mode sélection",
+          dans("SelectionCircuit.estActif()") === false);
+  }
+
   /* 6. Le dessin et les hameçons ne doivent jamais lever, mode actif ou non :
      ils sont appelés à chaque image et à chaque clic du simulateur. */
   {
