@@ -1883,19 +1883,14 @@ function Fourier(n_Qbits,inverse=false){
 
 function applique_Porte_Racine_X(n_Qbits,L_index,nbre_Qbits,L_aretes_controle){
   
-  let matrice = [];
   let dim=2;
+  let matrice = new matrice_porte(dim);
 
-  for (let i = 0; i < dim; i++) {
-    // Créer un tableau de taille n rempli de zéros
-    matrice[i] = new Array(dim).fill(0);
-  }
- 
   //matrice racine X
-  matrice[0][0]=new complexe(1,1);
-  matrice[0][1]=new complexe(1,-1);
-  matrice[1][0]=new complexe(1,-1);
-  matrice[1][1]=new complexe(1,1);
+  matrice.ecrit(0,0,1,1);
+  matrice.ecrit(0,1,1,-1);
+  matrice.ecrit(1,0,1,-1);
+  matrice.ecrit(1,1,1,1);
   
  
   
@@ -1907,34 +1902,19 @@ function applique_Porte_Racine_X(n_Qbits,L_index,nbre_Qbits,L_aretes_controle){
  
 function applique_Porte_Racine_SWAP(n_Qbits,L_index,nbre_Qbits,L_aretes_controle){
   
-  let matrice = [];
   let dim=4;
+  let matrice = new matrice_porte(dim);
 
-  for (let i = 0; i < dim; i++) {
-    // Créer un tableau de taille n rempli de zéros
-    matrice[i] = new Array(dim).fill(0);
-  }
- 
-  //matrice racine swap
-  matrice[0][0]=new complexe(1,0);
-  matrice[0][1]=new complexe(0,0);
-  matrice[0][2]=new complexe(0,0);
-  matrice[0][3]=new complexe(0,0);
-  
-  matrice[1][0]=new complexe(0,0);
-  matrice[1][1]=new complexe(0.5,0.5);
-  matrice[1][2]=new complexe(0.5,-0.5);
-  matrice[1][3]=new complexe(0,0);
-  
-  matrice[2][0]=new complexe(0,0);
-  matrice[2][1]=new complexe(0.5,-0.5);
-  matrice[2][2]=new complexe(0.5,0.5);
-  matrice[2][3]=new complexe(0,0);
-  
-  matrice[3][0]=new complexe(0,0);
-  matrice[3][1]=new complexe(0,0);
-  matrice[3][2]=new complexe(0,0);
-  matrice[3][3]=new complexe(0,1);
+  //matrice racine swap : les coefficients nuls le sont deja
+  matrice.ecrit(0,0,1,0);
+
+  matrice.ecrit(1,1,0.5,0.5);
+  matrice.ecrit(1,2,0.5,-0.5);
+
+  matrice.ecrit(2,1,0.5,-0.5);
+  matrice.ecrit(2,2,0.5,0.5);
+
+  matrice.ecrit(3,3,0,1);
   
   
   return applique_Porte_Universelle(n_Qbits,L_index,nbre_Qbits,matrice,L_aretes_controle);
@@ -2049,17 +2029,21 @@ function applique_matrice(n_Qbits,matrice){
     let somme_carre=0;
 
     // Calcul de nouveau_n_Qbits = M * n_Qbits
+    //les coefficients sont dans deux Float64Array : on les sort de la boucle
+    let m_re=matrice.re, m_im=matrice.im;
+
     for (let i = 0; i < n; i++) {
+        let base=i*n;
         for (let j = 0; j < n; j++)
           if ((n_Qbits.re[j]!=0)||(n_Qbits.im[j]!=0))
-           if ((matrice[i][j].x!=0)||(matrice[i][j].y!=0)) //tester si = 0 gagne bcp de temps
+           if ((m_re[base+j]!=0)||(m_im[base+j]!=0)) //tester si = 0 gagne bcp de temps
         {
             /* nouveau[i] = nouveau[i].add(n_Qbits[j].mul(matrice[i][j]))
                Les deux operations de complexe arrondissaient chacune leur
                resultat a 10 decimales : le produit d abord, la somme ensuite.
                Il faut les deux arrondis, et dans cet ordre. */
             let ax=n_Qbits.re[j], ay=n_Qbits.im[j];
-            let bx=matrice[i][j].x, by=matrice[i][j].y;
+            let bx=m_re[base+j], by=m_im[base+j];
 
             let produit_x=Math.round((ax*bx-ay*by)*1e10)/1e10;
             let produit_y=Math.round((ax*by+ay*bx)*1e10)/1e10;

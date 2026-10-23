@@ -285,6 +285,75 @@ this.ancienGraphique_visible=false;
   
 }
 
+/* ---------------------------------------------------------------------------
+   La matrice d'une porte creee au bouton : les 4^n coefficients dans deux
+   tableaux de flottants, au lieu d'un tableau de tableaux de 4^n objets
+   complexe.
+
+   C'est la meme raison que pour vecteur_etat (voir calculsQuantiques.js) : V8
+   ne range pas les champs d'un complexe dans l'objet, il boite chaque double
+   dans un HeapNumber separe, et un coefficient coute une centaine d'octets
+   mesures au lieu de seize. Une porte sur 10 lignes quantiques pesait 138 Mo,
+   elle en pese 17 ici.
+
+   re et im sont les parties reelle et imaginaire ARRONDIES a 10 decimales,
+   comme les champs x et y de complexe. Le module et l'argument, qui ne servent
+   qu'a l'affichage trigonometrique, sont recalcules depuis elles : pour la
+   matrice d'un bouton c'etait deja le cas, puisque le constructeur de
+   BoutonPorte reconstruisait ses complexes avec les valeurs arrondies.
+
+   length rend le COTE de la matrice, et non son nombre de coefficients : le
+   code appelant parle en lignes, comme avec le tableau de tableaux d'avant,
+   et applique_matrice compare encore length a la taille du vecteur.        */
+class matrice_porte {
+  constructor(cote){
+    this.cote=cote;//nbre de lignes = nbre de colonnes = 2^(nbre de lignes quantiques)
+    this.re=new Float64Array(cote*cote);
+    this.im=new Float64Array(cote*cote);
+    this.jeton=null;//complexe de pret-a-lire pour l affichage, voir complexe_en
+  }
+
+  get length(){
+    return this.cote;
+  }
+
+  //la matrice identite, celle que l editeur propose a l ouverture
+  static identite(cote){
+    let M=new matrice_porte(cote);
+    for (let i = 0; i <cote; i++) M.re[i*cote+i]=1;
+    return M;
+  }
+
+  //ecrit le coefficient x+yi en ligne i, colonne j, avec l arrondi a 10
+  //decimales que faisait coeff_complexe
+  ecrit(i,j,x,y){
+    let k=i*this.cote+j;
+    this.re[k]=Math.round(x*1e10)/1e10;
+    this.im[k]=Math.round(y*1e10)/1e10;
+  }
+
+  /* Un complexe portant le coefficient de la ligne i, colonne j, pour
+     l affichage. ATTENTION : c est toujours le MEME objet qui est rendu,
+     rempli a neuf a chaque appel. C est ce qui evite 4^n allocations dans les
+     boucles d affichage, mais il ne faut ni le conserver ni en demander deux
+     a la fois. */
+  complexe_en(i,j){
+    if (this.jeton===null) this.jeton=new complexe(0,0);
+    let k=i*this.cote+j;
+    this.jeton.coeff_complexe(this.re[k],this.im[k]);
+    return this.jeton;
+  }
+
+  //une copie independante : les deux matrices ne partagent plus rien
+  copie(){
+    let M=new matrice_porte(this.cote);
+    M.re.set(this.re);
+    M.im.set(this.im);
+    return M;
+  }
+}
+
+
 class complexe {// c est un des coefficient du qbit de la forme x+yi
   //champs : xbrut, ybrut (avant arrondi), x, y (arrondis a 10 decimales), proba
   //accesseurs calcules a la lecture : r (module), theta_rad, theta_deg, k
@@ -1353,18 +1422,17 @@ function DeCodeStringEnGraph(code) {
     let nAretes_max=parseInt(codeBouton[1],10);
     let symbole=codeBouton[2];
     
-    let M=[];//matrice
     let n=2**nAretes_max;
+    let M=new matrice_porte(n);//matrice
     let num=3;
     for (let u = 0; u < n; u++) {
-                M.push([]);
                 for (let v = 0; v <n; v++){
-                  
+
                      let x=parseFloat(codeBouton[num],10);num=num+1;
                      let y=parseFloat(codeBouton[num],10);;num=num+1;
-                     M[u].push(new complexe(x,y));
-                     
-                     
+                     M.ecrit(u,v,x,y);
+
+
                }
     }
     

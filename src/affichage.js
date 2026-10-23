@@ -19,7 +19,7 @@ let R.affiche_decimal=false;//affcihe les etats |0111> en decimal
 */
 let couleur_mesure=0;// donne un effet couleur a chaque mesure, du rouge au noir
 
-let matrice_generee = [];//matrice generee
+let matrice_generee = undefined;//matrice_porte en cours d edition dans la fenetre
 
 let Bouton_mis_a_jour_matrice=undefined;//qaund on met a jour une matrice de porte generee
 let liste_boutons_crees=[];//liste de tous les boutons crees avec leur matrice etc...
@@ -1315,7 +1315,7 @@ function generateMatrix(matrice_deja_faite=undefined) {
           bouton -- et les etats intermediaires de la saisie entraient dans
           l historique du circuit. La copie n est reversee dans le bouton qu au
           clic sur OK, par mise_a_jour_des_portes_generees_deja_placees(). */
-       matrice_generee=copie_matrice(matrice_deja_faite);
+       matrice_generee=matrice_deja_faite.copie();
        
      }else
        
@@ -1325,19 +1325,8 @@ function generateMatrix(matrice_deja_faite=undefined) {
     
   
   
-  //on genere une matrice unitaire
-  matrice_generee = [];
-  /*for (let i = 0; i < n; i++) {
-    // Créer un tableau de taille n rempli de zéros
-    matrice_generee[i] = new Array(n).fill(new complexe(0,0));
-  }attention c est le même complexe sur toute la ligne, ne fonctionne pas*/
-  
-  for (let i = 0; i < n; i++) {
-    matrice_generee.push([]);
-    for (let j = 0; j < n; j++)
-       if (i==j) matrice_generee[i][j] = new complexe(1,0);
-       else matrice_generee[i][j] = new complexe(0,0);
-  }
+  //on genere une matrice unitaire, rangee dans deux Float64Array
+  matrice_generee = matrice_porte.identite(n);
      }
   
  
@@ -1347,16 +1336,12 @@ function generateMatrix(matrice_deja_faite=undefined) {
   
   M= new AfficheMatrix();
   document.getElementById("texteindice").textContent="0,0";
-  document.getElementById("coeffa1").value=matrice_generee[0][0].x.toString();
-  document.getElementById("coeffb1").value=matrice_generee[0][0].y.toString();
+  document.getElementById("coeffa1").value=matrice_generee.re[0].toString();
+  document.getElementById("coeffb1").value=matrice_generee.im[0].toString();
   recupere_coeff_matrice_et_affiche_matrice();
   
+  M.affiche_matrice_generee();
   
-  
- M.affiche_matrice_generee();
-
-   
-   
   M.setMatrixColor(0,0,true);
 }
 
@@ -1647,7 +1632,7 @@ function recupere_coeff_matrice_et_affiche_matrice(messageErreur=false){
   
   
   
-  matrice_generee[M.ligne_curseur][M.colonne_curseur].coeff_complexe(a1,b1);
+  matrice_generee.ecrit(M.ligne_curseur,M.colonne_curseur,a1,b1);
   M.setMatrixValue(M.ligne_curseur,M.colonne_curseur);
   
   
@@ -1663,7 +1648,7 @@ function affiche_valeur_matrice_dans_champs_html(){
   
  
   
-  let C1=matrice_generee[M.ligne_curseur][M.colonne_curseur];
+  let C1=matrice_generee.complexe_en(M.ligne_curseur,M.colonne_curseur);
   modifie_champs_html_sichangementFormatMatrice(C1,true,true);
   
   
@@ -1725,17 +1710,6 @@ function modifie_champs_html_sichangementFormatMatrice(C1,champs1=false,champs2=
 
 
 
-//Une copie independante d une matrice de complexes : les deux matrices ne
-//partagent plus aucun objet, on peut modifier l une sans toucher a l autre.
-function copie_matrice(matrice){
-  let copie=[];
-  for (let i = 0; i < matrice.length; i++) {
-    copie.push([]);
-    for (let j = 0; j < matrice.length; j++)
-      copie[i][j]=new complexe(matrice[i][j].x,matrice[i][j].y);
-  }
-  return copie;
-}
 
 
 class BoutonPorte {// c est une porte qui a été créé
@@ -1748,7 +1722,7 @@ class BoutonPorte {// c est une porte qui a été créé
     this.symbole=document.getElementById('symboleportecree').value;
     
     if (this.symbole=="") this.symbole=numero.toString();
-    this.matrice=copie_matrice(matrice);
+    this.matrice=matrice.copie();
     this.cache_chaine=null;//voir chaine_matrice()
     
     if (nAretes_max!=undefined) this.nAretes_max=nAretes_max; else
@@ -1815,12 +1789,11 @@ newButton.addEventListener('dblclick', function() {
     if (this.cache_chaine===null){
       let M=this.matrice;
       let chaine="";
-      for (let u = 0; u < M.length; u++) 
-            for (let v = 0; v <M.length; v++){
-                 chaine=chaine+M[u][v].x.toString()+";"
-                 chaine=chaine+M[u][v].y.toString()+";"
-                 
-           }
+      for (let k = 0; k < M.re.length; k++){
+           chaine=chaine+M.re[k].toString()+";"
+           chaine=chaine+M.im[k].toString()+";"
+
+      }
       this.cache_chaine=chaine;
     }
     return this.cache_chaine;
@@ -1857,7 +1830,7 @@ function EffaceButton(buttonId) {
          memoire d une porte creee (276 Mo au lieu de 138 a 10 qbits) jusqu a
          la prochaine ouverture de la fenetre. La fenetre est fermee, et toute
          reouverture repasse par generateMatrix(), qui la reconstruit. */
-      matrice_generee=[];
+      matrice_generee=undefined;
       
      
     }
@@ -1963,14 +1936,7 @@ function genere_matrice_et_porte_a_partir_circuit_affiche_a_lecran(){
   
   
     //on genere une matrice vide
-     matrice_generee = [];
- 
-    for (let i = 0; i < n; i++) {
-      matrice_generee.push([]);
-      for (let j = 0; j < n; j++)
-         matrice_generee[i][j] = new complexe(0,0);
-      
-     }
+     matrice_generee = new matrice_porte(n);
      
   
   
@@ -2006,7 +1972,7 @@ function genere_matrice_et_porte_a_partir_circuit_affiche_a_lecran(){
       let y=G.n_Qbits_sortie.im[ligne];
       
      // print(ligne,i,x,y)
-      matrice_generee[ligne][i].coeff_complexe(x,y);
+      matrice_generee.ecrit(ligne,i,x,y);
     }
     
      
@@ -2038,8 +2004,8 @@ function genere_matrice_et_porte_a_partir_circuit_affiche_a_lecran(){
   M= new AfficheMatrix();
   //M.curseurmatrice=0;//varie de 0 à n2  - 1
   document.getElementById("texteindice").textContent="0,0";
-  document.getElementById("coeffa1").value=matrice_generee[0][0].x.toString();
-  document.getElementById("coeffb1").value=matrice_generee[0][0].y.toString();
+  document.getElementById("coeffa1").value=matrice_generee.re[0].toString();
+  document.getElementById("coeffb1").value=matrice_generee.im[0].toString();
   recupere_coeff_matrice_et_affiche_matrice();
   
   
@@ -2284,7 +2250,7 @@ affiche_matrice_generee(){
 
        
       
-         cell.textContent =matrice_generee[ligne][colonne].texte_complexe(1,true,true);
+         cell.textContent =matrice_generee.complexe_en(ligne,colonne).texte_complexe(1,true,true);
       
       matrixContainer.appendChild(cell);
       
@@ -2307,7 +2273,7 @@ affiche_matrice_generee(){
     let cells = document.querySelectorAll(".matrix-cell");
     if (cells[index]) {
       let type_affichage_matrice=document.getElementById('selectnotationcoeff').value;
-        cells[index].textContent = matrice_generee[x][y].texte_complexe(type_affichage_matrice,true,true);
+        cells[index].textContent = matrice_generee.complexe_en(x,y).texte_complexe(type_affichage_matrice,true,true);
     }
 }
 
