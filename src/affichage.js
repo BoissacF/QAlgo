@@ -1402,7 +1402,7 @@ function affichageCreationPorte(element){
   
   else {
     
-    if ((G.lignes_quantiques.length>=1)&&(G.lignes_quantiques.length<=8))
+    if ((G.lignes_quantiques.length>=1)&&(G.lignes_quantiques.length<=9))
      document.getElementById("generematrice").style.display = "inline";
     else
       document.getElementById("generematrice").style.display = "none";
@@ -2197,9 +2197,18 @@ calcul_nbre_cellules_max()  {
  
 
    this.n_max=int((taillecol2matrix-30)/largeur_cellule);//bordure de 30, 15 15
+
+   /* Une fenetre de moins de cinq cellules ne se navigue pas : on affichait
+      alors toute la matrice. On ne le fait plus que si elle est petite -- a 9
+      lignes quantiques dim vaut 512, et la grille demanderait 262 144
+      cellules DOM, ce qui fige le navigateur. Au dela, on garde une fenetre,
+      jamais plus etroite que 4 cellules. */
+   if (this.n_max<=4){
+     if (this.dim<=16) this.n_max=this.dim;
+     else this.n_max=4;
+   }
+
    if (this.n_max>this.dim) this.n_max=this.dim;
-  
-   else if (this.n_max<=4) this.n_max=this.dim;
   
 }
   

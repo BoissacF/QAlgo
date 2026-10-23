@@ -456,6 +456,45 @@ function testePortesCreees() {
         })()`));
   verif("le jeton prêté est bien toujours le même objet",
         dans(`matrice_generee.complexe_en(0, 0) === matrice_generee.complexe_en(3, 4)`));
+
+  /* La matrice s'affiche par fenêtre glissante : la grille ne crée que
+     n_max² cellules DOM, jamais dim². Le repli « tout afficher », quand la
+     colonne est trop étroite pour cinq cellules, ne vaut plus que pour les
+     petites matrices — à 9 lignes quantiques dim vaut 512, et la grille
+     demanderait 262 144 <div>, ce qui fige le navigateur. */
+  function fenetre(lignesQuantiques, largeurColonne) {
+    dans(`document.getElementById('nombrelignequantique').value = "${lignesQuantiques}";
+          document.getElementById('taillecol2matrix').offsetWidth = ${largeurColonne};
+          globalThis.vue = new AfficheMatrix();`);
+    return { dim: dans("vue.dim"), n_max: dans("vue.n_max") };
+  }
+
+  let v = fenetre(9, 1200);
+  verif("9 lignes sur un écran large : fenêtre de 18 cellules sur 512",
+        v.dim === 512 && v.n_max === 18, v.n_max + " sur " + v.dim);
+
+  v = fenetre(9, 100);
+  verif("9 lignes sur une colonne étroite : la fenêtre tient, elle ne s'ouvre pas à 512",
+        v.dim === 512 && v.n_max === 4, v.n_max + " sur " + v.dim);
+
+  v = fenetre(2, 100);
+  verif("2 lignes sur une colonne étroite : tout s'affiche, comme avant",
+        v.dim === 4 && v.n_max === 4, v.n_max + " sur " + v.dim);
+
+  v = fenetre(1, 1200);
+  verif("1 ligne : la matrice 2x2 entière",
+        v.dim === 2 && v.n_max === 2, v.n_max + " sur " + v.dim);
+
+  // et le compte réel de cellules posées dans la grille
+  dans(`matrice_generee = matrice_porte.identite(512);
+        document.getElementById('nombrelignequantique').value = "9";
+        document.getElementById('taillecol2matrix').offsetWidth = 100;
+        vue = new AfficheMatrix();
+        document.getElementById('matrix').children = [];
+        vue.affiche_matrice_generee();`);
+  verif("la grille ne pose que 16 cellules, et non 262 144",
+        dans("document.getElementById('matrix').children.length") === 16,
+        dans("document.getElementById('matrix').children.length") + " cellules");
 }
 
 console.log("QAlgo — test des modules d'interface");

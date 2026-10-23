@@ -63,7 +63,7 @@ function changerdestextesicioula(){//a faire en dernier
      
      
      document.getElementById('tradicioula1').textContent="Creation of a quantum gate";
-     document.getElementById('tradicioula2').textContent="Number of quantum lines";
+     document.getElementById('tradicioula2').textContent="Number of quantum lines (1 to 9)";
 document.getElementById('tradicioula3').textContent="Symbol";
 document.getElementById('tradicioula4').textContent="Coefficient format";
 document.getElementById('boutonOkmatrice').textContent="Validate";
@@ -80,7 +80,7 @@ document.getElementById('boutonAnnulermatrice').textContent="Cancel";
      
      
      document.getElementById('tradicioula1').textContent="Création d'une porte quantique";
-      document.getElementById('tradicioula2').textContent="Nombre de lignes quantiques";
+      document.getElementById('tradicioula2').textContent="Nombre de lignes quantiques (1 à 9)";
      document.getElementById('tradicioula3').textContent="Symbole";
      document.getElementById('tradicioula4').textContent="Format des coefficients";
      document.getElementById('boutonOkmatrice').textContent="Valider";

@@ -48,7 +48,7 @@
   <!-- 1. Chargement du CSS (toujours en premier) -->
 <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css" />
 <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
-<link rel="stylesheet" type="text/css" href="assets/css/style.css?v=22.3" />
+<link rel="stylesheet" type="text/css" href="assets/css/style.css?v=22.4" />
 
 <!-- 2. Chargement de Bootstrap JS (au moment où tu en as besoin, avant les autres scripts) -->
 <script src="vendor/bootstrap/bootstrap.bundle.min.js"></script>
@@ -70,17 +70,17 @@
     
     <!-- L'ordre de chargement compte : ces fichiers partagent des variables globales.
          Le ?v= force le rechargement du cache des visiteurs apres une mise en ligne. -->
-    <script src="src/bloch.js?v=22.3"></script>
-    <script src="src/Graphic.js?v=22.3"></script>
-    <script src="src/traduction.js?v=22.3"></script>
-    <script src="src/affichage.js?v=22.3"></script>
-    <script src="src/outils.js?v=22.3"></script>
-    <script src="src/graphe.js?v=22.3"></script>
-    <script src="src/sommetaretes.js?v=22.3"></script>
-    <script src="src/calculsQuantiques.js?v=22.3"></script>
-    <script src="src/sketch.js?v=22.3"></script>
-    <script src="src/plein_ecran.js?v=22.3"></script>
-    <script src="src/historique.js?v=22.3"></script>
+    <script src="src/bloch.js?v=22.4"></script>
+    <script src="src/Graphic.js?v=22.4"></script>
+    <script src="src/traduction.js?v=22.4"></script>
+    <script src="src/affichage.js?v=22.4"></script>
+    <script src="src/outils.js?v=22.4"></script>
+    <script src="src/graphe.js?v=22.4"></script>
+    <script src="src/sommetaretes.js?v=22.4"></script>
+    <script src="src/calculsQuantiques.js?v=22.4"></script>
+    <script src="src/sketch.js?v=22.4"></script>
+    <script src="src/plein_ecran.js?v=22.4"></script>
+    <script src="src/historique.js?v=22.4"></script>
     
 
     <!--     
@@ -314,9 +314,9 @@ CE MENU FONCTIONNE SUR BOOTSRAP 5 pas sur le 4!!!!!!!!!!-->
     
             
                 <div class="align-line">
-            <label for="nombrelignequantique" class="me-3 fw-bold" id ="tradicioula2">Nombre de lignes quantiques </label>
+            <label for="nombrelignequantique" class="me-3 fw-bold" id ="tradicioula2">Nombre de lignes quantiques (1 à 9) </label>
 
-            <input type="number" id="nombrelignequantique" class="form-control selectpetit" min="1" max="8" value="1" onchange="generateMatrix()">
+            <input type="number" id="nombrelignequantique" class="form-control selectpetit" min="1" max="9" value="1" onchange="generateMatrix()">
             </div>
             
              <hr class="my-1" />
