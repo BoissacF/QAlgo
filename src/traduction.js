@@ -70,7 +70,6 @@ document.getElementById('tradicioula4').textContent="Coefficient format";
 document.getElementById('boutonOkmatrice').textContent="Validate";
 document.getElementById('boutonAnnulermatrice').textContent="Cancel";
      
-      document.getElementById('boutongenerematrice').textContent="Automatically generate the matrix of the current circuit";
      
      
      
@@ -88,8 +87,6 @@ document.getElementById('boutonAnnulermatrice').textContent="Cancel";
      document.getElementById('boutonOkmatrice').textContent="Valider";
      document.getElementById('boutonAnnulermatrice').textContent="Annuler";
      
-     document.getElementById('boutongenerematrice').textContent=
-     "Générer automatiquement la matrice du circuit actuel"; 
      
     
      

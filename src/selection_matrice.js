@@ -398,7 +398,23 @@ var SelectionCircuit = (function () {
 
   function attrape() {
     var p = poigneeSousLaSouris();
-    if (p) { prise = { bords: p.bords }; return true; }
+    if (p) {
+      /* On retient l'écart entre la souris et la ligne que le bord suit.
+         La poignée est posée à MARGE au-dessus (ou en dessous) de cette
+         ligne, et l'écart entre deux lignes quantiques n'est pas constant :
+         il vaut une centaine de pixels sur un circuit de deux lignes, mais
+         tombe à une vingtaine sur un circuit de dix-huit. Viser la ligne la
+         plus proche de la souris elle-même désignerait alors une ligne ou
+         deux trop haut : le bord sauterait à l'instant où on l'attrape, et
+         sur une sélection déjà à neuf lignes le plafond le renverrait
+         aussitôt en place — la poignée paraîtrait morte. En suivant
+         l'écart, attraper sans bouger ne change rien, et déplacer la souris
+         d'un interligne déplace le bord d'une ligne. */
+      prise = { bords: p.bords,
+                dyH: mouseY - yLigne(ligneHaut),
+                dyB: mouseY - yLigne(ligneBas) };
+      return true;
+    }
 
     if (mouseX >= xMin && mouseX <= xMax && mouseY >= yHaut() && mouseY <= yBas()) {
       prise = { bords: "", dx: mouseX - xMin, dLigne: ligneLaPlusProche(mouseY) - ligneHaut };
@@ -428,12 +444,12 @@ var SelectionCircuit = (function () {
       if (prise.bords.indexOf("d") >= 0) xMax = Math.max(mouseX, xMin + 20);
 
       if (prise.bords.indexOf("h") >= 0) {
-        var nh = Math.min(ligneLaPlusProche(mouseY), ligneBas);
+        var nh = Math.min(ligneLaPlusProche(mouseY - prise.dyH), ligneBas);
         if (ligneBas - nh + 1 > MAX_LIGNES) { annonce("tropDeLignes"); nh = ligneBas - MAX_LIGNES + 1; }
         ligneHaut = nh;
       }
       if (prise.bords.indexOf("b") >= 0) {
-        var nb = Math.max(ligneLaPlusProche(mouseY), ligneHaut);
+        var nb = Math.max(ligneLaPlusProche(mouseY - prise.dyB), ligneHaut);
         if (nb - ligneHaut + 1 > MAX_LIGNES) { annonce("tropDeLignes"); nb = ligneHaut + MAX_LIGNES - 1; }
         ligneBas = nb;
       }

@@ -746,6 +746,41 @@ function testeSelectionCircuit() {
     verif("le cadre de départ n'en prend que neuf",
           e.ligneHaut === 0 && e.ligneBas === 8, "q" + e.ligneHaut + " à q" + e.ligneBas);
 
+    /* Les bords horizontaux suivent l'écart de la souris, et non la ligne la
+       plus proche d'elle. shor9bits est le circuit qui le prouve : ses lignes
+       sont à une vingtaine de pixels les unes des autres, soit bien moins que
+       les 34 px qui séparent une poignée de sa ligne. Viser la ligne la plus
+       proche de la souris désignerait donc une ligne ou deux trop haut, le
+       bord sauterait dès qu'on l'attrape, et le plafond de neuf lignes le
+       renverrait aussitôt en place : la poignée paraîtrait morte. */
+    const interligne =
+      dans("G.lignes_quantiques[1][0].y - G.lignes_quantiques[0][0].y");
+    verif("les lignes de shor9bits sont plus serrées que la marge des poignées",
+          interligne < 34, interligne + " px d'interligne pour 34 px de marge");
+
+    dans(`(function(){ let et = SelectionCircuit._etat();
+      mouseX = (et.xMin + et.xMax) / 2;
+      mouseY = G.lignes_quantiques[et.ligneHaut][0].y - 34; })()`);
+    verif("la poignée du bord haut est attrapée",
+          dans("SelectionCircuit.clic()") === true);
+    dans("SelectionCircuit.suit();");
+    e = dans("SelectionCircuit._etat()");
+    verif("l'attraper sans bouger la souris ne déplace pas le bord",
+          e.ligneHaut === 0 && e.ligneBas === 8, "q" + e.ligneHaut + " à q" + e.ligneBas);
+
+    dans("mouseY = mouseY + " + interligne + ";");
+    dans("SelectionCircuit.suit();");
+    e = dans("SelectionCircuit._etat()");
+    verif("descendre la souris d'un interligne resserre le cadre d'une ligne",
+          e.ligneHaut === 1 && e.ligneBas === 8, "q" + e.ligneHaut + " à q" + e.ligneBas);
+
+    dans("mouseY = mouseY - " + interligne + ";");
+    dans("SelectionCircuit.suit();");
+    e = dans("SelectionCircuit._etat()");
+    verif("et la remonter d'autant rouvre le cadre à neuf lignes",
+          e.ligneHaut === 0 && e.ligneBas === 8, "q" + e.ligneHaut + " à q" + e.ligneBas);
+    dans("SelectionCircuit.declic();");
+
     dans(`(function(){ let et = SelectionCircuit._etat();
       mouseX = (et.xMin + et.xMax) / 2;
       mouseY = G.lignes_quantiques[et.ligneBas][0].y + 34; })()`);
