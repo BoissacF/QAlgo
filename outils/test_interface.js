@@ -633,11 +633,21 @@ function testeSelectionCircuit() {
           e.bloquantes.length === 0,
           e.portes.length + " portes, " + e.bloquantes.length + " bloquante(s)");
 
+    /* En coupant la ligne du bas, le X est dehors — mais ses deux contrôles
+       sont dedans, et ils le commandent. Les deux lignes retenues ne sont donc
+       pas indépendantes : les contrôles bloquent. La relation se lit dans les
+       deux sens, c'est tout l'objet de la règle. */
     dans("SelectionCircuit._cadre(0, G.lignes_quantiques.length-2, -100000, 100000);");
     e = dans("SelectionCircuit._etat()");
-    verif("en coupant la ligne du bas, la porte est dehors et ne bloque pas",
-          e.bloquantes.length === 0,
+    verif("en coupant la ligne du bas, les contrôles restés dedans bloquent",
+          e.bloquantes.length === 2,
           e.portes.length + " portes, " + e.bloquantes.length + " bloquante(s)");
+    verif("et ce sont bien deux points de contrôle",
+          dans(`(function(){ let et = SelectionCircuit._etat();
+            return et.bloquantes.length === 2 &&
+                   (et.bloquantes[0].type === 16 || et.bloquantes[0].type === 17) &&
+                   (et.bloquantes[1].type === 16 || et.bloquantes[1].type === 17);
+          })()`) === true);
 
     dans("SelectionCircuit._cadre(1, G.lignes_quantiques.length-1, -100000, 100000);");
     e = dans("SelectionCircuit._etat()");
@@ -856,6 +866,69 @@ function testeSelectionCircuit() {
     dans("SelectionCircuit._valide();");
     verif("et la validation calcule la matrice 8×8",
           dans("matrice_generee !== undefined && matrice_generee.cote === 8"));
+  }
+
+  /* 5 bis. Une ligne qui porte un contrôle n'est pas indépendante, et le
+     codage superdense est le circuit qui le montre : sa première ligne porte
+     deux H et deux contrôles, chacun commandant un X sur la seconde. La
+     sélectionner seule rendait H·H = I, une matrice qui ne décrit rien. */
+  {
+    const { dans } = bacSelection("codagesuperdense");
+    verif("le codage superdense a bien deux lignes",
+          dans("G.lignes_quantiques.length") === 2);
+    verif("dont la première porte deux H et deux contrôles",
+          dans(`(function(){ let h = 0, c = 0;
+            for (let i = 0; i < G.TabSommets.length; i++) { let s = G.TabSommets[i];
+              if (s === undefined || s.num_ligne[0] !== 0) continue;
+              if (s.type === 5) h++;
+              if (s.type === 16 || s.type === 17) c++; }
+            return h === 2 && c === 2; })()`) === true);
+
+    dans("SelectionCircuit.demarre();");
+    dans("SelectionCircuit._cadre(0, 0, -100000, 100000);");
+    let e = dans("SelectionCircuit._etat()");
+    verif("la première ligne seule est refusée : ses contrôles bloquent",
+          e.bloquantes.length === 2,
+          e.portes.length + " portes, " + e.bloquantes.length + " bloquante(s)");
+    dans("matrice_generee = undefined;");
+    dans("SelectionCircuit._valide();");
+    verif("valider ne calcule donc rien",
+          dans("matrice_generee === undefined"));
+    verif("et le message annoncé nomme le contrôle",
+          dans("SelectionCircuit._etat().message").indexOf("contrôle") > 0,
+          dans("SelectionCircuit._etat().message"));
+
+    /* La seconde ligne seule porte les deux X commandés : elle est refusée
+       aussi, par la règle qui existait déjà. */
+    dans("SelectionCircuit._cadre(1, 1, -100000, 100000);");
+    e = dans("SelectionCircuit._etat()");
+    verif("la seconde ligne seule est refusée aussi",
+          e.bloquantes.length === 2,
+          e.portes.length + " portes, " + e.bloquantes.length + " bloquante(s)");
+
+    /* Les deux ensemble forment un groupe fermé : plus rien ne bloque, et la
+       matrice 4×4 se calcule. */
+    dans("SelectionCircuit._cadre(0, 1, -100000, 100000);");
+    e = dans("SelectionCircuit._etat()");
+    verif("les deux lignes ensemble forment un groupe fermé",
+          e.bloquantes.length === 0,
+          e.portes.length + " portes, " + e.bloquantes.length + " bloquante(s)");
+    dans("SelectionCircuit._valide();");
+    verif("et la matrice 4×4 se calcule",
+          dans("matrice_generee !== undefined && matrice_generee.cote === 4"));
+
+    /* Un cadre resserré sur le premier H seul, avant tout contrôle, reste
+       légitime : c'est bien une portion indépendante de la ligne. */
+    dans("SelectionCircuit.demarre();");
+    dans("SelectionCircuit._cadre(0, 0, 100, 160);");
+    e = dans("SelectionCircuit._etat()");
+    verif("mais le premier H seul, hors de tout contrôle, passe",
+          e.bloquantes.length === 0 && e.portes.length === 1,
+          e.portes.length + " porte(s), " + e.bloquantes.length + " bloquante(s)");
+    dans("matrice_generee = undefined;");
+    dans("SelectionCircuit._valide();");
+    verif("et rend une matrice 2×2",
+          dans("matrice_generee !== undefined && matrice_generee.cote === 2"));
   }
 
   /* 6. On sort du mode dès qu'on fait autre chose, et on ne revient pas dans

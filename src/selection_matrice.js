@@ -65,7 +65,7 @@ var SelectionCircuit = (function () {
       tropDeLignes: "Tu ne peux pas sélectionner plus que " + MAX_LIGNES + " lignes quantiques.",
       vide: "La sélection ne contient aucune porte.",
       pasDeCircuit: "Il n'y a pas encore de ligne quantique à sélectionner.",
-      lien: "Sélection impossible car une des portes est liée à d'autres lignes quantiques hors sélection.",
+      lien: "Sélection impossible car une porte ou un contrôle est lié à d'autres lignes quantiques hors sélection.",
     };
     var en = {
       valider: "✓ Use this selection",
@@ -74,7 +74,7 @@ var SelectionCircuit = (function () {
       tropDeLignes: "You cannot select more than " + MAX_LIGNES + " quantum lines.",
       vide: "The selection contains no gate.",
       pasDeCircuit: "There is no quantum line to select yet.",
-      lien: "Selection impossible: one of the gates is linked to other quantum lines outside the selection.",
+      lien: "Selection impossible: a gate or a control is linked to other quantum lines outside the selection.",
     };
     return (typeof langue !== "undefined" && langue === 1) ? en[cle] : fr[cle];
   }
@@ -121,14 +121,30 @@ var SelectionCircuit = (function () {
      entière dans le cadre. */
   function lignesTouchees(sommet) {
     var lignes = [];
-    var i;
+    var i, j;
     for (i = 0; i < sommet.num_ligne.length; i++)
       if (sommet.num_ligne[i] >= 0) lignes.push(sommet.num_ligne[i]);
 
+    /* Une arête de contrôle se lit **dans les deux sens**, et c'est tout
+       l'intérêt : `numSommetDepart` est le point de contrôle, `numSommetArrive`
+       la porte qu'il commande, et l'arête figure dans les deux listes. Vu de la
+       porte, on remonte à la ligne du contrôle ; vu du contrôle, on descend
+       aux lignes de la porte. Chacun des deux désigne donc l'autre, et une
+       sélection qui ne prend qu'un bout du lien se voit refuser.
+
+       Le sommet lui-même apparaît comme l'une des deux extrémités : on le
+       saute, ses propres lignes étant déjà comptées. */
     if (sommet.aretes_controle)
       for (i = 0; i < sommet.aretes_controle.length; i++) {
-        var depart = G.TabSommets[sommet.aretes_controle[i].numSommetDepart];
-        if (depart && depart.num_ligne[0] >= 0) lignes.push(depart.num_ligne[0]);
+        var a = sommet.aretes_controle[i];
+        var bouts = [G.TabSommets[a.numSommetDepart],
+                     G.TabSommets[a.numSommetArrive]];
+        for (j = 0; j < 2; j++) {
+          var autre = bouts[j];
+          if (!autre || autre === sommet) continue;
+          for (var k = 0; k < autre.num_ligne.length; k++)
+            if (autre.num_ligne[k] >= 0) lignes.push(autre.num_ligne[k]);
+        }
       }
     return lignes;
   }
@@ -183,10 +199,18 @@ var SelectionCircuit = (function () {
      blocage possible, et il ne peut venir que d'un contrôle ou d'une porte
      multiligne : rien d'autre n'est lié à une autre ligne quantique.
 
-     Les points de contrôle ne sont jamais examinés pour eux-mêmes : ils
-     viennent avec la porte qu'ils commandent, MÊME si le cadre coupe leur
-     abscisse. Sans cela une porte contrôlée pouvait être appliquée sans son
-     contrôle, donc inconditionnellement, et la matrice était fausse. */
+     Les points de contrôle sont examinés comme les portes, et pour la même
+     raison : un contrôle posé sur une ligne sélectionnée commande une porte
+     qui est peut-être ailleurs. Si elle est hors de la bande, la ligne n'est
+     pas indépendante et il n'y a rien à en tirer : le contrôle bloque. C'est
+     ce qui manquait — on pouvait sélectionner la seule première ligne du
+     codage superdense, qui porte deux H et deux contrôles commandés sur la
+     seconde, et obtenir H·H = I, une matrice qui ne décrit rien.
+
+     Un contrôle vient en outre avec la porte qu'il commande MÊME si le cadre
+     coupe son abscisse : sans cela une porte contrôlée pouvait être appliquée
+     sans son contrôle, donc inconditionnellement, et la matrice était fausse
+     sans que rien ne le signale. */
   function recalculeSelection() {
     retenues = [];
     bloquantes = [];
@@ -199,7 +223,6 @@ var SelectionCircuit = (function () {
       var s = G.TabSommets[i];
       if (s === undefined) continue;
       if (!participeAuCalcul(s)) continue;
-      if (estUnControle(s)) continue;
       if (s.x < xMin || s.x > xMax) continue;
       if (!dansLaBande(s.num_ligne[0])) continue;
 
