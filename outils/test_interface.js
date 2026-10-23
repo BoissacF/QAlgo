@@ -497,10 +497,235 @@ function testePortesCreees() {
         dans("document.getElementById('matrix').children.length") + " cellules");
 }
 
+// ============================== sélection d'une partie du circuit
+// Le module `selection_matrice.js` calcule la matrice d'un morceau de circuit.
+// Deux garanties se vérifient sans navigateur : le cadre posé sur le circuit
+// entier doit redonner exactement la matrice que l'ancien bouton produisait, et
+// une sous-sélection doit donner le bon produit tensoriel.
+
+function bacSelection(nomCircuit) {
+  const bac = harnais.fabriqueSandbox();
+  vm.createContext(bac);
+  vm.runInContext(harnais.sourceMoteur(), bac, { filename: "moteur.js" });
+  const dans = (expr) => vm.runInContext(expr, bac);
+  dans(`
+    langue = 0;
+    R = new Reglages();
+    liste_boutons_crees = [];
+    typeSelectionne = -1;
+    demarrage = true;
+    ouverture_de_fichier_en_cours = false;
+    textContainer1 = document.getElementById('textcontainer1');
+    textContainer2 = document.getElementById('textcontainer2');
+    Monselect = document.getElementById('monSelect');
+    Graphes_nQbits = new Graphique();
+    graf3DBloch1 = new GraphiqueBloch(true);
+    graf3DBloch2 = new GraphiqueBloch(false);
+    document.getElementById('nombrelignequantique').value = "1";
+    document.getElementById('symboleportecree').value = "U";
+    document.getElementById('selectnotationcoeff').value = "1";
+    document.getElementById('precisionChiffresApresVirgule').value = "1";
+    document.getElementById('taillecol2matrix').offsetWidth = 1200;
+  `);
+  const code = fs.readFileSync(
+    path.join(RACINE, "examples/fr", nomCircuit + ".txt"), "utf8").trim();
+  dans(`DeCodeStringEnGraph(${JSON.stringify(code)})`);
+  dans("G.calcul_LignesQuantiQues_nQbitsEntree_nQbitsSortie();");
+  return { dans: dans, bac: bac };
+}
+
+// la matrice, recopiée hors du bac à sable pour pouvoir la comparer
+function lisMatrice(dans, expr) {
+  return dans(`(function(){ let M = ${expr};
+    return { cote: M.cote, re: Array.from(M.re), im: Array.from(M.im) }; })()`);
+}
+
+function memeMatrice(a, b) {
+  if (a.cote !== b.cote) return "côtés " + a.cote + " contre " + b.cote;
+  for (let k = 0; k < a.re.length; k++)
+    if (a.re[k] !== b.re[k] || a.im[k] !== b.im[k])
+      return "coefficient " + k + " : " + a.re[k] + "+" + a.im[k] + "i contre " +
+             b.re[k] + "+" + b.im[k] + "i";
+  return "";
+}
+
+// compare à une matrice attendue, écrite ligne par ligne en parties réelles
+function colleAuxReels(M, attendue) {
+  if (M.cote * M.cote !== attendue.length) return "taille";
+  for (let k = 0; k < attendue.length; k++) {
+    if (Math.abs(M.re[k] - attendue[k]) > 1e-9) return "réel " + k;
+    if (Math.abs(M.im[k]) > 1e-9) return "imaginaire " + k;
+  }
+  return "";
+}
+
+function testeSelectionCircuit() {
+  titre("sélection d'une partie du circuit");
+
+  /* 1. Le cadre sur tout le circuit doit redonner, au bit près, la matrice
+     que calculait `genere_matrice_et_porte_a_partir_circuit_affiche_a_lecran`.
+     C'est la garantie que le filtrage et le décalage des numéros de ligne
+     n'ont rien changé au calcul lui-même. */
+  for (const nom of ["bell1", "toffoli", "teleportation", "grover3bits"]) {
+    const { dans } = bacSelection(nom);
+
+    dans("genere_matrice_et_porte_a_partir_circuit_affiche_a_lecran();");
+    const ancienne = lisMatrice(dans, "matrice_generee");
+
+    dans("G.calcul_LignesQuantiQues_nQbitsEntree_nQbitsSortie();");
+    dans("SelectionCircuit._cadre(0, G.lignes_quantiques.length-1, -100000, 100000);");
+    const nouvelle = lisMatrice(dans, "SelectionCircuit._calculeMatrice()");
+
+    const ecart = memeMatrice(ancienne, nouvelle);
+    verif("tout " + nom + " sélectionné : même matrice qu'avant", ecart === "",
+          ecart || "identique au bit près, côté " + nouvelle.cote);
+  }
+
+  /* 2. Une sous-sélection. bell1 est un H sur q0 puis un CNOT commandé par q0.
+     Le H seul vaut H ; le même H avec les deux lignes retenues vaut H⊗I ;
+     et tout bell1 vaut CNOT·(H⊗I), dont la première colonne est l'état de
+     Bell. Les trois sont vérifiés sur les valeurs, pas sur une empreinte. */
+  {
+    const { dans } = bacSelection("bell1");
+    const r = Math.SQRT1_2;
+
+    dans("SelectionCircuit._cadre(0, 0, 100, 220);");       // le H seul
+    let e = dans("SelectionCircuit._etat()");
+    let M = lisMatrice(dans, "SelectionCircuit._calculeMatrice()");
+    verif("une seule porte retenue autour du H", e.retenues.length === 1,
+          e.retenues.length + " retenue(s)");
+    verif("le H seul donne bien la matrice de Hadamard",
+          colleAuxReels(M, [r, r, r, -r]) === "",
+          colleAuxReels(M, [r, r, r, -r]) || "conforme");
+
+    dans("SelectionCircuit._cadre(0, 1, 100, 220);");       // le H, deux lignes
+    M = lisMatrice(dans, "SelectionCircuit._calculeMatrice()");
+    verif("le même H sur deux lignes donne H⊗I",
+          colleAuxReels(M, [r, 0, r, 0,
+                            0, r, 0, r,
+                            r, 0, -r, 0,
+                            0, r, 0, -r]) === "",
+          colleAuxReels(M, [r, 0, r, 0, 0, r, 0, r, r, 0, -r, 0, 0, r, 0, -r]) || "conforme");
+
+    dans("SelectionCircuit._cadre(0, 1, -100000, 100000);"); // tout bell1
+    M = lisMatrice(dans, "SelectionCircuit._calculeMatrice()");
+    verif("tout bell1 donne CNOT·(H⊗I)",
+          colleAuxReels(M, [r, 0, r, 0,
+                            0, r, 0, r,
+                            0, r, 0, -r,
+                            r, 0, -r, 0]) === "",
+          colleAuxReels(M, [r, 0, r, 0, 0, r, 0, r, 0, r, 0, -r, r, 0, -r, 0]) || "conforme");
+    verif("sa première colonne est l'état de Bell (∣00⟩+∣11⟩)/√2",
+          Math.abs(M.re[0] - r) < 1e-9 && Math.abs(M.re[4]) < 1e-9 &&
+          Math.abs(M.re[8]) < 1e-9 && Math.abs(M.re[12] - r) < 1e-9);
+  }
+
+  /* 3. La règle des contrôles. Dans toffoli, le X est sur q2 et ses deux
+     contrôles sur q0 et q1. En coupant la ligne du bas, le X sort du cadre.
+     En coupant celle du haut, il y reste mais perd un contrôle : il est alors
+     refusé, parce qu'il agirait sur un qubit absent de la matrice. */
+  {
+    const { dans } = bacSelection("toffoli");
+
+    dans("SelectionCircuit._cadre(0, G.lignes_quantiques.length-1, -100000, 100000);");
+    let e = dans("SelectionCircuit._etat()");
+    verif("cadre sur tout toffoli : rien n'est refusé", e.refusees.length === 0,
+          e.retenues.length + " retenues, " + e.refusees.length + " refusées");
+
+    dans("SelectionCircuit._cadre(0, G.lignes_quantiques.length-2, -100000, 100000);");
+    e = dans("SelectionCircuit._etat()");
+    verif("en coupant la ligne du bas, la porte est dehors et non refusée",
+          e.refusees.length === 0,
+          e.retenues.length + " retenues, " + e.refusees.length + " refusées");
+
+    dans("SelectionCircuit._cadre(1, G.lignes_quantiques.length-1, -100000, 100000);");
+    e = dans("SelectionCircuit._etat()");
+    verif("en coupant la ligne du haut, la porte dont un contrôle sort est refusée",
+          e.refusees.length === 1,
+          e.retenues.length + " retenues, " + e.refusees.length + " refusée(s)");
+    verif("et c'est bien le X à deux contrôles",
+          dans(`(function(){ let et = SelectionCircuit._etat();
+            return et.refusees[0].type === 3 &&
+                   et.refusees[0].aretes_controle.length === 2; })()`));
+  }
+
+  /* 4. Le plafond de neuf lignes, éprouvé en tirant vraiment une poignée :
+     on attrape le bord bas et on amène la souris sur la dix-huitième ligne. */
+  {
+    const { dans } = bacSelection("shor9bits");
+    verif("shor9bits a bien plus de neuf lignes",
+          dans("G.lignes_quantiques.length") === 18,
+          dans("G.lignes_quantiques.length") + " lignes");
+
+    dans("SelectionCircuit.demarre();");
+    let e = dans("SelectionCircuit._etat()");
+    verif("le cadre de départ n'en prend que neuf",
+          e.ligneHaut === 0 && e.ligneBas === 8, "q" + e.ligneHaut + " à q" + e.ligneBas);
+
+    dans(`(function(){ let et = SelectionCircuit._etat();
+      mouseX = (et.xMin + et.xMax) / 2;
+      mouseY = G.lignes_quantiques[et.ligneBas][0].y + 34; })()`);
+    verif("la poignée du bord bas est attrapée", dans("SelectionCircuit.clic()") === true);
+
+    dans("mouseY = G.lignes_quantiques[17][0].y;");
+    dans("SelectionCircuit.suit();");
+    e = dans("SelectionCircuit._etat()");
+    verif("tirer jusqu'à q17 ne dépasse pas neuf lignes",
+          e.ligneBas - e.ligneHaut + 1 === 9,
+          (e.ligneBas - e.ligneHaut + 1) + " lignes");
+    verif("et le message le dit", e.message.indexOf("9") > 0, e.message);
+    dans("SelectionCircuit.declic();");
+    dans("SelectionCircuit.touche(27);");
+    verif("Échap sort du mode sélection",
+          dans("SelectionCircuit.estActif()") === false);
+  }
+
+  /* 5. Une mesure dans la sélection n'a pas de matrice : `valide()` doit
+     refuser sans rien calculer. */
+  {
+    const { dans } = bacSelection("bell1");
+    dans("SelectionCircuit.demarre();");
+    dans("SelectionCircuit._cadre(0, 1, -100000, 100000);");
+    verif("le cadre sur tout bell1 contient une mesure",
+          dans(`(function(){ let et = SelectionCircuit._etat();
+            for (let i = 0; i < et.retenues.length; i++)
+              if (et.retenues[i].type === 65) return true;
+            return false; })()`) === true);
+    dans("matrice_generee = undefined;");
+    dans("SelectionCircuit._valide();");
+    verif("valider refuse et ne calcule rien",
+          dans("matrice_generee === undefined"));
+    verif("et le message explique pourquoi",
+          dans("SelectionCircuit._etat().message").indexOf("mesure") >= 0,
+          dans("SelectionCircuit._etat().message"));
+  }
+
+  /* 6. Le dessin et les hameçons ne doivent jamais lever, mode actif ou non :
+     ils sont appelés à chaque image et à chaque clic du simulateur. */
+  {
+    const { dans } = bacSelection("bell1");
+    verif("hors mode, les hameçons ne consomment rien et ne lèvent pas",
+          dans(`(function(){ try {
+            SelectionCircuit.dessine(); SelectionCircuit.suit();
+            return SelectionCircuit.clic() === false &&
+                   SelectionCircuit.declic() === false &&
+                   SelectionCircuit.touche(13) === false &&
+                   SelectionCircuit.estActif() === false;
+          } catch (e) { return "lève : " + e.message; } })()`) === true);
+    verif("en mode, dessine() et suit() ne lèvent pas",
+          dans(`(function(){ try {
+            SelectionCircuit.demarre();
+            SelectionCircuit.dessine(); SelectionCircuit.suit();
+            return SelectionCircuit.estActif() === true;
+          } catch (e) { return "lève : " + e.message; } })()`) === true);
+  }
+}
+
 console.log("QAlgo — test des modules d'interface");
 testePleinEcran();
 testeHistorique();
 testePortesCreees();
+testeSelectionCircuit();
 console.log("");
 if (echecs) {
   console.log(echecs + " contrôle(s) en échec sur " + total + ".");

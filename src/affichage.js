@@ -1402,7 +1402,10 @@ function affichageCreationPorte(element){
   
   else {
     
-    if ((G.lignes_quantiques.length>=1)&&(G.lignes_quantiques.length<=9))
+    /* Le bouton de selection n a plus besoin que le circuit entier tienne en
+       9 lignes : c est la selection qu on borne, pas le circuit. Il suffit
+       qu il y ait une ligne quantique. */
+    if (G.lignes_quantiques.length>=1)
      document.getElementById("generematrice").style.display = "inline";
     else
       document.getElementById("generematrice").style.display = "none";

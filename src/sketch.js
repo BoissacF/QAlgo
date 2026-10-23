@@ -861,11 +861,12 @@ function mousePressed() {
   //console.log('Position X:', canevas.elt.offsetLeft);
   //console.log('Position Y:', canevas.elt.offsetTop);
   if (R.on_est_dans_une_fenetre==true) return;
-  
- 
-  
-  
-  
+  if (SelectionCircuit.estActif()) return;
+
+
+
+
+
    if (R.active_Bloch==true){
     
     if (graf3DBloch1.toucheSouris()==true) {
@@ -1262,6 +1263,12 @@ if (G.TabSommets.length>2) graf3DBloch2.affiche();
  // if (menuCouleurVisible) {
   //  drawMenu_clic_droit_souris(menuCouleurX, menuCouleurY);
  // }
+
+  /* Le cadre de selection d une partie du circuit, par-dessus tout le reste.
+     Voir selection_matrice.js ; hors de ce mode, les deux appels ne font
+     rien. */
+  SelectionCircuit.suit();
+  SelectionCircuit.dessine();
 }
 
 
@@ -1364,7 +1371,8 @@ function mouseReleased() {}
 
 function DoubleClicCanevas() {
  if (demarrage==false )return;
-  
+  if (SelectionCircuit.estActif()) return;
+
   if (mouseButton === RIGHT) return;
   if (menuCouleurVisible == true) return;
 
@@ -1498,8 +1506,10 @@ function clicsurSommetcontrole(numSommet){
 
 
 function ClicCanevas() {
-  
+
   if (demarrage==false )return;
+  //en mode selection, le circuit ne doit pas bouger : le cadre prend tout
+  if (SelectionCircuit.clic()) return;
   if (gestionClicGraphicEnergie()==true) return;
   
   if (Graphes_nQbitsExiste==true)
@@ -1554,6 +1564,7 @@ function ClicCanevas() {
 
 function DeclicCanevas() {
   colorPicker.hide();
+  if (SelectionCircuit.declic()) return;
   if (R.on_est_dans_une_fenetre==true) return;
   
   print("jedeclic bloch=",R.active_Bloch," selection=",Selection,"double_clic_en_cours",double_clic_en_cours,"deplace graphic",Souris_Graphic[0])
@@ -1678,6 +1689,8 @@ function DeclicCanevas() {
 }
 
 function keyPressed() {
+  //Entree valide la selection en cours, Echap l annule
+  if (SelectionCircuit.touche(keyCode)) return;
   //parametrage sommeten cours
   // background('yellow');
   //text(`${key} ${keyCode}`, 10, 40);

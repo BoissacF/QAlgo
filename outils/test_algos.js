@@ -44,7 +44,7 @@ const REFERENCES = path.join(RACINE, "outils", "references_algos.json");
 const MOTEUR = [
   "bloch.js", "Graphic.js", "traduction.js", "affichage.js", "outils.js",
   "graphe.js", "sommetaretes.js", "calculsQuantiques.js", "sketch.js",
-  "plein_ecran.js", "historique.js",
+  "plein_ecran.js", "historique.js", "selection_matrice.js",
 ];
 
 // Seuls Shor pour 21 (18 qubits, 262144 amplitudes) et Shor pour 39
