@@ -102,6 +102,7 @@ depuis l'interface, sans toucher au code.
 | Action | Commande |
 |---|---|
 | Déposer ou retirer un qubit ou une porte | Cliquer-glisser |
+| Ajouter une ligne quantique sous la dernière | Le « + » en haut à gauche du circuit |
 | Sélectionner et déplacer | Clic gauche |
 | Modifier la taille | Clic gauche + molette |
 | Modifier la couleur | Clic droit |

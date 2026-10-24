@@ -8,7 +8,7 @@
  * voir le fichier LICENSE à la racine du dépôt.
  */
 
-/* Ce test recharge le vrai moteur de QAlgo — les neuf fichiers de `src/`, dans
+/* Ce test recharge le vrai moteur de QAlgo — les fichiers de `src/`, dans
  * l'ordre où les pages les chargent — puis rejoue chaque circuit d'exemple et
  * compare les amplitudes obtenues à des valeurs de référence enregistrées.
  *
@@ -44,7 +44,7 @@ const REFERENCES = path.join(RACINE, "outils", "references_algos.json");
 const MOTEUR = [
   "bloch.js", "Graphic.js", "traduction.js", "affichage.js", "outils.js",
   "graphe.js", "sommetaretes.js", "calculsQuantiques.js", "sketch.js",
-  "plein_ecran.js", "historique.js", "selection_matrice.js",
+  "plein_ecran.js", "historique.js", "selection_matrice.js", "ajout_qbit.js",
 ];
 
 // Seuls Shor pour 21 (18 qubits, 262144 amplitudes) et Shor pour 39

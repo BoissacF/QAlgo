@@ -49,6 +49,8 @@ function changeLanguage(element=undefined) {
   changerdestextesicioula();
   if (typeof mettreAJourBoutonPleinEcran === 'function')
     mettreAJourBoutonPleinEcran();//le libelle du bouton suit la langue
+  if (typeof AjoutQbit !== 'undefined')
+    AjoutQbit.traduis();//idem pour la bulle du « + » d ajout de qbit
         }
 
 

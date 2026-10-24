@@ -1094,7 +1094,12 @@ function draw() {
   mes touches supp et le clic droit suffisent
 */
   frameRate(10); // make frameRate 10 FPS 10 mise a jour par seconde
-  
+
+  /* Le « + » d ajout de ligne quantique est en HTML par dessus le canvas : il
+     doit suivre le canvas et disparaitre avec lui, donc avant les retours
+     anticipes qui suivent. Voir ajout_qbit.js. */
+  if (typeof AjoutQbit !== "undefined") AjoutQbit.synchronise();
+
   if (ouverture_de_fichier_en_cours){
       affichemessagedattente();
       return;

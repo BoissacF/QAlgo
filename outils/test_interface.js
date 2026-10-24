@@ -503,7 +503,8 @@ function testePortesCreees() {
 // entier doit redonner exactement la matrice que l'ancien bouton produisait, et
 // une sous-sélection doit donner le bon produit tensoriel.
 
-function bacSelection(nomCircuit) {
+// le moteur chargé dans un bac à sable, avec un circuit déjà posé
+function bacCircuit(code) {
   const bac = harnais.fabriqueSandbox();
   vm.createContext(bac);
   vm.runInContext(harnais.sourceMoteur(), bac, { filename: "moteur.js" });
@@ -527,11 +528,15 @@ function bacSelection(nomCircuit) {
     document.getElementById('precisionChiffresApresVirgule').value = "1";
     document.getElementById('taillecol2matrix').offsetWidth = 1200;
   `);
-  const code = fs.readFileSync(
-    path.join(RACINE, "examples/fr", nomCircuit + ".txt"), "utf8").trim();
   dans(`DeCodeStringEnGraph(${JSON.stringify(code)})`);
   dans("G.calcul_LignesQuantiQues_nQbitsEntree_nQbitsSortie();");
   return { dans: dans, bac: bac };
+}
+
+function bacSelection(nomCircuit) {
+  const code = fs.readFileSync(
+    path.join(RACINE, "examples/fr", nomCircuit + ".txt"), "utf8").trim();
+  return bacCircuit(code);
 }
 
 // la matrice, recopiée hors du bac à sable pour pouvoir la comparer
@@ -1025,11 +1030,173 @@ function testeSelectionCircuit() {
   }
 }
 
+// ============================== « + » d'ajout d'une ligne quantique
+// Le module `ajout_qbit.js` ne calcule qu'une position : c'est elle qui se
+// vérifie ici, le dessin du bouton demandant un vrai navigateur. Le circuit
+// d'accueil sert de point de départ, comme au démarrage du simulateur.
+
+const ACCUEIL = fs.readFileSync(
+  path.join(RACINE, "examples/circuitouverture.txt"), "utf8").trim();
+
+/* `largeur` et `hauteur` sont celles du canvas : sans elles `ajouteSommet` ne
+   sait pas où poser la mesure de fin de ligne, et n'en pose aucune. On prend
+   l'écran que le bac à sable annonce par `width` et `height`. */
+function bacAjout() {
+  const b = bacCircuit(ACCUEIL);
+  b.dans("largeur = 1200; hauteur = 800;");
+  return b;
+}
+
+// toutes les abscisses de qbits d'entrée, et toutes leurs ordonnées
+function lisLignes(dans) {
+  return JSON.parse(dans(`JSON.stringify(G.lignes_quantiques.map(
+    function (l) { return [l[0].x, l[0].y, l[0].diametre]; }))`));
+}
+
+function testeAjoutQbit() {
+  titre("« + » d'ajout d'une ligne quantique");
+
+  /* Le circuit d'accueil : un qbit en (49, 91) de 35 px, et sa mesure en 741.
+     La ligne suivante doit garder l'abscisse 49 et tomber 1,5 porte plus bas. */
+  {
+    const { dans } = bacAjout();
+    verif("le circuit d'accueil a une seule ligne",
+          dans("G.lignes_quantiques.length") === 1);
+
+    const p = JSON.parse(dans("JSON.stringify(AjoutQbit._position())"));
+    verif("la prochaine ligne garde l'abscisse du premier qbit",
+          p.x === 49, "x = " + p.x);
+    verif("elle tombe à 1,5 hauteur de porte sous la dernière",
+          Math.abs(p.y - (91 + 1.5 * 35)) < 1e-9, "y = " + p.y);
+    verif("rien à réduire tant que l'écran est assez haut",
+          p.coeff === 1, "coeff = " + p.coeff);
+    verif("sans menu posé, l'état choisi est |0⟩", dans("AjoutQbit._type()") === 0);
+  }
+
+  /* Quatre clics : quatre lignes de plus, alignées, régulièrement espacées, et
+     fermées par une mesure à l'abscisse de celle de la première ligne. */
+  {
+    const { dans } = bacAjout();
+    verif("quatre clics posent quatre lignes",
+          dans(`(function(){ for (var i = 0; i < 4; i++) AjoutQbit.ajoute();
+                 return G.lignes_quantiques.length; })()`) === 5);
+
+    const lignes = lisLignes(dans);
+    verif("les cinq qbits sont à la même abscisse",
+          lignes.every((l) => l[0] === 49),
+          lignes.map((l) => l[0]).join(" "));
+    verif("les écarts valent tous 1,5 hauteur de porte",
+          lignes.every((l, i) => i === 0 ||
+                       Math.abs(l[1] - lignes[i - 1][1] - 1.5 * 35) < 1e-9),
+          lignes.map((l) => l[1]).join(" "));
+    verif("les lignes sont toutes fermées à la même abscisse",
+          dans(`(function(){
+            var x = [];
+            for (var i = 0; i < G.lignes_quantiques.length; i++) {
+              var l = G.lignes_quantiques[i];
+              var f = l[l.length - 1];
+              if (f.type !== 65) return "la ligne " + i + " ne finit pas par une mesure";
+              if (x.indexOf(f.x) < 0) x.push(f.x);
+            }
+            return x.length === 1 ? true : "abscisses " + x.join(" ");
+          })()`) === true);
+    verif("l'état de sortie suit : cinq qbits, donc 32 amplitudes",
+          dans(`(function(){
+            G.calcul_LignesQuantiQues_nQbitsEntree_nQbitsSortie();
+            return G.n_Qbits_sortie.length; })()`) === 32);
+  }
+
+  /* L'état du menu est respecté : |−⟩ donne bien le qbit (|0⟩−|1⟩)/√2. */
+  {
+    const { dans } = bacAjout();
+    verif("le ket choisi dans le menu est celui qui est posé",
+          dans(`(function(){
+            AjoutQbit._cree();
+            AjoutQbit._elements().choix.value = "22";
+            if (AjoutQbit._type() !== 22) return "type lu : " + AjoutQbit._type();
+            AjoutQbit.ajoute();
+            var q = G.lignes_quantiques[1][0];
+            return (Math.abs(q.Qbit[0][0].x - Math.SQRT1_2) < 1e-9) &&
+                   (Math.abs(q.Qbit[0][1].x + Math.SQRT1_2) < 1e-9);
+          })()`) === true);
+    verif("le menu propose les quatre kets, |0⟩ en premier",
+          dans(`AjoutQbit._elements().choix.children.map(
+                  function (o) { return o.textContent; }).join(" ")`) ===
+          "|0⟩ |1⟩ |+⟩ |−⟩");
+    verif("la bulle part fermée",
+          dans("AjoutQbit._elements().bulle.style.display") === "none");
+  }
+
+  /* Le redimensionnement automatique. L'écran du bac fait 800 px de haut : à
+     35 px de porte les lignes tiennent jusqu'à la quatorzième, la quinzième
+     force la réduction de tout le circuit. */
+  {
+    const { dans } = bacAjout();
+    dans("(function(){ for (var i = 0; i < 13; i++) AjoutQbit.ajoute(); })()");
+    const avant = lisLignes(dans);
+    verif("quatorze lignes tiennent sans rien réduire",
+          (avant.length === 14) && avant.every((l) => l[2] === 35),
+          "diamètres " + avant.map((l) => l[2]).join(" "));
+
+    dans("AjoutQbit.ajoute()");
+    const apres = lisLignes(dans);
+    verif("la quinzième ligne réduit le circuit",
+          (apres.length === 15) && apres.every((l) => l[2] < 35),
+          "diamètre " + apres[0][2]);
+    verif("après réduction tout le circuit reste dans l'écran",
+          apres.every((l) => l[1] + l[2] / 2 <= 800),
+          "plus basse ligne en " + apres[apres.length - 1][1]);
+    verif("les qbits restent alignés après réduction",
+          apres.every((l) => l[0] === apres[0][0]),
+          apres.map((l) => l[0]).join(" "));
+    verif("l'écart reste de 1,5 porte, à la nouvelle échelle",
+          apres.every((l, i) => i === 0 ||
+                      Math.abs(l[1] - apres[i - 1][1] - 1.5 * l[2]) < 1e-9),
+          apres.map((l) => l[1]).join(" "));
+  }
+
+  /* Les garde-fous : le bouton ne doit rien poser quand le circuit n'a pas la
+     main, et `synchronise()` est appelée à chaque image, donc elle ne doit ni
+     lever ni dépendre d'un vrai canvas. */
+  {
+    const { dans } = bacAjout();
+    verif("rien n'est posé sous une fenêtre de paramètres",
+          dans(`(function(){ R.on_est_dans_une_fenetre = true;
+                 var r = AjoutQbit.ajoute();
+                 R.on_est_dans_une_fenetre = false;
+                 return (r === false) && (G.lignes_quantiques.length === 1);
+               })()`) === true);
+    verif("rien n'est posé pendant le chargement d'un fichier",
+          dans(`(function(){ ouverture_de_fichier_en_cours = true;
+                 var r = AjoutQbit.ajoute();
+                 ouverture_de_fichier_en_cours = false;
+                 return (r === false) && (G.lignes_quantiques.length === 1);
+               })()`) === true);
+    verif("le plafond de qbits est respecté",
+          dans(`(function(){
+                 for (var i = 0; i < nbre_qbits_max + 5; i++) AjoutQbit.ajoute();
+                 return G.lignes_quantiques.length; })()`) === 24);
+    verif("synchronise() ne lève pas et ne demande pas de canvas",
+          dans(`(function(){ try { AjoutQbit.synchronise();
+                 AjoutQbit.synchronise(); return true; }
+                 catch (e) { return "lève : " + e.message; } })()`) === true);
+    verif("le libellé suit la langue",
+          dans(`(function(){ AjoutQbit._cree();
+                 langue = 1; AjoutQbit.traduis();
+                 var en = AjoutQbit._elements().etiquette.textContent;
+                 langue = 0; AjoutQbit.traduis();
+                 var fr = AjoutQbit._elements().etiquette.textContent;
+                 return [fr, en].join(" / "); })()`) ===
+          "Ajouter un qbit / Add a qubit");
+  }
+}
+
 console.log("QAlgo — test des modules d'interface");
 testePleinEcran();
 testeHistorique();
 testePortesCreees();
 testeSelectionCircuit();
+testeAjoutQbit();
 console.log("");
 if (echecs) {
   console.log(echecs + " contrôle(s) en échec sur " + total + ".");
