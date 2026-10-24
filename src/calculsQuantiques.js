@@ -682,6 +682,40 @@ function retourne_vecteur_nQbits_dentree(LigneQuantique){
   if (n==0) return [];
 
   let taille_finale=2**n;
+
+  /* Raccourci : si TOUS les qbits d entree sont exactement |0> ou |1>, le
+     produit tensoriel n a qu une amplitude non nulle, et son rang est le nombre
+     binaire forme par les kets, la premiere ligne donnant le bit de poids fort.
+     Inutile de parcourir les 2^n rangs pour y ecrire des zeros : a 24 qbits la
+     boucle ci dessous fait une centaine de millions d ecritures, et reserve en
+     plus les 16 Mo du tableau `fige`.
+
+     Le resultat est identique au bit pres. Les seuls produits en jeu valent
+     1x1, l arrondi a dix decimales ne change rien a 1, la probabilite 1x1+0x0
+     vaut 1, et toutes les autres cases valent zero -- ce qu un Float64Array
+     neuf donne deja. Il faut n>=2 : a une seule ligne la boucle ne tourne pas
+     et les coefficients sont poses tels quels, probabilite du qbit comprise.
+
+     Tout le reste -- |+>, |->, un qbit dont on a change les coefficients --
+     repasse par la boucle, inchangee. */
+  if (n>=2){
+    let rang=0;
+    let que_des_etats_de_base=true;
+    for (let j = 0; j <n; j++) {
+      let c0=LigneQuantique[j][0].Qbit[0][0];
+      let c1=LigneQuantique[j][0].Qbit[0][1];
+      if ((c0.x===1)&&(c0.y===0)&&(c1.x===0)&&(c1.y===0)) rang=rang*2;       //|0>
+      else if ((c0.x===0)&&(c0.y===0)&&(c1.x===1)&&(c1.y===0)) rang=rang*2+1;//|1>
+      else { que_des_etats_de_base=false; break; }
+    }
+    if (que_des_etats_de_base===true){
+      let un_seul=new vecteur_etat(taille_finale);
+      un_seul.ecrit(rang,1,0);
+      if (debug_affiche_nQbits==true) print("le nqbits est",un_seul);
+      return un_seul;
+    }
+  }
+
   let n_Qbits=new vecteur_etat(taille_finale);
   let fige=new Uint8Array(taille_finale);//1 = etat arrete sur un coefficient nul
 
@@ -769,11 +803,48 @@ function calcul_probas_pour_un_Qbit_numeroQbit_du_nQbit(n_Qbits,numeroQbit,nbre_
 
   if (n_Qbits instanceof vecteur_etat){
 
-    let pr=n_Qbits.pr;
-    for (let i = 0; i <n_Qbits.length; i++)
-      if (n_Qbits.est_vivant(i))
-        // c est beaucoup plus rapide de faire un et que de convertir !!!!!
-        if ((masque_index_a_traiter&i)!=0)  P1=P1+100*pr[i];
+    /* Les etats dont le bit vaut 1 sont exactement les blocs contigus
+       [masque, 2*masque[, puis [3*masque, 4*masque[, etc : un paquet de
+       `masque` rangs sur deux. On ne parcourt donc que ceux la, dans l ordre
+       croissant. C est la moitie des rangs, et des plages contigues plutot
+       qu un rang sur deux, ce qui pour les lignes de poids fort lit deux fois
+       moins de lignes de cache. Les termes additionnes et leur ordre sont les
+       memes qu avec un parcours complet filtre par un et binaire : la somme
+       est donc identique au bit pres.
+
+       Le test de vie est sorti de la boucle : il est le meme pour tout le
+       vecteur, et `vivant` ne vaut autre chose que null que sur le vecteur
+       d une mesure partielle. */
+
+    let L=n_Qbits.length;
+    let masque=masque_index_a_traiter;
+
+    /* Masque hors bornes : numeroQbit vaut -1 pour une porte non raccordee, et
+       le masque vaut alors 2^nbre_Qbits, soit L -- aucun rang ne porte ce bit.
+       Un numeroQbit trop grand donne un masque fractionnaire, que le et
+       binaire ramenait a 0. Ces deux cas rendaient [100,0], on le garde. */
+    if ((masque>=1)&&(masque<L)){
+
+      let pr=n_Qbits.pr;
+      let vivant=n_Qbits.vivant;
+      let pas=2*masque;
+
+      if (vivant===null){
+        for (let debut = masque; debut < L; debut += pas){
+          let fin=debut+masque;
+          if (fin>L) fin=L;//vecteur dont la taille n est pas une puissance de 2
+          for (let i = debut; i < fin; i++)  P1=P1+100*pr[i];
+        }
+      } else {
+        for (let debut = masque; debut < L; debut += pas){
+          let fin=debut+masque;
+          if (fin>L) fin=L;
+          for (let i = debut; i < fin; i++)
+            if (vivant[i]===1)  P1=P1+100*pr[i];
+        }
+      }
+
+    }
 
   } else {
 
@@ -1019,7 +1090,21 @@ function applique_Porte_Z(n_Qbits,index,nbre_Qbits,L_aretes_controle){//applique
   //cree un masque 0001000000 ou 1 est la position du qbit qui passe dans la porte
   let  masque_index_a_traiter = 2**(nbre_Qbits-1-index);
 
-  let nouveau_n_Qbits=new vecteur_etat(n_Qbits.length);
+  /* Z travaille SUR PLACE : elle lit le rang i et reecrit le rang i, tous les
+     rangs sont reecrits, et aucun ne depend d un autre. Allouer un vecteur neuf
+     reservait et mettait a zero trois Float64Array -- 400 Mo a 24 qbits pour
+     une seule porte Z, dont le premier acces coute plus que le calcul.
+
+     Le resultat est identique au bit pres : `ecrit` ne change rien a un re et
+     un im deja arrondis, et recalcule la probabilite sur exactement les memes
+     valeurs que recevait le vecteur neuf. Comme celui ci on repart sans
+     amplitude supprimee, d ou la remise a null de `vivant`.
+
+     Meme raisonnement que pour applique_Porte_BitMesure, deja sur place : le
+     seul appelant reaffecte le resultat, et les deux endroits qui gardent le
+     vecteur de sortie pendant un calcul en tiennent soit une copie profonde
+     (genere_matrice_et_porte_a_partir_circuit_affiche_a_lecran), soit une
+     reference sur laquelle le pipeline ne travaille pas (calculeMatrice). */
 
   //on parcourt chaque etat du n_qbit
   for (let i = 0; i <n_Qbits.length; i++) {
@@ -1028,20 +1113,22 @@ function applique_Porte_Z(n_Qbits,index,nbre_Qbits,L_aretes_controle){//applique
     let y=n_Qbits.im[i];
 
     if ((Liste_controle)&&(cette_porte_est_desactive_par_un_controle(i,Liste_controle,nbre_Qbits))){
-      nouveau_n_Qbits.ecrit(i,x,y);//desactive par le bit de controle
+      n_Qbits.ecrit(i,x,y);//desactive par le bit de controle
     }
     else
       {//Porte Z activee
 
     //Z change la phase (signe de l amplitude) si c est |1> sinon fait rien
-        if ((masque_index_a_traiter&i)!=0) nouveau_n_Qbits.ecrit(i,-x,-y);
-        else nouveau_n_Qbits.ecrit(i,x,y);
+        if ((masque_index_a_traiter&i)!=0) n_Qbits.ecrit(i,-x,-y);
+        else n_Qbits.ecrit(i,x,y);
 
       }
 
   }
 
-  return nouveau_n_Qbits;
+  n_Qbits.vivant=null;
+
+  return n_Qbits;
 
 }
 
@@ -1056,8 +1143,7 @@ function applique_Porte_R(n_Qbits,index,nbre_Qbits,phase,L_aretes_controle){//ap
   let cosinus=Math.cos(phase);
   let sinus=Math.sin(phase);
 
-  let nouveau_n_Qbits=new vecteur_etat(n_Qbits.length);
-
+  //R travaille SUR PLACE, pour la meme raison que Z juste au dessus
   //on parcourt chaque etat du n_qbit
   for (let i = 0; i <n_Qbits.length; i++) {
 
@@ -1065,21 +1151,23 @@ function applique_Porte_R(n_Qbits,index,nbre_Qbits,phase,L_aretes_controle){//ap
     let y=n_Qbits.im[i];
 
     if ((Liste_controle)&&(cette_porte_est_desactive_par_un_controle(i,Liste_controle,nbre_Qbits))){
-      nouveau_n_Qbits.ecrit(i,x,y);//desactive par le bit de controle
+      n_Qbits.ecrit(i,x,y);//desactive par le bit de controle
     }
     else
       {//Porte R activee
 
     //R change la phase en multipliant par exp(iphi) le coeff de ket 1
         if ((masque_index_a_traiter&i)!=0)
-          nouveau_n_Qbits.ecrit(i,x*cosinus-y*sinus,x*sinus+y*cosinus);
-        else nouveau_n_Qbits.ecrit(i,x,y);
+          n_Qbits.ecrit(i,x*cosinus-y*sinus,x*sinus+y*cosinus);
+        else n_Qbits.ecrit(i,x,y);
 
       }
 
   }
 
-  return nouveau_n_Qbits;
+  n_Qbits.vivant=null;
+
+  return n_Qbits;
 
 }
 
