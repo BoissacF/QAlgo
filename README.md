@@ -100,6 +100,7 @@ interface, without touching the code.
 |---|---|
 | Drop or remove a qubit or a gate | Click and drag |
 | Add a quantum line below the last one | The "+" at the top left of the circuit |
+| Move an empty line as a block, without tilting it | Click and drag its qubit |
 | Select and move | Left click |
 | Change the size | Left click + scroll wheel |
 | Change the colour | Right click |

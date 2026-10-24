@@ -103,6 +103,7 @@ depuis l'interface, sans toucher au code.
 |---|---|
 | Déposer ou retirer un qubit ou une porte | Cliquer-glisser |
 | Ajouter une ligne quantique sous la dernière | Le « + » en haut à gauche du circuit |
+| Déplacer une ligne vide d'un bloc, sans l'incliner | Cliquer-glisser son qubit |
 | Sélectionner et déplacer | Clic gauche |
 | Modifier la taille | Clic gauche + molette |
 | Modifier la couleur | Clic droit |

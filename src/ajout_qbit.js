@@ -1,4 +1,4 @@
-/* QAlgo — le « + » qui ajoute une ligne quantique
+/* QAlgo — le « + » qui ajoute une ligne quantique, et les lignes vides
  *
  * Simulateur de circuits quantiques pour l'enseignement — https://www.qalgo.org
  * Code source : https://github.com/BoissacF/QAlgo
@@ -33,6 +33,11 @@
  * Le menu a un second rôle, mais seulement tant que le circuit n'a qu'une
  * ligne : en changer l'état remplace alors le qbit de cette ligne au lieu de
  * préparer le suivant. Voir `remplaceLeKet()`.
+ *
+ * Le module garde enfin les lignes vides horizontales quand on les déplace : une
+ * ligne qui n'a qu'un qbit et sa mesure se déplace d'un bloc si on prend son
+ * qbit, et reste inclinable par sa mesure. Ce sont exactement les lignes que le
+ * « + » pose, d'où leur place ici. Voir `suitLeQbit()`.
  *
  * Le bouton est en HTML par-dessus le canvas, et non dessiné dedans : il porte
  * un <select>, et p5 ralentit beaucoup dès qu'on lui fait créer des éléments de
@@ -155,6 +160,59 @@ var AjoutQbit = (function () {
 
     var yBas = bas.y + ecart(d);
     return { x: x, y: yBas, diametre: d, coeff: reduction(yBas, d) };
+  }
+
+  // --- déplacer une ligne vide d'un bloc --------------------------------
+
+  /* La mesure au bout d'une ligne quantique VIDE — un qbit, sa mesure, et rien
+     entre les deux. `undefined` dès qu'il y a autre chose sur la ligne : une
+     porte, un contrôle, une sonde.
+
+     La structure est lue sur les arêtes du sommet, et non dans
+     `G.lignes_quantiques` : pendant un glissement cette liste n'est pas refaite
+     — le calcul attend le déclic — et ses numéros de ligne peuvent donc ne plus
+     correspondre au dessin. Les arêtes, elles, sont toujours justes. */
+  function mesureDuneLigneVide(num) {
+    if ((typeof G === "undefined") || !G || !G.TabSommets) return undefined;
+
+    var qbit = G.TabSommets[num];
+    if (!qbit || (qbit.type !== 0)) return undefined;
+    if (qbit.nAretes_sortantes !== 1) return undefined;
+    if (qbit.nAretes_controle !== 0) return undefined;
+
+    var mesure = G.TabSommets[qbit.aretes_sortantes[0].numSommetArrive];
+    if (!mesure || (mesure.type !== 65)) return undefined;
+    if ((mesure.nAretes_entrantes !== 1) || (mesure.nAretes_sortantes !== 0))
+      return undefined;
+
+    return mesure;
+  }
+
+  /* Une ligne vide se déplace d'un bloc : prendre son qbit emmène la mesure du
+     même décalage, donc la ligne garde sa longueur et son horizontalité.
+
+     Prendre la MESURE, en revanche, ne doit rien changer : c'est le seul moyen
+     d'incliner une ligne ou d'en changer la longueur, et il doit rester. Cette
+     fonction n'est donc appelée que pour le sommet tiré, et elle ne reconnaît
+     qu'un qbit — la mesure n'a pas d'arête sortante, elle ne passe pas le
+     test ci-dessus.
+
+     Le décalage est celui que le qbit a RÉELLEMENT pris, et non celui de la
+     souris : `changePositionRayon` ramène l'ordonnée sur la ligne tant que la
+     souris n'a pas dépassé un rayon, et la mesure doit suivre le sommet, pas
+     le curseur.
+
+     Un décalage, et non l'ordonnée du qbit recopiée : une ligne inclinée garde
+     son inclinaison en se déplaçant. Sous un rayon d'écart, c'est le rappel de
+     `changePositionRayon` qui l'aplatit — comme il le fait pour n'importe quel
+     élément reposé près de sa ligne. */
+  function suitLeQbit(num, dx, dy) {
+    if (!dx && !dy) return false;
+    var mesure = mesureDuneLigneVide(num);
+    if (!mesure) return false;
+
+    mesure.changePositionRayon(mesure.x + dx, mesure.y + dy);
+    return true;
   }
 
   // --- poser la ligne ---------------------------------------------------
@@ -385,7 +443,9 @@ var AjoutQbit = (function () {
     traduis: traduis,
     ajoute: ajoute,
     remplaceLeKet: remplaceLeKet,
+    suitLeQbit: suitLeQbit,
     // pour les tests
+    _mesureDuneLigneVide: mesureDuneLigneVide,
     _position: position,
     _ecart: ecart,
     _cree: cree,

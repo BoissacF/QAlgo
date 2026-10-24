@@ -1217,6 +1217,72 @@ function testeAjoutQbit() {
                })()`) === true);
   }
 
+  /* Le déplacement d'un bloc. Une ligne vide — un qbit et sa mesure, rien
+     entre les deux — suit son qbit ; prendre la mesure ne change rien, sans
+     quoi on ne pourrait plus incliner une ligne. */
+  {
+    const { dans } = bacAjout();
+
+    verif("la ligne d'accueil est vide : sa mesure est reconnue",
+          dans(`(function(){
+            var m = AjoutQbit._mesureDuneLigneVide(0);
+            return (m !== undefined) && (m.type === 65) && (m.x === 741);
+          })()`) === true);
+    verif("la mesure du bout, elle, n'est pas un qbit de ligne vide",
+          dans("AjoutQbit._mesureDuneLigneVide(1)") === undefined);
+
+    verif("prendre le qbit emmène la mesure du même décalage",
+          dans(`(function(){
+            var q = G.TabSommets[0], m = G.TabSommets[1];
+            var x0 = m.x, y0 = m.y;
+            q.changePositionRayon(q.x + 40, q.y + 120);
+            if (AjoutQbit.suitLeQbit(0, 40, 120) !== true) return "pas suivi";
+            return (m.x === x0 + 40) && (m.y === y0 + 120);
+          })()`) === true);
+    verif("la ligne est restée horizontale",
+          dans("G.TabSommets[0].y === G.TabSommets[1].y") === true);
+    verif("et elle a gardé sa longueur",
+          dans("G.TabSommets[1].x - G.TabSommets[0].x") === 692);
+
+    verif("l'arête suit, elle aussi",
+          dans(`(function(){
+            var a = G.TabSommets[0].aretes_sortantes[0];
+            return (a.xB === G.TabSommets[1].x) && (a.yB === G.TabSommets[1].y);
+          })()`) === true);
+
+    verif("un déplacement nul ne touche à rien",
+          dans("AjoutQbit.suitLeQbit(0, 0, 0)") === false);
+    verif("prendre la mesure ne déplace pas le qbit",
+          dans(`(function(){
+            var q = G.TabSommets[0], m = G.TabSommets[1];
+            var xq = q.x, yq = q.y;
+            m.changePositionRayon(m.x - 100, m.y + 200);
+            if (AjoutQbit.suitLeQbit(1, -100, 200) !== false) return "a suivi";
+            return (q.x === xq) && (q.y === yq) && (m.y !== yq);
+          })()`) === true, "la ligne doit rester inclinable");
+  }
+
+  /* Dès qu'il y a quoi que ce soit sur la ligne, elle n'est plus vide et le
+     qbit se déplace seul, comme avant. */
+  {
+    const { dans } = bacSelection("bell1");
+    verif("une ligne qui porte une porte n'est pas vide",
+          dans(`(function(){
+            for (var i = 0; i < G.lignes_quantiques.length; i++) {
+              var q = G.lignes_quantiques[i][0];
+              if (G.lignes_quantiques[i].length <= 2) continue;
+              if (AjoutQbit._mesureDuneLigneVide(q.numeroSommet) !== undefined)
+                return "ligne " + i + " prise pour vide";
+            }
+            return true;
+          })()`) === true);
+    verif("son qbit se déplace donc seul",
+          dans(`(function(){
+            var q = G.lignes_quantiques[0][0];
+            return AjoutQbit.suitLeQbit(q.numeroSommet, 0, 50) === false;
+          })()`) === true);
+  }
+
   /* Les garde-fous : le bouton ne doit rien poser quand le circuit n'a pas la
      main, et `synchronise()` est appelée à chaque image, donc elle ne doit ni
      lever ni dépendre d'un vrai canvas. */

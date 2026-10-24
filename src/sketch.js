@@ -1317,8 +1317,19 @@ function afficheAreteEnConstructionOuChemin() {
        let t= millis();
        if ((t-Time_Click)>Time_doubleClick){
          let y=  mouseY;
-       
-        G.TabSommets[Selection].changePositionRayon(mouseX,y);
+         let S=G.TabSommets[Selection];
+         let x_avant=S.x;
+         let y_avant=S.y;
+
+        S.changePositionRayon(mouseX,y);
+
+        /* Une ligne quantique vide -- un qbit et sa mesure, rien entre les
+           deux -- se deplace d un bloc : la mesure du bout suit le qbit du
+           meme decalage, donc la ligne reste horizontale. Prendre la mesure ne
+           change rien, c est ce qui permet encore d incliner une ligne.
+           Voir ajout_qbit.js. */
+        if (typeof AjoutQbit !== "undefined")
+          AjoutQbit.suitLeQbit(Selection, S.x-x_avant, S.y-y_avant);
        }
        
           
