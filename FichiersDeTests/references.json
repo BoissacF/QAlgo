@@ -1,0 +1,278 @@
+{
+ "TestControles": {
+  "normal": {
+   "qubits": 8,
+   "amplitudes": 256,
+   "lignes": [
+    100,
+    100,
+    0,
+    0,
+    0,
+    100,
+    100,
+    0
+   ],
+   "vect": "dd5b5e4325731c072522df3b",
+   "marg": "0fd9788c14d5db9c182f6ba5"
+  },
+  "mesures": []
+ },
+ "TestFourier": {
+  "normal": {
+   "qubits": 4,
+   "amplitudes": 16,
+   "lignes": [
+    0,
+    0,
+    100,
+    100
+   ],
+   "vect": "169940ca145bde45bd3350b5",
+   "marg": "b832d5d7ac393642639c3b3a"
+  },
+  "mesures": []
+ },
+ "TestKets": {
+  "normal": {
+   "qubits": 4,
+   "amplitudes": 16,
+   "lignes": [
+    0,
+    100,
+    50,
+    50
+   ],
+   "vect": "492fa1db2e7304788aaaabe1",
+   "marg": "fb3f9e56edd4e160b4d53c92"
+  },
+  "mesures": []
+ },
+ "TestMesurePartielle_Bell": {
+  "normal": {
+   "qubits": 4,
+   "amplitudes": 16,
+   "lignes": [
+    50,
+    50,
+    50,
+    100
+   ],
+   "vect": "9ae2017188099058085236a0",
+   "marg": "24c8934765adff11beae705b"
+  },
+  "mesures": [
+   {
+    "ligne": 0,
+    "valeur": 0,
+    "quoi": "ligne 1 mesurée à 0 : la ligne 2 intriquée doit suivre à 0",
+    "onFaitLesMesures": 2,
+    "lignes": [
+     50,
+     0,
+     50,
+     100
+    ],
+    "tirees": [
+     0,
+     null,
+     null,
+     null
+    ],
+    "amplitudes": 16,
+    "vect": "a5f741d944327d87c6680454",
+    "marg": "43e2166ea56156d3671f258e"
+   },
+   {
+    "ligne": 0,
+    "valeur": 1,
+    "quoi": "ligne 1 mesurée à 1 : la ligne 2 intriquée doit suivre à 1",
+    "onFaitLesMesures": 2,
+    "lignes": [
+     50,
+     100,
+     50,
+     100
+    ],
+    "tirees": [
+     1,
+     null,
+     null,
+     null
+    ],
+    "amplitudes": 16,
+    "vect": "73526dda08b8746014ae33bc",
+    "marg": "dad58a49e550abaa672a32eb"
+   },
+   {
+    "ligne": 1,
+    "valeur": 1,
+    "quoi": "mesure par l'autre bout : la ligne 1 doit suivre à 1",
+    "onFaitLesMesures": 2,
+    "lignes": [
+     100,
+     50,
+     50,
+     100
+    ],
+    "tirees": [
+     null,
+     1,
+     null,
+     null
+    ],
+    "amplitudes": 16,
+    "vect": "4853663b1f4f7716f683cf9a",
+    "marg": "fc977fbb2ad533c79cb66df9"
+   }
+  ]
+ },
+ "TestMesurePartielle_GHZ": {
+  "normal": {
+   "qubits": 4,
+   "amplitudes": 16,
+   "lignes": [
+    50,
+    50,
+    50,
+    50
+   ],
+   "vect": "135a11ce388afd065fa461a1",
+   "marg": "426d81743cd36f28b0f22c9b"
+  },
+  "mesures": [
+   {
+    "ligne": 0,
+    "valeur": 0,
+    "quoi": "ligne 1 mesurée à 0 : les lignes 2 et 3 doivent suivre à 0",
+    "onFaitLesMesures": 2,
+    "lignes": [
+     50,
+     0,
+     0,
+     50
+    ],
+    "tirees": [
+     0,
+     null,
+     null,
+     null
+    ],
+    "amplitudes": 16,
+    "vect": "5db6c7c6b1904e1255d681e6",
+    "marg": "16a017f628ea06e0296758f0"
+   },
+   {
+    "ligne": 0,
+    "valeur": 1,
+    "quoi": "ligne 1 mesurée à 1 : les lignes 2 et 3 doivent suivre à 1",
+    "onFaitLesMesures": 2,
+    "lignes": [
+     50,
+     100,
+     100,
+     50
+    ],
+    "tirees": [
+     1,
+     null,
+     null,
+     null
+    ],
+    "amplitudes": 16,
+    "vect": "dd98dd7db6152633dec0a0b9",
+    "marg": "78e055cfe525714d8400ab54"
+   },
+   {
+    "ligne": 2,
+    "valeur": 1,
+    "quoi": "mesure de la ligne 3 : les lignes 1 et 2 doivent suivre à 1",
+    "onFaitLesMesures": 2,
+    "lignes": [
+     100,
+     100,
+     50,
+     50
+    ],
+    "tirees": [
+     null,
+     null,
+     1,
+     null
+    ],
+    "amplitudes": 16,
+    "vect": "24193160c69986471ed89b77",
+    "marg": "d9f1fd8b5be9fc0359c82a25"
+   }
+  ]
+ },
+ "TestPortesSimples": {
+  "normal": {
+   "qubits": 8,
+   "amplitudes": 256,
+   "lignes": [
+    100,
+    0,
+    100,
+    0,
+    0,
+    100,
+    50,
+    0
+   ],
+   "vect": "735055ff383ed20dc10ead21",
+   "marg": "13532b003adf2e6201ade5e4"
+  },
+  "mesures": []
+ },
+ "TestSwap": {
+  "normal": {
+   "qubits": 4,
+   "amplitudes": 16,
+   "lignes": [
+    0,
+    100,
+    0,
+    100
+   ],
+   "vect": "528e1fc758ea80b6fcc727d6",
+   "marg": "c8608561e0da353cf4c1d4ea"
+  },
+  "mesures": []
+ },
+ "TestToffoli": {
+  "normal": {
+   "qubits": 6,
+   "amplitudes": 64,
+   "lignes": [
+    100,
+    100,
+    100,
+    100,
+    0,
+    0
+   ],
+   "vect": "d2a33ab209f91b074fb923c5",
+   "marg": "16ec6fabe1601c34d0b77322"
+  },
+  "mesures": []
+ },
+ "TestZRphi": {
+  "normal": {
+   "qubits": 7,
+   "amplitudes": 128,
+   "lignes": [
+    100,
+    100,
+    50,
+    100,
+    100,
+    100,
+    0
+   ],
+   "vect": "d32e1f8c5f0d9641ed83a9f7",
+   "marg": "1e0f1cb1c4704e8766df666e"
+  },
+  "mesures": []
+ }
+}

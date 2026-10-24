@@ -78,7 +78,7 @@ MOTIFS="index.html indexFR.html analytics.js
         server/*.php"
 
 # Ce qui ne doit JAMAIS se trouver sur le serveur web.
-INTRUS="docs outils archive vendor/p5 assets/js README.md LICENSE .gitignore .gitattributes"
+INTRUS="docs outils archive vendor/p5 assets/js FichiersDeTests README.md LICENSE .gitignore .gitattributes"
 
 CONFIRME=1
 LISTE_SEULE=0
