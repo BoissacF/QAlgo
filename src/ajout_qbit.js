@@ -21,12 +21,18 @@
  *      de la première ligne — celui du circuit d'accueil au démarrage. Leur
  *      mesure est ramenée sur celle de cette même ligne, sinon les lignes
  *      n'auraient pas la même longueur.
- *   2. L'écart vertical vaut 1,5 fois la hauteur d'une porte, lue sur le qbit
- *      de la ligne du bas : l'espacement suit donc la taille du circuit.
+ *   2. L'écart vertical vaut 1,25 fois la hauteur d'une PORTE — et non du
+ *      sommet, qui fait la moitié : deux portes posées l'une sous l'autre ne
+ *      doivent pas se toucher. La hauteur est lue sur le qbit de la ligne du
+ *      bas, donc l'espacement suit la taille du circuit.
  *   3. Si la nouvelle ligne tombait sous le bas de l'écran, le circuit entier
  *      est réduit juste assez pour qu'elle rentre, par le
  *      `change_Taille_sommets_Graphe()` des boutons de zoom. Après la
  *      réduction tout a bougé : les repères sont relus avant de poser le qbit.
+ *
+ * Le menu a un second rôle, mais seulement tant que le circuit n'a qu'une
+ * ligne : en changer l'état remplace alors le qbit de cette ligne au lieu de
+ * préparer le suivant. Voir `remplaceLeKet()`.
  *
  * Le bouton est en HTML par-dessus le canvas, et non dessiné dedans : il porte
  * un <select>, et p5 ralentit beaucoup dès qu'on lui fait créer des éléments de
@@ -38,8 +44,15 @@ var AjoutQbit = (function () {
   "use strict";
 
   var MARGE = 8;            // écart au coin du canvas, en pixels
-  var ECART_LIGNES = 1.5;   // espacement vertical, en hauteurs de porte
-  var MARGE_BAS = 0.75;     // place gardée sous la dernière ligne, idem
+
+  /* La hauteur d'une porte n'est PAS son diamètre de sommet : `afficheSommet()`
+     la dessine par `rect(x − diametre, y − diametre, 2·diametre, 2·diametre)`,
+     donc son carré fait deux diamètres de haut et déborde d'un diamètre de part
+     et d'autre de la ligne. Un écart d'un diamètre et demi faisait donc se
+     chevaucher deux portes posées l'une sous l'autre. */
+  var PORTE = 2;            // hauteur d'une porte, en diamètres de sommet
+  var ECART_LIGNES = 1.25;  // espacement vertical, en hauteurs de porte
+  var MARGE_BAS = 0.625;    // place gardée sous la dernière ligne, idem
   var DIAMETRE_MIN = 10;    // en dessous le circuit n'est plus lisible
   var X_DEFAUT = 49;        // position du qbit de examples/circuitouverture.txt,
   var Y_DEFAUT = 91;        // au cas où le circuit serait vide
@@ -105,11 +118,17 @@ var AjoutQbit = (function () {
     return 0;
   }
 
+  // l'écart entre deux lignes, en pixels : 2,5 diamètres, soit un quart de
+  // porte de vide entre les carrés de deux portes voisines
+  function ecart(d) {
+    return ECART_LIGNES * PORTE * d;
+  }
+
   /* De combien réduire le circuit pour qu'un qbit posé en `y` reste dans
      l'écran. Le coefficient s'applique aussi au diamètre, donc la ligne tombe
      exactement sur la limite : coeff * y, et coeff * diametre de hauteur. */
   function reduction(y, d) {
-    var limite = hauteurEcran() - MARGE_BAS * d;
+    var limite = hauteurEcran() - MARGE_BAS * PORTE * d;
     if ((limite <= 0) || (y <= limite)) return 1;
     var coeff = limite / y;
     if (d * coeff < DIAMETRE_MIN) coeff = DIAMETRE_MIN / d;
@@ -129,12 +148,12 @@ var AjoutQbit = (function () {
       // circuit vide : il n'y a rien à réduire, on se contente de rester dans
       // l'écran si celui-ci est minuscule
       var y = Y_DEFAUT;
-      var limite = hauteurEcran() - MARGE_BAS * d;
+      var limite = hauteurEcran() - MARGE_BAS * PORTE * d;
       if ((limite > 0) && (y > limite)) y = limite;
       return { x: x, y: y, diametre: d, coeff: 1 };
     }
 
-    var yBas = bas.y + ECART_LIGNES * d;
+    var yBas = bas.y + ecart(d);
     return { x: x, y: yBas, diametre: d, coeff: reduction(yBas, d) };
   }
 
@@ -173,6 +192,39 @@ var AjoutQbit = (function () {
     if (modele.x <= qbit.x + qbit.diametre) return;  // trop à gauche, on laisse
 
     mesure.changePositionRayon(modele.x, mesure.y);
+  }
+
+  /* Tant que le circuit n'a qu'UNE ligne — celle du circuit d'accueil au
+     démarrage —, changer le menu ne prépare pas le prochain qbit : il remplace
+     celui qui est là. C'est le geste attendu quand on veut simplement
+     commencer sur ∣1⟩ plutôt que sur ∣0⟩, sans avoir à supprimer la ligne pour
+     en reposer une. Dès qu'il y a une deuxième ligne, le menu redevient le
+     choix du prochain qbit et ne touche plus à rien : à deux lignes, laquelle
+     remplacer n'aurait pas de réponse.
+
+     Les coefficients du ket ne sont pas recopiés ici : on fabrique un sommet
+     jetable du type voulu et on lit les siens, pour qu'ils ne puissent pas
+     diverger de ceux du constructeur de `Sommet`. */
+  function remplaceLeKet() {
+    if (!circuitPret()) return false;
+    if (nbLignes() !== 1) return false;
+    if (typeof Sommet === "undefined") return false;
+
+    var qbit = qbitDeLigne(0);
+    if (!qbit || (qbit.type !== 0)) return false;
+
+    // un qbit d'entrée qui change rend les mesures affichées caduques
+    if ((typeof OnFaitLesMesures !== "undefined") && (OnFaitLesMesures !== 0) &&
+        (typeof initialise_mesures === "function")) initialise_mesures();
+
+    var modele = new Sommet(-1, 0, 0, qbit.diametre, typeChoisi());
+    for (var i = 0; i < 2; i++)
+      qbit.Qbit[0][i].coeff_complexe(modele.Qbit[0][i].x, modele.Qbit[0][i].y);
+    qbit.Qbit[0][2] = qbit.Qbit[0][0].proba;
+    qbit.Qbit[0][3] = qbit.Qbit[0][1].proba;
+
+    doit_lancer_calcul_LignesQuantiQues_nQbitsEntree_nQbitsSortie = true;
+    return true;
   }
 
   function ajoute() {
@@ -284,6 +336,7 @@ var AjoutQbit = (function () {
     // sur un écran tactile il n'y a pas de survol : le premier appui sur le
     // « + » pose un qbit et ouvre la bulle, le menu est atteignable ensuite
     bouton.addEventListener("click", function () { montre(); ajoute(); });
+    choix.addEventListener("change", remplaceLeKet);
     choix.addEventListener("blur", function () { if (!survol) cache(); });
 
     traduis();
@@ -331,8 +384,10 @@ var AjoutQbit = (function () {
     synchronise: synchronise,
     traduis: traduis,
     ajoute: ajoute,
+    remplaceLeKet: remplaceLeKet,
     // pour les tests
     _position: position,
+    _ecart: ecart,
     _cree: cree,
     _type: typeChoisi,
     _elements: function () {

@@ -1057,7 +1057,9 @@ function testeAjoutQbit() {
   titre("« + » d'ajout d'une ligne quantique");
 
   /* Le circuit d'accueil : un qbit en (49, 91) de 35 px, et sa mesure en 741.
-     La ligne suivante doit garder l'abscisse 49 et tomber 1,5 porte plus bas. */
+     La ligne suivante garde l'abscisse 49 et tombe 1,25 hauteur de PORTE plus
+     bas. Une porte fait deux diametres de haut, l'ecart vaut donc 2,5
+     diametres : 87,5 px, et un quart de porte reste vide entre deux carres. */
   {
     const { dans } = bacAjout();
     verif("le circuit d'accueil a une seule ligne",
@@ -1066,8 +1068,12 @@ function testeAjoutQbit() {
     const p = JSON.parse(dans("JSON.stringify(AjoutQbit._position())"));
     verif("la prochaine ligne garde l'abscisse du premier qbit",
           p.x === 49, "x = " + p.x);
-    verif("elle tombe à 1,5 hauteur de porte sous la dernière",
-          Math.abs(p.y - (91 + 1.5 * 35)) < 1e-9, "y = " + p.y);
+    verif("l'écart vaut 1,25 hauteur de porte, soit 2,5 diamètres",
+          dans("AjoutQbit._ecart(35)") === 2.5 * 35);
+    verif("elle tombe 2,5 diamètres sous la dernière",
+          Math.abs(p.y - (91 + 2.5 * 35)) < 1e-9, "y = " + p.y);
+    verif("deux portes voisines ne se touchent pas",
+          2.5 * 35 > 2 * 35, "écart " + 2.5 * 35 + " pour des portes de 70");
     verif("rien à réduire tant que l'écran est assez haut",
           p.coeff === 1, "coeff = " + p.coeff);
     verif("sans menu posé, l'état choisi est |0⟩", dans("AjoutQbit._type()") === 0);
@@ -1085,9 +1091,9 @@ function testeAjoutQbit() {
     verif("les cinq qbits sont à la même abscisse",
           lignes.every((l) => l[0] === 49),
           lignes.map((l) => l[0]).join(" "));
-    verif("les écarts valent tous 1,5 hauteur de porte",
+    verif("les écarts valent tous 2,5 diamètres",
           lignes.every((l, i) => i === 0 ||
-                       Math.abs(l[1] - lignes[i - 1][1] - 1.5 * 35) < 1e-9),
+                       Math.abs(l[1] - lignes[i - 1][1] - 2.5 * 35) < 1e-9),
           lignes.map((l) => l[1]).join(" "));
     verif("les lignes sont toutes fermées à la même abscisse",
           dans(`(function(){
@@ -1128,31 +1134,87 @@ function testeAjoutQbit() {
   }
 
   /* Le redimensionnement automatique. L'écran du bac fait 800 px de haut : à
-     35 px de porte les lignes tiennent jusqu'à la quatorzième, la quinzième
+     2,5 diamètres d'écart les lignes tiennent jusqu'à la huitième, la neuvième
      force la réduction de tout le circuit. */
   {
     const { dans } = bacAjout();
-    dans("(function(){ for (var i = 0; i < 13; i++) AjoutQbit.ajoute(); })()");
+    dans("(function(){ for (var i = 0; i < 7; i++) AjoutQbit.ajoute(); })()");
     const avant = lisLignes(dans);
-    verif("quatorze lignes tiennent sans rien réduire",
-          (avant.length === 14) && avant.every((l) => l[2] === 35),
+    verif("huit lignes tiennent sans rien réduire",
+          (avant.length === 8) && avant.every((l) => l[2] === 35),
           "diamètres " + avant.map((l) => l[2]).join(" "));
 
     dans("AjoutQbit.ajoute()");
     const apres = lisLignes(dans);
-    verif("la quinzième ligne réduit le circuit",
-          (apres.length === 15) && apres.every((l) => l[2] < 35),
+    verif("la neuvième ligne réduit le circuit",
+          (apres.length === 9) && apres.every((l) => l[2] < 35),
           "diamètre " + apres[0][2]);
-    verif("après réduction tout le circuit reste dans l'écran",
-          apres.every((l) => l[1] + l[2] / 2 <= 800),
-          "plus basse ligne en " + apres[apres.length - 1][1]);
+    verif("après réduction la porte du bas tient encore dans l'écran",
+          apres.every((l) => l[1] + l[2] <= 800),
+          "bas de la dernière porte en " +
+          (apres[apres.length - 1][1] + apres[apres.length - 1][2]));
     verif("les qbits restent alignés après réduction",
           apres.every((l) => l[0] === apres[0][0]),
           apres.map((l) => l[0]).join(" "));
-    verif("l'écart reste de 1,5 porte, à la nouvelle échelle",
+    verif("l'écart reste de 2,5 diamètres, à la nouvelle échelle",
           apres.every((l, i) => i === 0 ||
-                      Math.abs(l[1] - apres[i - 1][1] - 1.5 * l[2]) < 1e-9),
+                      Math.abs(l[1] - apres[i - 1][1] - 2.5 * l[2]) < 1e-9),
           apres.map((l) => l[1]).join(" "));
+    verif("et deux portes voisines ne se touchent toujours pas",
+          apres.every((l, i) => i === 0 ||
+                      (l[1] - l[2]) > (apres[i - 1][1] + apres[i - 1][2])),
+          "vide entre deux portes : " +
+          (apres[1][1] - apres[1][2] - apres[0][1] - apres[0][2]));
+  }
+
+  /* Le second rôle du menu : tant que le circuit n'a qu'une ligne, en changer
+     l'état remplace le qbit de cette ligne. Dès la deuxième, il ne touche plus
+     à rien. */
+  {
+    const { dans } = bacAjout();
+    dans("AjoutQbit._cree();");
+
+    verif("à une seule ligne, le menu remplace le ket de la ligne",
+          dans(`(function(){
+            AjoutQbit._elements().choix.value = "1";
+            if (AjoutQbit.remplaceLeKet() !== true) return "refusé";
+            var q = G.lignes_quantiques[0][0];
+            return (q.Qbit[0][0].x === 0) && (q.Qbit[0][1].x === 1);
+          })()`) === true);
+    verif("l'état de sortie suit le ket remplacé : |1⟩ à 100 %",
+          dans(`(function(){
+            G.calcul_LignesQuantiQues_nQbitsEntree_nQbitsSortie();
+            return G.n_Qbits_sortie.pr[1]; })()`) === 1);
+    verif("le remplacement marche pour les quatre kets",
+          dans(`(function(){
+            var attendu = { 0: [1, 0], 1: [0, 1], 2: [Math.SQRT1_2, Math.SQRT1_2],
+                            22: [Math.SQRT1_2, -Math.SQRT1_2] };
+            for (var t in attendu) {
+              AjoutQbit._elements().choix.value = t;
+              AjoutQbit.remplaceLeKet();
+              var q = G.lignes_quantiques[0][0];
+              if ((Math.abs(q.Qbit[0][0].x - attendu[t][0]) > 1e-9) ||
+                  (Math.abs(q.Qbit[0][1].x - attendu[t][1]) > 1e-9))
+                return "ket " + t + " : " + q.Qbit[0][0].x + " " + q.Qbit[0][1].x;
+            }
+            return true;
+          })()`) === true);
+
+    verif("à deux lignes, le menu ne touche plus au circuit",
+          dans(`(function(){
+            AjoutQbit._elements().choix.value = "0";
+            AjoutQbit.remplaceLeKet();          // on repart de |0>
+            AjoutQbit.ajoute();                 // deuxième ligne
+            AjoutQbit._elements().choix.value = "1";
+            if (AjoutQbit.remplaceLeKet() !== false) return "a remplacé quand même";
+            var q = G.lignes_quantiques[0][0];
+            return (q.Qbit[0][0].x === 1) && (q.Qbit[0][1].x === 0);
+          })()`) === true);
+    verif("mais le menu reste celui du prochain qbit posé",
+          dans(`(function(){ AjoutQbit.ajoute();
+                 var q = G.lignes_quantiques[2][0];
+                 return (q.Qbit[0][0].x === 0) && (q.Qbit[0][1].x === 1);
+               })()`) === true);
   }
 
   /* Les garde-fous : le bouton ne doit rien poser quand le circuit n'a pas la
