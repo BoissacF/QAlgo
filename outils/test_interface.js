@@ -1212,6 +1212,33 @@ function testeAjoutQbit() {
     verif("le menu aussi", dans(`(function(){
             return AjoutQbit._elements().choix.title === 'État du qbit ajouté';
           })()`) === true);
+
+    /* La géométrie du menu, qui a dû être reprise. `p-0` de Bootstrap pose
+       `padding: 0 !important` et supprimait la réserve que `.form-select` garde
+       à droite pour sa flèche : le symbole du ket courait dessous. Et la rangée
+       doit laisser respirer les quatre symboles d'état juste en dessous. */
+    verif("le menu ne porte pas p-0, qui écraserait ses marges intérieures",
+          dans(`AjoutQbit._elements().choix.className.indexOf("p-0")`) === -1,
+          dans("AjoutQbit._elements().choix.className"));
+    verif("il réserve 18 px à droite, et la flèche y tient",
+          dans(`(function(){ var st = AjoutQbit._elements().choix.style;
+            return [st.padding, st.backgroundPosition, st.backgroundSize].join(" / ");
+          })()`) === "0 18px 0 6px / right 3px center / 10px 8px",
+          dans(`(function(){ var st = AjoutQbit._elements().choix.style;
+            return [st.padding, st.backgroundPosition, st.backgroundSize].join(" / ");
+          })()`));
+    verif("la rangée tient dans les 110 px de la colonne",
+          dans(`(function(){ var e = AjoutQbit._elements();
+            var l = parseInt(e.bouton.style.width, 10) +
+                    parseInt(e.bouton.style.marginLeft, 10) +
+                    parseInt(e.bouton.style.marginRight, 10) +
+                    parseInt(e.choix.style.width, 10);
+            return l <= 110 ? l : "largeur " + l; })()`) === 95);
+    verif("le menu est moins haut que le « + », et la rangée garde sa marge",
+          dans(`(function(){ var e = AjoutQbit._elements();
+            return (parseInt(e.choix.style.height, 10) <
+                    parseInt(e.bouton.style.height, 10)) &&
+                   (parseInt(e.zone.style.marginBottom, 10) >= 4); })()`) === true);
   }
 
   /* Les indications empilées, type par type. `_indications()` ne dépend que du

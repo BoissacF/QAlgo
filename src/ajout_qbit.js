@@ -590,7 +590,10 @@ var AjoutQbit = (function () {
     zone = document.createElement("div");
     zone.id = "zoneAjoutQbit";
     zone.className = "d-inline-flex align-items-center";
-    zone.style.marginBottom = "2px";
+    /* La hauteur de la rangée est celle du « + », 25 px ; le menu, à 22 px,
+       laisse donc 1,5 px au-dessus et au-dessous, et cette marge dégage les
+       quatre symboles d'état de la rangée suivante, que le menu touchait. */
+    zone.style.marginBottom = "4px";
 
     bouton = document.createElement("button");
     bouton.type = "button";
@@ -608,12 +611,21 @@ var AjoutQbit = (function () {
 
     choix = document.createElement("select");
     choix.id = "selectAjoutQbit";
-    choix.className = "form-select form-select-sm p-0";
-    // la colonne du menu ne fait que 110 px : 25 + 4 + 56 y tient
-    choix.style.width = "56px";
-    choix.style.height = "25px";
+    /* Pas de `p-0` ici : la classe de Bootstrap pose `padding: 0 !important`,
+       ce qui supprime la réserve que `.form-select` garde à droite pour sa
+       flèche — le symbole du ket courait alors dessous. Les marges intérieures
+       sont donc écrites à la main, et la flèche est rapprochée du bord et
+       rapetissée pour tenir dans les 18 px réservés. */
+    choix.className = "form-select form-select-sm";
+    // la colonne du menu ne fait que 110 px : 2 + 25 + 4 + 64 y tient
+    choix.style.width = "64px";
+    choix.style.height = "22px";
     choix.style.fontSize = "12px";
-    choix.style.paddingLeft = "4px";
+    choix.style.lineHeight = "1";
+    choix.style.padding = "0 18px 0 6px";
+    choix.style.backgroundPosition = "right 3px center";
+    choix.style.backgroundSize = "10px 8px";
+    choix.style.textAlign = "center";
     choix.style.textAlignLast = "center";
     for (var i = 0; i < KETS.length; i++) {
       var option = document.createElement("option");
