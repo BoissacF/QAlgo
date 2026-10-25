@@ -45,6 +45,11 @@ Use is free and unrestricted. No account is required.
 - **Draw a circuit with the mouse.** Drop input qubits and gates onto the
   canvas, connect them, move them, resize them. The circuit is recomputed on
   every change.
+- **Do without the manual.** A "+" in the palette adds an evenly spaced
+  quantum line without aiming with the mouse, and hovering an element of the
+  circuit tells you what can be done with it: the double-click when it has one,
+  the two ways to delete it, the color on right click, the size on the scroll
+  wheel. Wires answer too, at their little circle.
 - **Watch the state live.** The coefficients of each qubit, and the complex
   amplitudes and probabilities of the whole register, displayed along the
   circuit. Superposition states can be animated.
@@ -172,9 +177,9 @@ Note that the source code and its comments are written in French.
 | `examples/fr/`, `examples/en/` | Example circuits loaded from the menu |
 | `examples/circuitouverture.txt` | Circuit shown on start-up |
 | `server/compteurquantique.php` | Visit counter, currently disabled |
-| `outils/test_algos.js` | Replays the 24 example circuits and compares the amplitudes |
-| `outils/test_interface.js` | Checks full screen and the circuit history |
-| `outils/references_algos.json` | Reference results of the 24 circuits |
+| `outils/test_algos.js` | Replays the 26 example circuits and compares the amplitudes |
+| `outils/test_interface.js` | Checks the interface modules: full screen, history, created gates, selection, qubit adding |
+| `outils/references_algos.json` | Reference results of the 26 circuits |
 | `outils/verifie_pages.py` | Checks that the two pages have not drifted apart |
 | `outils/publie.sh` | Sends the server only the files that changed |
 | `outils/publie.conf.exemple` | Template for the publishing server's details |
@@ -194,6 +199,8 @@ The sources in detail:
 | `src/traduction.js` | French ↔ English switching of the whole interface |
 | `src/plein_ecran.js` | "Full screen" button in the menu bar |
 | `src/historique.js` | Undo, and automatic saving of the circuit |
+| `src/selection_matrice.js` | Selection frame over part of the circuit, to generate its matrix |
+| `src/ajout_qbit.js` | The "+" in the palette, empty lines, the hover help |
 
 Names in the code are French, as are the comments: `sommet` is a vertex, `arete`
 an edge, `porte` a gate, `ligne quantique` a quantum line, `mesure` a
@@ -204,11 +211,11 @@ measurement.
 **There is neither compilation nor a build step**: the files in `src/` are both
 the sources and what the browser runs. Edit, refresh.
 
-The ten scripts are loaded in an order that matters — they share global
+The thirteen scripts are loaded in an order that matters — they share global
 variables and none of them is a module — and that order is fixed at the top of
 the `<body>` of both pages.
 
-The pages append a version number to the scripts (`?v=21.4`) to force a reload
+The pages append a version number to the scripts (`?v=23.9`) to force a reload
 in visitors' browsers after a deployment; it must be incremented on every
 publication.
 

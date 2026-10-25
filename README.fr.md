@@ -45,6 +45,11 @@ L'usage est libre et gratuit. Aucun compte n'est nécessaire.
 - **Dessiner un circuit à la souris.** On dépose des qubits d'entrée et des
   portes sur le canvas, on les relie, on les déplace, on les redimensionne. Le
   circuit est recalculé à chaque modification.
+- **Se passer du mode d'emploi.** Un « + » dans la palette ajoute une ligne
+  quantique régulière sans viser à la souris, et survoler un élément du circuit
+  annonce ce qu'on peut en faire : le double-clic quand il en a un, les deux
+  façons de le supprimer, la couleur au clic droit, la taille à la molette. Les
+  fils répondent aussi, au niveau de leur petit rond.
 - **Voir l'état en direct.** Coefficients de chaque qubit, amplitudes complexes
   et probabilités du registre complet, affichés au fil du circuit. Les états de
   superposition peuvent être animés.
@@ -175,9 +180,9 @@ chacune.
 | `examples/fr/`, `examples/en/` | Circuits d'exemple chargés par le menu |
 | `examples/circuitouverture.txt` | Circuit affiché au démarrage |
 | `server/compteurquantique.php` | Compteur de visites, actuellement désactivé |
-| `outils/test_algos.js` | Rejoue les 24 circuits d'exemple et compare les amplitudes |
-| `outils/test_interface.js` | Vérifie le plein écran et l'historique du circuit |
-| `outils/references_algos.json` | Résultats de référence des 24 circuits |
+| `outils/test_algos.js` | Rejoue les 26 circuits d'exemple et compare les amplitudes |
+| `outils/test_interface.js` | Vérifie les modules d'interface : plein écran, historique, portes créées, sélection, ajout de qubits |
+| `outils/references_algos.json` | Résultats de référence des 26 circuits |
 | `outils/verifie_pages.py` | Contrôle que les deux pages n'ont pas divergé |
 | `outils/publie.sh` | Envoie au serveur les seuls fichiers qui ont changé |
 | `outils/publie.conf.exemple` | Modèle des coordonnées du serveur de publication |
@@ -197,6 +202,8 @@ Le détail des sources :
 | `src/traduction.js` | Bascule français ↔ anglais de toute l'interface |
 | `src/plein_ecran.js` | Bouton « Plein écran » de la barre de menu |
 | `src/historique.js` | Annulation, sauvegarde automatique du circuit |
+| `src/selection_matrice.js` | Cadre de sélection d'une partie du circuit, pour en générer la matrice |
+| `src/ajout_qbit.js` | Le « + » de la palette, les lignes vides, l'aide au survol |
 
 ## Modifier le code
 
@@ -204,11 +211,11 @@ Le détail des sources :
 à la fois les sources et ce que le navigateur exécute. On modifie, on
 rafraîchit.
 
-Les dix scripts sont chargés dans un ordre qui compte — ils partagent des
+Les treize scripts sont chargés dans un ordre qui compte — ils partagent des
 variables globales et aucun n'est un module — et cet ordre est fixé en tête du
 `<body>` des deux pages.
 
-Les pages ajoutent un numéro de version aux scripts (`?v=21.4`) pour forcer le
+Les pages ajoutent un numéro de version aux scripts (`?v=23.9`) pour forcer le
 rechargement chez les visiteurs après une mise en ligne ; il est à incrémenter
 à chaque publication.
 
