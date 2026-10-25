@@ -1129,8 +1129,6 @@ function testeAjoutQbit() {
           dans(`AjoutQbit._elements().choix.children.map(
                   function (o) { return o.textContent; }).join(" ")`) ===
           "|0⟩ |1⟩ |+⟩ |−⟩");
-    verif("la bulle part fermée",
-          dans("AjoutQbit._elements().bulle.style.display") === "none");
   }
 
   /* Le redimensionnement automatique. L'écran du bac fait 800 px de haut : à
@@ -1167,53 +1165,109 @@ function testeAjoutQbit() {
           (apres[1][1] - apres[1][2] - apres[0][1] - apres[0][2]));
   }
 
-  /* Le second rôle du menu : tant que le circuit n'a qu'une ligne, en changer
-     l'état remplace le qbit de cette ligne. Dès la deuxième, il ne touche plus
-     à rien. */
+  /* La place du bouton : dans la colonne du menu, juste sous l'intertitre
+     « Qubits », donc au-dessus des quatre boutons d'état. Rien n'est ajouté aux
+     pages, c'est le module qui insère. Le placement à l'écran, lui, ne se
+     constate que dans un navigateur. */
   {
     const { dans } = bacAjout();
-    dans("AjoutQbit._cree();");
+    /* Le faux DOM du bac à sable ignore `insertBefore` : on le lui apprend, le
+       temps de vérifier où le module insère. */
+    verif("le bouton s'insère sous l'intertitre « Qubits »",
+          dans(`(function(){
+            var titre = document.getElementById('titrePalette1');
+            var colonne = document.getElementById('colonne1');
+            // ce qui suit l'intertitre dans la page : la rangée des quatre états
+            var etats = document.createElement('div');
+            colonne.poses = [];
+            colonne.insertBefore = function (e, ref) {
+              this.poses.push(e); this.avant = ref; return e;
+            };
+            titre.parentNode = colonne;
+            titre.nextSibling = etats;
+            if (AjoutQbit._cree() !== true) return "pas créé";
+            return (colonne.poses.length === 1) &&
+                   (colonne.poses[0].id === 'zoneAjoutQbit') &&
+                   (colonne.avant === etats);
+          })()`) === true);
+    verif("rien n'est posé dans <body>",
+          dans("document.body.children.length") === 0);
+    verif("le « + » et le menu sont dans la même zone",
+          dans(`(function(){
+            var e = AjoutQbit._elements();
+            return (e.zone.children[0] === e.bouton) &&
+                   (e.zone.children[1] === e.choix) && (e.bouton.textContent === '+');
+          })()`) === true);
+    verif("le « + » porte une infobulle, comme ses voisins",
+          dans(`(function(){ langue = 0; AjoutQbit.traduis();
+                 var fr = AjoutQbit._elements().bouton.title;
+                 langue = 1; AjoutQbit.traduis();
+                 var en = AjoutQbit._elements().bouton.title;
+                 langue = 0; AjoutQbit.traduis();
+                 return (fr.indexOf('Ajouter un qbit') === 0) &&
+                        (en.indexOf('Add a qubit') === 0);
+               })()`) === true);
+    verif("le menu aussi", dans(`(function(){
+            return AjoutQbit._elements().choix.title === 'État du qbit ajouté';
+          })()`) === true);
+  }
 
-    verif("à une seule ligne, le menu remplace le ket de la ligne",
-          dans(`(function(){
-            AjoutQbit._elements().choix.value = "1";
-            if (AjoutQbit.remplaceLeKet() !== true) return "refusé";
-            var q = G.lignes_quantiques[0][0];
-            return (q.Qbit[0][0].x === 0) && (q.Qbit[0][1].x === 1);
-          })()`) === true);
-    verif("l'état de sortie suit le ket remplacé : |1⟩ à 100 %",
-          dans(`(function(){
-            G.calcul_LignesQuantiQues_nQbitsEntree_nQbitsSortie();
-            return G.n_Qbits_sortie.pr[1]; })()`) === 1);
-    verif("le remplacement marche pour les quatre kets",
-          dans(`(function(){
-            var attendu = { 0: [1, 0], 1: [0, 1], 2: [Math.SQRT1_2, Math.SQRT1_2],
-                            22: [Math.SQRT1_2, -Math.SQRT1_2] };
-            for (var t in attendu) {
-              AjoutQbit._elements().choix.value = t;
-              AjoutQbit.remplaceLeKet();
-              var q = G.lignes_quantiques[0][0];
-              if ((Math.abs(q.Qbit[0][0].x - attendu[t][0]) > 1e-9) ||
-                  (Math.abs(q.Qbit[0][1].x - attendu[t][1]) > 1e-9))
-                return "ket " + t + " : " + q.Qbit[0][0].x + " " + q.Qbit[0][1].x;
-            }
-            return true;
-          })()`) === true);
+  /* L'aide au survol d'un qbit. Le circuit d'accueil a son qbit en (49, 91) et
+     sa mesure en (741, 91) ; un rayon de 17,5 px et la marge de 10 px de
+     `calcul_Rayon()` donnent une zone sensible de 21,5 à 76,5 en abscisse. */
+  {
+    const { dans } = bacAjout();
+    dans("AjoutQbit._cree(); Selection = -1; mouseIsPressed = false;");
 
-    verif("à deux lignes, le menu ne touche plus au circuit",
+    const survol = (x, y, avant) => dans(`(function(){ ${avant || ""}
+      mouseX = ${x}; mouseY = ${y};
+      return AjoutQbit._aideAuSurvol(); })()`);
+
+    verif("survoler le qbit annonce le double-clic",
+          survol(49, 91) === "Modifier coefficients qBit : Double Clic",
+          survol(49, 91));
+    verif("en anglais aussi",
+          survol(49, 91, "langue = 1;") === "Change qBit coefficients: Double Click");
+    dans("langue = 0;");
+    verif("survoler la mesure du bout ne dit rien", survol(741, 91) === "");
+    verif("survoler le vide ne dit rien non plus", survol(400, 400) === "");
+
+    verif("rien n'est dit tant qu'un sommet est tenu",
+          survol(49, 91, "Selection = 0;") === "");
+    dans("Selection = -1;");
+    verif("ni bouton de souris enfoncé",
+          survol(49, 91, "mouseIsPressed = true;") === "");
+    dans("mouseIsPressed = false;");
+    verif("ni avec un élément de palette armé",
+          survol(49, 91, "typeSelectionne = 5;") === "");
+    dans("typeSelectionne = -1;");
+    verif("ni sous une fenêtre de paramètres",
+          survol(49, 91, "R.on_est_dans_une_fenetre = true;") === "");
+    dans("R.on_est_dans_une_fenetre = false;");
+
+    verif("synchronise() pose le texte dans le title du canvas",
           dans(`(function(){
-            AjoutQbit._elements().choix.value = "0";
-            AjoutQbit.remplaceLeKet();          // on repart de |0>
-            AjoutQbit.ajoute();                 // deuxième ligne
-            AjoutQbit._elements().choix.value = "1";
-            if (AjoutQbit.remplaceLeKet() !== false) return "a remplacé quand même";
-            var q = G.lignes_quantiques[0][0];
-            return (q.Qbit[0][0].x === 1) && (q.Qbit[0][1].x === 0);
+            mouseX = 49; mouseY = 91;
+            AjoutQbit.synchronise();
+            var t = AjoutQbit._elements().toile;
+            if (!t) return "pas de canvas";
+            if (t.title !== "Modifier coefficients qBit : Double Clic")
+              return "title = " + t.title;
+            mouseX = 400; mouseY = 400;
+            AjoutQbit.synchronise();
+            return t.title === "";
           })()`) === true);
-    verif("mais le menu reste celui du prochain qbit posé",
-          dans(`(function(){ AjoutQbit.ajoute();
-                 var q = G.lignes_quantiques[2][0];
-                 return (q.Qbit[0][0].x === 0) && (q.Qbit[0][1].x === 1);
+  }
+
+  /* Le « + » désarme ce qui attendait d'être posé : il est voisin des quatre
+     boutons d'état, qui eux arment un glisser-déposer. */
+  {
+    const { dans } = bacAjout();
+    verif("poser un qbit par le « + » annule le dépôt en attente",
+          dans(`(function(){ typeSelectionne = 0;
+                 AjoutQbit.ajoute();
+                 return (typeSelectionne === -1) &&
+                        (G.lignes_quantiques.length === 2);
                })()`) === true);
   }
 
@@ -1308,14 +1362,6 @@ function testeAjoutQbit() {
           dans(`(function(){ try { AjoutQbit.synchronise();
                  AjoutQbit.synchronise(); return true; }
                  catch (e) { return "lève : " + e.message; } })()`) === true);
-    verif("le libellé suit la langue",
-          dans(`(function(){ AjoutQbit._cree();
-                 langue = 1; AjoutQbit.traduis();
-                 var en = AjoutQbit._elements().etiquette.textContent;
-                 langue = 0; AjoutQbit.traduis();
-                 var fr = AjoutQbit._elements().etiquette.textContent;
-                 return [fr, en].join(" / "); })()`) ===
-          "Ajouter un qbit / Add a qubit");
   }
 }
 

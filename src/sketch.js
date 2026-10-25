@@ -1095,9 +1095,10 @@ function draw() {
 */
   frameRate(10); // make frameRate 10 FPS 10 mise a jour par seconde
 
-  /* Le « + » d ajout de ligne quantique est en HTML par dessus le canvas : il
-     doit suivre le canvas et disparaitre avec lui, donc avant les retours
-     anticipes qui suivent. Voir ajout_qbit.js. */
+  /* L infobulle qui annonce le double-clic sur un qbit : elle vit dans le
+     title du canvas et suit la souris, donc elle se rafraichit a chaque image.
+     Avant les retours anticipes qui suivent, pour qu elle s efface des que le
+     circuit n a plus la main. Voir ajout_qbit.js. */
   if (typeof AjoutQbit !== "undefined") AjoutQbit.synchronise();
 
   if (ouverture_de_fichier_en_cours){

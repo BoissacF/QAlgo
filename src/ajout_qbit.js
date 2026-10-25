@@ -1,4 +1,4 @@
-/* QAlgo — le « + » qui ajoute une ligne quantique, et les lignes vides
+/* QAlgo — ajouter des qbits : le « + » de la palette, les lignes vides, l'aide
  *
  * Simulateur de circuits quantiques pour l'enseignement — https://www.qalgo.org
  * Code source : https://github.com/BoissacF/QAlgo
@@ -8,47 +8,51 @@
  * voir le fichier LICENSE à la racine du dépôt.
  */
 
-/* Un « + » dans le coin haut gauche du circuit. Le survol ouvre une bulle —
- * « Ajouter un qbit » et un menu d'état, |0⟩ par défaut, |1⟩, |+⟩ ou |−⟩ au
- * choix — et chaque clic pose une ligne quantique de plus sous la dernière.
+/* Trois commodités autour des qbits d'entrée, qui n'ont en commun que leur
+ * sujet. Aucune ne touche au moteur.
  *
- * Poser le qbit ne demande aucun code nouveau : `G.ajouteSommet()` ajoute déjà
- * la mesure de fin de ligne et le fil qui les relie, exactement comme un
- * glisser-déposer depuis la palette. Ce module ne décide donc que de l'endroit,
- * et il y a trois choses à y tenir :
+ * 1. LE « + » DE LA PALETTE, en tête de la section Qubits, au-dessus des quatre
+ *    boutons d'état, avec un menu qui dit lequel poser — ∣0⟩ par défaut, ∣1⟩,
+ *    ∣+⟩ ou ∣−⟩ au choix. Chaque clic pose une ligne quantique de plus sous la
+ *    dernière, là où les quatre boutons demandent un glisser-déposer et laissent
+ *    à l'utilisateur le soin de viser.
  *
- *   1. Toutes les lignes ajoutées commencent à la MÊME abscisse, celle du qbit
- *      de la première ligne — celui du circuit d'accueil au démarrage. Leur
- *      mesure est ramenée sur celle de cette même ligne, sinon les lignes
- *      n'auraient pas la même longueur.
- *   2. L'écart vertical vaut 1,25 fois la hauteur d'une PORTE — et non du
- *      sommet, qui fait la moitié : deux portes posées l'une sous l'autre ne
- *      doivent pas se toucher. La hauteur est lue sur le qbit de la ligne du
- *      bas, donc l'espacement suit la taille du circuit.
- *   3. Si la nouvelle ligne tombait sous le bas de l'écran, le circuit entier
- *      est réduit juste assez pour qu'elle rentre, par le
- *      `change_Taille_sommets_Graphe()` des boutons de zoom. Après la
- *      réduction tout a bougé : les repères sont relus avant de poser le qbit.
+ *    Il est créé en JavaScript et inséré dans la colonne du menu : rien n'est
+ *    ajouté aux pages, donc l'invariant des deux corps identiques (section 9 du
+ *    récapitulatif) tient sans effort. Son infobulle est un simple attribut
+ *    `title`, comme celles des boutons voisins, et suit `langue`.
  *
- * Le menu a un second rôle, mais seulement tant que le circuit n'a qu'une
- * ligne : en changer l'état remplace alors le qbit de cette ligne au lieu de
- * préparer le suivant. Voir `remplaceLeKet()`.
+ *    Poser le qbit ne demande aucun code nouveau : `G.ajouteSommet()` ajoute
+ *    déjà la mesure de fin de ligne et le fil qui les relie, exactement comme un
+ *    glisser-déposer. Ce module ne décide donc que de l'endroit, et il y a trois
+ *    choses à y tenir :
  *
- * Le module garde enfin les lignes vides horizontales quand on les déplace : une
- * ligne qui n'a qu'un qbit et sa mesure se déplace d'un bloc si on prend son
- * qbit, et reste inclinable par sa mesure. Ce sont exactement les lignes que le
- * « + » pose, d'où leur place ici. Voir `suitLeQbit()`.
+ *      a. Toutes les lignes ajoutées commencent à la MÊME abscisse, celle du
+ *         qbit de la première ligne — celui du circuit d'accueil au démarrage.
+ *         Leur mesure est ramenée sur celle de cette même ligne, sinon les
+ *         lignes n'auraient pas la même longueur.
+ *      b. L'écart vertical vaut 1,25 fois la hauteur d'une PORTE — et non du
+ *         sommet, qui fait la moitié : deux portes posées l'une sous l'autre ne
+ *         doivent pas se toucher. La hauteur est lue sur le qbit de la ligne du
+ *         bas, donc l'espacement suit la taille du circuit.
+ *      c. Si la nouvelle ligne tombait sous le bas de l'écran, le circuit entier
+ *         est réduit juste assez pour qu'elle rentre, par le
+ *         `change_Taille_sommets_Graphe()` des boutons de zoom. Après la
+ *         réduction tout a bougé : les repères sont relus avant de poser le
+ *         qbit.
  *
- * Le bouton est en HTML par-dessus le canvas, et non dessiné dedans : il porte
- * un <select>, et p5 ralentit beaucoup dès qu'on lui fait créer des éléments de
- * formulaire — c'est la raison pour laquelle #monSelect est déjà dans les pages
- * et non dans le canvas.
+ * 2. LES LIGNES VIDES RESTENT HORIZONTALES. Une ligne qui n'a qu'un qbit et sa
+ *    mesure se déplace d'un bloc quand on prend son qbit, et reste inclinable
+ *    par sa mesure. Ce sont exactement les lignes que le « + » pose.
+ *    Voir `suitLeQbit()`.
+ *
+ * 3. L'AIDE AU SURVOL D'UN QBIT. Survoler un qbit du circuit annonce qu'un
+ *    double-clic en modifie les coefficients — ce que rien n'indiquait.
+ *    Voir `aideAuSurvol()`.
  */
 
 var AjoutQbit = (function () {
   "use strict";
-
-  var MARGE = 8;            // écart au coin du canvas, en pixels
 
   /* La hauteur d'une porte n'est PAS son diamètre de sommet : `afficheSommet()`
      la dessine par `rect(x − diametre, y − diametre, 2·diametre, 2·diametre)`,
@@ -71,20 +75,25 @@ var AjoutQbit = (function () {
     { type: 22, libelle: "|−⟩" },
   ];
 
-  var conteneur = null;  // #parentducanvas, seulement pour y trouver le canvas
-  var zone = null;       // le conteneur posé sur le canvas
-  var bouton = null;     // le « + »
-  var bulle = null;      // le message et le menu
-  var etiquette = null;  // « Ajouter un qbit »
-  var choix = null;      // le <select> des états
-  var survol = false;    // la souris est sur le bouton ou sur la bulle
-  var gauche = -1, haut = -1;   // dernière position posée, pour ne pas la réécrire
+  var zone = null;         // la ligne « + » + menu, dans la colonne du menu
+  var bouton = null;       // le « + »
+  var choix = null;        // le <select> des états
+  var toile = null;        // le canvas, pour y poser l'infobulle du survol
+  var dernierTitre = null; // ce qui y est déjà écrit, pour ne pas le réécrire
 
   // --- les textes, dans les deux langues --------------------------------
 
   function texte(cle) {
-    var fr = { ajouter: "Ajouter un qbit" };
-    var en = { ajouter: "Add a qubit" };
+    var fr = {
+      ajouter: "Ajouter un qbit : une ligne quantique de plus sous la dernière",
+      etat: "État du qbit ajouté",
+      doubleClic: "Modifier coefficients qBit : Double Clic",
+    };
+    var en = {
+      ajouter: "Add a qubit: one more quantum line below the last one",
+      etat: "State of the added qubit",
+      doubleClic: "Change qBit coefficients: Double Click",
+    };
     return (typeof langue !== "undefined" && langue === 1) ? en[cle] : fr[cle];
   }
 
@@ -252,39 +261,6 @@ var AjoutQbit = (function () {
     mesure.changePositionRayon(modele.x, mesure.y);
   }
 
-  /* Tant que le circuit n'a qu'UNE ligne — celle du circuit d'accueil au
-     démarrage —, changer le menu ne prépare pas le prochain qbit : il remplace
-     celui qui est là. C'est le geste attendu quand on veut simplement
-     commencer sur ∣1⟩ plutôt que sur ∣0⟩, sans avoir à supprimer la ligne pour
-     en reposer une. Dès qu'il y a une deuxième ligne, le menu redevient le
-     choix du prochain qbit et ne touche plus à rien : à deux lignes, laquelle
-     remplacer n'aurait pas de réponse.
-
-     Les coefficients du ket ne sont pas recopiés ici : on fabrique un sommet
-     jetable du type voulu et on lit les siens, pour qu'ils ne puissent pas
-     diverger de ceux du constructeur de `Sommet`. */
-  function remplaceLeKet() {
-    if (!circuitPret()) return false;
-    if (nbLignes() !== 1) return false;
-    if (typeof Sommet === "undefined") return false;
-
-    var qbit = qbitDeLigne(0);
-    if (!qbit || (qbit.type !== 0)) return false;
-
-    // un qbit d'entrée qui change rend les mesures affichées caduques
-    if ((typeof OnFaitLesMesures !== "undefined") && (OnFaitLesMesures !== 0) &&
-        (typeof initialise_mesures === "function")) initialise_mesures();
-
-    var modele = new Sommet(-1, 0, 0, qbit.diametre, typeChoisi());
-    for (var i = 0; i < 2; i++)
-      qbit.Qbit[0][i].coeff_complexe(modele.Qbit[0][i].x, modele.Qbit[0][i].y);
-    qbit.Qbit[0][2] = qbit.Qbit[0][0].proba;
-    qbit.Qbit[0][3] = qbit.Qbit[0][1].proba;
-
-    doit_lancer_calcul_LignesQuantiQues_nQbitsEntree_nQbitsSortie = true;
-    return true;
-  }
-
   function ajoute() {
     if (!circuitPret()) return false;
     if ((typeof trop_de_qbits_pour_en_ajouter === "function") &&
@@ -293,6 +269,12 @@ var AjoutQbit = (function () {
     /* Un cadre de sélection ouvert n'a plus de sens dès qu'on fait autre
        chose : on en sort, et le circuit reprend la main. */
     if (typeof SelectionCircuit !== "undefined") SelectionCircuit.abandonne();
+
+    /* Le « + » est voisin des quatre boutons d'état, qui eux ARMENT un
+       glisser-déposer. Cliquer l'un puis l'autre laissait un dépôt en attente,
+       et le clic suivant sur le circuit posait un second qbit : poser tout de
+       suite désarme donc ce qui attendait. */
+    if (typeof typeSelectionne !== "undefined") typeSelectionne = -1;
 
     var p = position();
     if ((p.coeff < 1) && (typeof change_Taille_sommets_Graphe === "function")) {
@@ -308,71 +290,97 @@ var AjoutQbit = (function () {
     return true;
   }
 
-  // --- le bouton et sa bulle --------------------------------------------
+  // --- l'aide au survol d'un qbit ---------------------------------------
 
-  function montre() {
-    if (bulle) bulle.style.display = "flex";
+  /* Ce que le survol doit annoncer, ou "" s'il n'a rien à dire. Le texte est
+     ensuite posé dans le `title` du canvas et non peint dessus : c'est le
+     navigateur qui l'affiche, donc avec le même délai et la même allure que les
+     infobulles des boutons de la palette — c'est bien celles-là qu'il imite.
+
+     Rien n'est annoncé pendant un geste : un sommet tenu, un bouton de souris
+     enfoncé, un élément de palette armé qui attend d'être posé, une sélection
+     en cours. L'infobulle est une aide au repos. */
+  function aideAuSurvol() {
+    if (!circuitPret()) return "";
+    if ((typeof SelectionCircuit !== "undefined") && SelectionCircuit.estActif())
+      return "";
+    if ((typeof Selection !== "undefined") && (Selection >= 0)) return "";
+    if ((typeof mouseIsPressed !== "undefined") && (mouseIsPressed === true))
+      return "";
+    if ((typeof typeSelectionne !== "undefined") && (typeSelectionne >= 0))
+      return "";
+    if (typeof G.NumSommetQuiTouche !== "function") return "";
+
+    var num = G.NumSommetQuiTouche();
+    if (num < 0) return "";
+    var S = G.TabSommets[num];
+    // les quatre kets sont ramenés au type 0 par le constructeur de Sommet
+    if (!S || (S.type !== 0)) return "";
+
+    return texte("doubleClic");
   }
 
-  function cache() {
-    if (!bulle) return;
-    // on ne referme pas la bulle sous un menu déroulant resté ouvert
-    if (document.activeElement === choix) return;
-    bulle.style.display = "none";
+  function poseLaideAuSurvol() {
+    if (!toile) {
+      var parent = document.getElementById("parentducanvas");
+      if (!parent || !parent.querySelector) return;
+      toile = parent.querySelector("canvas");
+      if (!toile) return;
+    }
+    var aide = aideAuSurvol();
+    if (aide === dernierTitre) return;
+    toile.title = aide;
+    dernierTitre = aide;
   }
+
+  // --- le bouton dans la palette ----------------------------------------
 
   function traduis() {
-    if (!etiquette) return;
-    etiquette.textContent = texte("ajouter");
+    if (!bouton) return;
+    bouton.title = texte("ajouter");
     bouton.setAttribute("aria-label", texte("ajouter"));
+    choix.title = texte("etat");
+    // le titre déjà posé sur le canvas est dans l'ancienne langue
+    dernierTitre = null;
   }
 
   function cree() {
     if (zone) return true;
     if ((typeof document === "undefined") || !document.getElementById) return false;
-    conteneur = document.getElementById("parentducanvas");
-    if (!conteneur || !document.body || !document.body.appendChild) return false;
+
+    var titre = document.getElementById("titrePalette1");
+    if (!titre) return false;
+    var colonne = titre.parentNode || document.getElementById("colonne1");
+    if (!colonne || !colonne.insertBefore) return false;
 
     zone = document.createElement("div");
     zone.id = "zoneAjoutQbit";
-    zone.style.position = "absolute";
-    zone.style.left = MARGE + "px";
-    zone.style.top = MARGE + "px";
-    zone.style.zIndex = "5";
-    zone.style.display = "none";
-    zone.style.alignItems = "center";
+    zone.className = "d-inline-flex align-items-center";
+    zone.style.marginBottom = "2px";
 
     bouton = document.createElement("button");
     bouton.type = "button";
     bouton.id = "boutonAjoutQbit";
-    bouton.className = "btn btn-primary rounded-circle p-0 " +
+    bouton.className = "btn btn-secondary rounded-circle p-0 " +
                        "d-flex align-items-center justify-content-center";
-    bouton.style.width = "26px";
-    bouton.style.height = "26px";
+    // les quatre boutons d'état voisins font 25 px : il s'aligne sur eux
+    bouton.style.width = "25px";
+    bouton.style.height = "25px";
     bouton.style.fontWeight = "bold";
     bouton.style.lineHeight = "1";
+    bouton.style.marginLeft = "2px";
+    bouton.style.marginRight = "4px";
     bouton.textContent = "+";
-
-    bulle = document.createElement("div");
-    bulle.id = "bulleAjoutQbit";
-    bulle.className = "d-flex align-items-center bg-secondary text-white " +
-                      "rounded px-2 py-1";
-    bulle.style.marginLeft = "6px";
-    bulle.style.fontSize = "12px";
-    bulle.style.whiteSpace = "nowrap";
-    bulle.style.display = "none";
-
-    etiquette = document.createElement("span");
-    etiquette.id = "texteAjoutQbit";
-    etiquette.style.marginRight = "6px";
 
     choix = document.createElement("select");
     choix.id = "selectAjoutQbit";
-    choix.className = "form-select form-select-sm";
-    choix.style.width = "66px";
-    choix.style.height = "24px";
+    choix.className = "form-select form-select-sm p-0";
+    // la colonne du menu ne fait que 110 px : 25 + 4 + 56 y tient
+    choix.style.width = "56px";
+    choix.style.height = "25px";
     choix.style.fontSize = "12px";
-    choix.style.padding = "0 18px 0 6px";
+    choix.style.paddingLeft = "4px";
+    choix.style.textAlignLast = "center";
     for (var i = 0; i < KETS.length; i++) {
       var option = document.createElement("option");
       option.value = String(KETS[i].type);
@@ -381,78 +389,53 @@ var AjoutQbit = (function () {
     }
     choix.selectedIndex = 0;        // |0⟩ par défaut
 
-    bulle.appendChild(etiquette);
-    bulle.appendChild(choix);
     zone.appendChild(bouton);
-    zone.appendChild(bulle);
-    document.body.appendChild(zone);
+    zone.appendChild(choix);
+    // juste sous l'intertitre « Qubits », donc au-dessus des quatre états
+    colonne.insertBefore(zone, titre.nextSibling || null);
 
-    // la zone couvre le bouton ET la bulle : passer de l'un à l'autre ne la
-    // referme donc pas, sinon on ne pourrait pas atteindre le menu
-    zone.addEventListener("mouseenter", function () { survol = true; montre(); });
-    zone.addEventListener("mouseleave", function () { survol = false; cache(); });
-    // sur un écran tactile il n'y a pas de survol : le premier appui sur le
-    // « + » pose un qbit et ouvre la bulle, le menu est atteignable ensuite
-    bouton.addEventListener("click", function () { montre(); ajoute(); });
-    choix.addEventListener("change", remplaceLeKet);
-    choix.addEventListener("blur", function () { if (!survol) cache(); });
+    bouton.addEventListener("click", function () {
+      bouton.blur();   // sinon le bouton garde le cadre de focus de Bootstrap
+      ajoute();
+    });
 
     traduis();
     return true;
   }
 
-  /* La zone est posée dans <body>, et non dans #parentducanvas : donner un
-     `position: relative` à celui-ci changerait le `offsetLeft` du canvas, dont
-     setup() se sert pour placer les deux fenêtres de coefficients.
-     Elle suit donc le canvas en coordonnées de page, relevées à chaque image —
-     le canvas se déplace quand la fenêtre change de taille, et quand une
-     fenêtre de paramètres s'ouvre au-dessus de lui. Les deux rectangles
-     bougent ensemble au défilement, leur différence n'en dépend pas. */
-  function place() {
-    if (!conteneur || !conteneur.querySelector) return;
-    var toile = conteneur.querySelector("canvas");
-    if (!toile || !toile.getBoundingClientRect) return;
-    var rToile = toile.getBoundingClientRect();
-    var rCorps = document.body.getBoundingClientRect();
-    var g = Math.round(rToile.left - rCorps.left) + MARGE;
-    var h = Math.round(rToile.top - rCorps.top) + MARGE;
-    if (g !== gauche) { zone.style.left = g + "px"; gauche = g; }
-    if (h !== haut) { zone.style.top = h + "px"; haut = h; }
-  }
-
-  /* Appelée par draw(), avant ses retours anticipés : le bouton disparaît avec
-     le circuit — pendant le chargement d'un fichier, sous une fenêtre de
-     paramètres, et pendant une sélection, qui a ses propres boutons. */
+  /* Appelée en tête de draw(), avant ses retours anticipés : seule l'infobulle
+     du canvas a besoin d'être rafraîchie à chaque image, le bouton vivant dans
+     le menu comme les autres. */
   function synchronise() {
     if (!cree()) return;
-    var visible = circuitPret() &&
-                  !((typeof SelectionCircuit !== "undefined") &&
-                    SelectionCircuit.estActif());
-    if (!visible) {
-      survol = false;
-      bulle.style.display = "none";
-      zone.style.display = "none";
-      return;
-    }
-    zone.style.display = "flex";
-    place();
+    poseLaideAuSurvol();
+  }
+
+  /* En page, le module se place tout seul dès que la colonne du menu existe.
+     `readyState` n'est une chaîne que dans un vrai document : le bac à sable des
+     tests n'en a pas, et c'est à eux de décider quand créer le bouton. */
+  if ((typeof document !== "undefined") &&
+      (typeof document.readyState === "string")) {
+    if ((document.readyState === "loading") && document.addEventListener)
+      document.addEventListener("DOMContentLoaded", cree);
+    else
+      cree();
   }
 
   return {
     synchronise: synchronise,
     traduis: traduis,
     ajoute: ajoute,
-    remplaceLeKet: remplaceLeKet,
     suitLeQbit: suitLeQbit,
     // pour les tests
     _mesureDuneLigneVide: mesureDuneLigneVide,
+    _aideAuSurvol: aideAuSurvol,
     _position: position,
     _ecart: ecart,
     _cree: cree,
     _type: typeChoisi,
     _elements: function () {
-      return { zone: zone, bouton: bouton, bulle: bulle, choix: choix,
-               etiquette: etiquette };
+      return { zone: zone, bouton: bouton, choix: choix, toile: toile };
     },
   };
 })();
