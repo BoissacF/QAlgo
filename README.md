@@ -108,7 +108,7 @@ interface, without touching the code.
 | Change an oracle's `f(x)` | Double click |
 | Change the Φ of an R<sub>Φ</sub> gate | Double click |
 | Partial measurement | Double click on a measurement |
-| Delete | `Delete` key |
+| Delete | Hold the click on the element + `Delete` key |
 | Undo, redo | `Ctrl+Z`, `Ctrl+Y`, or the ↶ and ↷ buttons |
 
 ## Bundled examples

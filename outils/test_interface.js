@@ -1212,9 +1212,86 @@ function testeAjoutQbit() {
           })()`) === true);
   }
 
-  /* L'aide au survol d'un qbit. Le circuit d'accueil a son qbit en (49, 91) et
-     sa mesure en (741, 91) ; un rayon de 17,5 px et la marge de 10 px de
-     `calcul_Rayon()` donnent une zone sensible de 21,5 à 76,5 en abscisse. */
+  /* Les indications empilées, type par type. `_indications()` ne dépend que du
+     type, elle se vérifie donc sans circuit : c'est là qu'on s'assure qu'aucune
+     indication ne promet un geste que le code ne fait pas. */
+  {
+    const { dans } = bacAjout();
+    const lignes = (type) =>
+      JSON.parse(dans(`JSON.stringify(AjoutQbit._indications({ type: ${type} }))`));
+
+    const COULEUR = "Modifier couleur : Clic droit";
+    const TAILLE = "Modifier taille : Molette";
+
+    verif("un qbit : coefficients, suppression, couleur, taille",
+          JSON.stringify(lignes(0)) === JSON.stringify([
+            "Modifier coefficients qBit : Double Clic",
+            "Supprimer le qbit : clic maintenu + Suppr", COULEUR, TAILLE]),
+          lignes(0).join(" | "));
+    verif("RΦ : le double-clic change Φ",
+          lignes(7)[0] === "Modifier Φ de RΦ : Double Clic", lignes(7)[0]);
+    verif("l'oracle : le double-clic change f(x)",
+          lignes(10)[0] === "Modifier f(x) Oracle : Double Clic", lignes(10)[0]);
+    verif("et c'est bien l'oracle qu'on supprime",
+          lignes(10)[1] === "Supprimer l'oracle : clic maintenu + Suppr",
+          lignes(10)[1]);
+    verif("une porte créée : le double-clic ouvre sa matrice",
+          (lignes(8)[0] === "Modifier la matrice de la porte : Double Clic") &&
+          (lignes(9)[0] === lignes(8)[0]), lignes(8)[0]);
+    verif("une mesure : mesure partielle, mais pas de suppression",
+          JSON.stringify(lignes(65)) === JSON.stringify([
+            "Mesure partielle : Double Clic", COULEUR, TAILLE]),
+          lignes(65).join(" | "));
+
+    /* Les trois types sans double-clic : X, SWAP, afficheur. Ils n'annoncent
+       que ce qui marche, et leur nom suit. */
+    verif("une porte X : pas de double-clic, trois indications",
+          JSON.stringify(lignes(3)) === JSON.stringify([
+            "Supprimer la porte : clic maintenu + Suppr", COULEUR, TAILLE]),
+          lignes(3).join(" | "));
+    verif("un contrôle est nommé contrôle",
+          lignes(16)[0] === "Supprimer le contrôle : clic maintenu + Suppr",
+          lignes(16)[0]);
+    verif("un afficheur est nommé afficheur",
+          lignes(64)[0] === "Supprimer l'afficheur : clic maintenu + Suppr",
+          lignes(64)[0]);
+
+    /* Un personnage n'accepte ni couleur ni taille : `mousePressed` et
+       `mouseWheel` sortent tous deux sur `type & 128`. */
+    verif("un personnage ne promet ni couleur ni taille",
+          JSON.stringify(lignes(128)) === JSON.stringify([
+            "Supprimer le personnage : clic maintenu + Suppr"]),
+          lignes(128).join(" | "));
+    verif("ni Bob ni Gérard non plus",
+          (lignes(129).length === 1) && (lignes(130).length === 1));
+
+    verif("seuls les types que DoubleClicCanevas traite ont un double-clic",
+          dans(`(function(){
+            var avec = [0, 7, 8, 9, 10, 65];
+            var sans = [3, 4, 5, 6, 11, 12, 13, 14, 15, 16, 17, 32, 64, 128, 129, 130];
+            for (var i = 0; i < avec.length; i++)
+              if (AjoutQbit._doubleClic(avec[i]) === "")
+                return "type " + avec[i] + " devrait en avoir un";
+            for (var j = 0; j < sans.length; j++)
+              if (AjoutQbit._doubleClic(sans[j]) !== "")
+                return "type " + sans[j] + " ne devrait pas en avoir";
+            return true;
+          })()`) === true);
+
+    verif("tout est traduit en anglais",
+          dans(`(function(){ langue = 1;
+            var l = AjoutQbit._indications({ type: 10 });
+            langue = 0;
+            return l.join(" | ");
+          })()`) ===
+          "Modify f(x) Oracle: Double Click | Delete the oracle: hold the click + Del | " +
+          "Change color: Right Click | Resize: Scroll wheel");
+  }
+
+  /* L'aide au survol, branchée sur le circuit. Le circuit d'accueil a son qbit
+     en (49, 91) et sa mesure en (741, 91) ; un rayon de 17,5 px et la marge de
+     10 px de `calcul_Rayon()` donnent une zone sensible de 21,5 à 76,5 en
+     abscisse. */
   {
     const { dans } = bacAjout();
     dans("AjoutQbit._cree(); Selection = -1; mouseIsPressed = false;");
@@ -1223,14 +1300,15 @@ function testeAjoutQbit() {
       mouseX = ${x}; mouseY = ${y};
       return AjoutQbit._aideAuSurvol(); })()`);
 
-    verif("survoler le qbit annonce le double-clic",
-          survol(49, 91) === "Modifier coefficients qBit : Double Clic",
-          survol(49, 91));
-    verif("en anglais aussi",
-          survol(49, 91, "langue = 1;") === "Change qBit coefficients: Double Click");
-    dans("langue = 0;");
-    verif("survoler la mesure du bout ne dit rien", survol(741, 91) === "");
-    verif("survoler le vide ne dit rien non plus", survol(400, 400) === "");
+    verif("survoler le qbit empile ses quatre indications",
+          survol(49, 91).split("\n").length === 4,
+          survol(49, 91).replace(/\n/g, " | "));
+    verif("elles sont séparées par des retours à la ligne, d'où l'empilement",
+          survol(49, 91).indexOf("\n") > 0);
+    verif("survoler la mesure donne les siennes, sans suppression",
+          survol(741, 91).split("\n").length === 3,
+          survol(741, 91).replace(/\n/g, " | "));
+    verif("survoler le vide ne dit rien", survol(400, 400) === "");
 
     verif("rien n'est dit tant qu'un sommet est tenu",
           survol(49, 91, "Selection = 0;") === "");
@@ -1251,12 +1329,40 @@ function testeAjoutQbit() {
             AjoutQbit.synchronise();
             var t = AjoutQbit._elements().toile;
             if (!t) return "pas de canvas";
-            if (t.title !== "Modifier coefficients qBit : Double Clic")
+            if (t.title.indexOf("Modifier coefficients qBit") !== 0)
               return "title = " + t.title;
             mouseX = 400; mouseY = 400;
             AjoutQbit.synchronise();
             return t.title === "";
           })()`) === true);
+  }
+
+  /* L'indication de suppression dit « clic maintenu + Suppr », et non « Suppr »
+     seul, parce que c'est le geste que le code demande : `DeclicCanevas()`
+     remet `Selection` à -1 au relâchement, donc `keyPressed()` n'a plus de
+     sommet à effacer. C'est vérifié ici sur le moteur réel, sans quoi
+     l'indication serait une promesse en l'air. */
+  {
+    const { dans } = bacAjout();
+    const vivants = () =>
+      dans("G.TabSommets.filter(function (s) { return s !== undefined; }).length");
+    dans(`Graphes_nQbitsExiste = false; menuCouleurVisible = false;
+          mouseButton = LEFT; double_clic_en_cours = false;
+          Souris_Graphic = [-1, -1];
+          img_selection = { width: 1, height: 1 };
+          img_dimension = { width: 1, height: 1 };
+          colorPicker = { hide: function () {} };
+          mouseX = 49; mouseY = 91;`);
+
+    verif("le circuit d'accueil a deux sommets", vivants() === 2);
+    verif("un clic relâché puis Suppr n'efface rien",
+          dans(`(function(){ ClicCanevas(); DeclicCanevas();
+                 keyCode = 46; keyPressed(); return Selection; })()`) === -1 &&
+          vivants() === 2, "sommets restants : " + vivants());
+    verif("clic maintenu, Suppr efface bien",
+          dans(`(function(){ ClicCanevas();
+                 keyCode = 46; keyPressed(); return true; })()`) === true &&
+          vivants() === 0, "sommets restants : " + vivants());
   }
 
   /* Le « + » désarme ce qui attendait d'être posé : il est voisin des quatre

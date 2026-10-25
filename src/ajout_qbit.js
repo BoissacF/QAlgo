@@ -46,9 +46,12 @@
  *    par sa mesure. Ce sont exactement les lignes que le « + » pose.
  *    Voir `suitLeQbit()`.
  *
- * 3. L'AIDE AU SURVOL D'UN QBIT. Survoler un qbit du circuit annonce qu'un
- *    double-clic en modifie les coefficients — ce que rien n'indiquait.
- *    Voir `aideAuSurvol()`.
+ * 3. L'AIDE AU SURVOL D'UN ÉLÉMENT. Survoler un élément du circuit annonce ce
+ *    qu'on peut en faire : le double-clic quand il en a un — coefficients d'un
+ *    qbit, Φ de RΦ, f(x) d'un oracle, matrice d'une porte créée, mesure
+ *    partielle —, puis la suppression, la couleur au clic droit et la taille à
+ *    la molette. Les indications s'empilent, une par ligne.
+ *    Voir `indications()` et `aideAuSurvol()`.
  */
 
 var AjoutQbit = (function () {
@@ -87,14 +90,55 @@ var AjoutQbit = (function () {
     var fr = {
       ajouter: "Ajouter un qbit : une ligne quantique de plus sous la dernière",
       etat: "État du qbit ajouté",
-      doubleClic: "Modifier coefficients qBit : Double Clic",
+      // les indications du survol, dans le style de la fenêtre d'aide
+      coeffs: "Modifier coefficients qBit : Double Clic",
+      phase: "Modifier Φ de RΦ : Double Clic",
+      oracle: "Modifier f(x) Oracle : Double Clic",
+      matrice: "Modifier la matrice de la porte : Double Clic",
+      mesurePartielle: "Mesure partielle : Double Clic",
+      supprimer: "Supprimer %s : clic maintenu + Suppr",
+      couleur: "Modifier couleur : Clic droit",
+      taille: "Modifier taille : Molette",
     };
     var en = {
       ajouter: "Add a qubit: one more quantum line below the last one",
       etat: "State of the added qubit",
-      doubleClic: "Change qBit coefficients: Double Click",
+      coeffs: "Change qBit coefficients: Double Click",
+      phase: "Change Φ of RΦ: Double Click",
+      oracle: "Modify f(x) Oracle: Double Click",
+      matrice: "Change the gate matrix: Double Click",
+      mesurePartielle: "Partial measurement: Double Click",
+      supprimer: "Delete %s: hold the click + Del",
+      couleur: "Change color: Right Click",
+      taille: "Resize: Scroll wheel",
     };
     return (typeof langue !== "undefined" && langue === 1) ? en[cle] : fr[cle];
+  }
+
+  /* Le nom de l'élément, avec son article : « Supprimer LA porte ». Le français
+     a besoin du genre, l'anglais d'un simple « the », d'où l'article collé au
+     nom plutôt qu'au gabarit. */
+  function nomAvecArticle(type) {
+    var fr, en;
+    if (type === 0) { fr = "le qbit"; en = "the qubit"; }
+    else if (type === 10) { fr = "l'oracle"; en = "the oracle"; }
+    else if ((type === 16) || (type === 17)) { fr = "le contrôle"; en = "the control"; }
+    else if (type === 64) { fr = "l'afficheur"; en = "the display"; }
+    else if ((type & 128) !== 0) { fr = "le personnage"; en = "the character"; }
+    else { fr = "la porte"; en = "the gate"; }
+    return (typeof langue !== "undefined" && langue === 1) ? en : fr;
+  }
+
+  /* Ce qu'un double-clic fait sur cet élément, ou "" s'il ne fait rien. La
+     liste suit celle de `DoubleClicCanevas()` dans sketch.js, et doit la
+     suivre : une indication fausse est pire qu'une absence d'indication. */
+  function texteDoubleClic(type) {
+    if (type === 0) return texte("coeffs");       // les quatre kets
+    if (type === 7) return texte("phase");        // RΦ
+    if ((type === 8) || (type === 9)) return texte("matrice");
+    if (type === 10) return texte("oracle");
+    if (type === 65) return texte("mesurePartielle");
+    return "";
   }
 
   // --- repères pris sur le circuit --------------------------------------
@@ -290,16 +334,46 @@ var AjoutQbit = (function () {
     return true;
   }
 
-  // --- l'aide au survol d'un qbit ---------------------------------------
+  // --- l'aide au survol d'un élément du circuit -------------------------
+
+  /* Les indications empilées, de la plus spécifique à la plus générale : ce que
+     fait le double-clic sur cet élément-là, comment le supprimer, puis les deux
+     gestes qui valent pour tout — la couleur au clic droit et la taille à la
+     molette.
+
+     Deux exceptions, qui viennent du code et non d'un choix d'affichage :
+     une mesure ne s'efface pas (`keyPressed` la refuse, sans quoi la
+     numérotation des lignes deviendrait incohérente), et les personnages
+     n'acceptent ni couleur ni taille (`mousePressed` et `mouseWheel` sortent
+     tous deux sur `type & 128`). */
+  function indications(S) {
+    var lignes = [];
+
+    var dc = texteDoubleClic(S.type);
+    if (dc) lignes.push(dc);
+
+    if (S.type !== 65)
+      lignes.push(texte("supprimer").replace("%s", nomAvecArticle(S.type)));
+
+    if ((S.type & 128) === 0) {
+      lignes.push(texte("couleur"));
+      lignes.push(texte("taille"));
+    }
+
+    return lignes;
+  }
 
   /* Ce que le survol doit annoncer, ou "" s'il n'a rien à dire. Le texte est
      ensuite posé dans le `title` du canvas et non peint dessus : c'est le
      navigateur qui l'affiche, donc avec le même délai et la même allure que les
      infobulles des boutons de la palette — c'est bien celles-là qu'il imite.
+     Une infobulle native accepte le multiligne, ce qui permet d'empiler les
+     indications sans rien dessiner sur le circuit.
 
      Rien n'est annoncé pendant un geste : un sommet tenu, un bouton de souris
      enfoncé, un élément de palette armé qui attend d'être posé, une sélection
-     en cours. L'infobulle est une aide au repos. */
+     en cours. L'infobulle est une aide au repos ; pendant une action, et de
+     toute façon, le navigateur ne montre pas d'infobulle bouton enfoncé. */
   function aideAuSurvol() {
     if (!circuitPret()) return "";
     if ((typeof SelectionCircuit !== "undefined") && SelectionCircuit.estActif())
@@ -314,10 +388,9 @@ var AjoutQbit = (function () {
     var num = G.NumSommetQuiTouche();
     if (num < 0) return "";
     var S = G.TabSommets[num];
-    // les quatre kets sont ramenés au type 0 par le constructeur de Sommet
-    if (!S || (S.type !== 0)) return "";
+    if (!S) return "";
 
-    return texte("doubleClic");
+    return indications(S).join("\n");
   }
 
   function poseLaideAuSurvol() {
@@ -430,6 +503,8 @@ var AjoutQbit = (function () {
     // pour les tests
     _mesureDuneLigneVide: mesureDuneLigneVide,
     _aideAuSurvol: aideAuSurvol,
+    _indications: indications,
+    _doubleClic: texteDoubleClic,
     _position: position,
     _ecart: ecart,
     _cree: cree,
