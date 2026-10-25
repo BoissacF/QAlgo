@@ -1190,8 +1190,10 @@ function testeAjoutQbit() {
                    (colonne.poses[0].id === 'zoneAjoutQbit') &&
                    (colonne.avant === etats);
           })()`) === true);
-    verif("rien n'est posé dans <body>",
-          dans("document.body.children.length") === 0);
+    /* Le « + » n'est pas dans <body> : c'est un outil du menu. Seule
+       l'infobulle du circuit y est posée, et elle n'existe pas encore ici. */
+    verif("le « + » n'est pas posé dans <body>",
+          dans(`document.body.children.indexOf(AjoutQbit._elements().zone)`) === -1);
     verif("le « + » et le menu sont dans la même zone",
           dans(`(function(){
             var e = AjoutQbit._elements();
@@ -1214,53 +1216,64 @@ function testeAjoutQbit() {
 
   /* Les indications empilées, type par type. `_indications()` ne dépend que du
      type, elle se vérifie donc sans circuit : c'est là qu'on s'assure qu'aucune
-     indication ne promet un geste que le code ne fait pas. */
+     indication ne promet un geste que le code ne fait pas.
+
+     Les astérisques encadrent ce qui s'affichera en gras : elles font partie du
+     texte produit, et `_ligneEnHtml()` les transforme en <strong>. */
   {
     const { dans } = bacAjout();
     const lignes = (type) =>
       JSON.parse(dans(`JSON.stringify(AjoutQbit._indications({ type: ${type} }))`));
 
-    const COULEUR = "Modifier couleur : Clic droit";
-    const TAILLE = "Modifier taille : Molette";
+    const COULEUR = "*Modifier* couleur : Clic droit";
+    const TAILLE = "*Modifier* taille : Molette";
+    // les deux gestes qui suppriment : la touche, et le balayage hors cadre
+    const SUPPR = " : clic maintenu + Suppr, ou balayage hors du cadre (gauche ou haut)";
 
     verif("un qbit : coefficients, suppression, couleur, taille",
           JSON.stringify(lignes(0)) === JSON.stringify([
-            "Modifier coefficients qBit : Double Clic",
-            "Supprimer le qbit : clic maintenu + Suppr", COULEUR, TAILLE]),
+            "*Modifier* coefficients qBit : Double Clic",
+            "*Supprimer* le qbit" + SUPPR, COULEUR, TAILLE]),
           lignes(0).join(" | "));
     verif("RΦ : le double-clic change Φ",
-          lignes(7)[0] === "Modifier Φ de RΦ : Double Clic", lignes(7)[0]);
+          lignes(7)[0] === "*Modifier* Φ de RΦ : Double Clic", lignes(7)[0]);
     verif("l'oracle : le double-clic change f(x)",
-          lignes(10)[0] === "Modifier f(x) Oracle : Double Clic", lignes(10)[0]);
+          lignes(10)[0] === "*Modifier* f(x) Oracle : Double Clic", lignes(10)[0]);
     verif("et c'est bien l'oracle qu'on supprime",
-          lignes(10)[1] === "Supprimer l'oracle : clic maintenu + Suppr",
-          lignes(10)[1]);
+          lignes(10)[1] === "*Supprimer* l'oracle" + SUPPR, lignes(10)[1]);
     verif("une porte créée : le double-clic ouvre sa matrice",
-          (lignes(8)[0] === "Modifier la matrice de la porte : Double Clic") &&
+          (lignes(8)[0] === "*Modifier* la matrice de la porte : Double Clic") &&
           (lignes(9)[0] === lignes(8)[0]), lignes(8)[0]);
     verif("une mesure : mesure partielle, mais pas de suppression",
           JSON.stringify(lignes(65)) === JSON.stringify([
-            "Mesure partielle : Double Clic", COULEUR, TAILLE]),
+            "*Mesure partielle* : Double Clic", COULEUR, TAILLE]),
           lignes(65).join(" | "));
 
-    /* Les trois types sans double-clic : X, SWAP, afficheur. Ils n'annoncent
-       que ce qui marche, et leur nom suit. */
+    /* Les deux gestes de suppression sont annoncés ensemble : `keyPressed()`
+       demande le clic maintenu, et `draw()` efface le sommet tenu dès que
+       mouseX ou mouseY passe sous zéro — donc par la gauche ou par le haut
+       seulement, jamais par la droite ni par le bas. */
+    verif("l'indication nomme les DEUX façons de supprimer",
+          (lignes(0)[1].indexOf("Suppr") > 0) &&
+          (lignes(0)[1].indexOf("balayage hors du cadre") > 0) &&
+          (lignes(0)[1].indexOf("gauche ou haut") > 0), lignes(0)[1]);
+
+    /* Les types sans double-clic : X, contrôle, afficheur. Ils n'annoncent que
+       ce qui marche, et leur nom suit. */
     verif("une porte X : pas de double-clic, trois indications",
           JSON.stringify(lignes(3)) === JSON.stringify([
-            "Supprimer la porte : clic maintenu + Suppr", COULEUR, TAILLE]),
+            "*Supprimer* la porte" + SUPPR, COULEUR, TAILLE]),
           lignes(3).join(" | "));
     verif("un contrôle est nommé contrôle",
-          lignes(16)[0] === "Supprimer le contrôle : clic maintenu + Suppr",
-          lignes(16)[0]);
+          lignes(16)[0] === "*Supprimer* le contrôle" + SUPPR, lignes(16)[0]);
     verif("un afficheur est nommé afficheur",
-          lignes(64)[0] === "Supprimer l'afficheur : clic maintenu + Suppr",
-          lignes(64)[0]);
+          lignes(64)[0] === "*Supprimer* l'afficheur" + SUPPR, lignes(64)[0]);
 
     /* Un personnage n'accepte ni couleur ni taille : `mousePressed` et
        `mouseWheel` sortent tous deux sur `type & 128`. */
     verif("un personnage ne promet ni couleur ni taille",
           JSON.stringify(lignes(128)) === JSON.stringify([
-            "Supprimer le personnage : clic maintenu + Suppr"]),
+            "*Supprimer* le personnage" + SUPPR]),
           lignes(128).join(" | "));
     verif("ni Bob ni Gérard non plus",
           (lignes(129).length === 1) && (lignes(130).length === 1));
@@ -1278,14 +1291,27 @@ function testeAjoutQbit() {
             return true;
           })()`) === true);
 
+    verif("chaque indication a exactement un passage en gras",
+          dans(`(function(){
+            var types = [0, 3, 7, 8, 10, 16, 64, 65, 128];
+            for (var i = 0; i < types.length; i++) {
+              var l = AjoutQbit._indications({ type: types[i] });
+              for (var j = 0; j < l.length; j++)
+                if (l[j].split("*").length !== 3)
+                  return "type " + types[i] + " : " + l[j];
+            }
+            return true;
+          })()`) === true);
+
     verif("tout est traduit en anglais",
           dans(`(function(){ langue = 1;
             var l = AjoutQbit._indications({ type: 10 });
             langue = 0;
             return l.join(" | ");
           })()`) ===
-          "Modify f(x) Oracle: Double Click | Delete the oracle: hold the click + Del | " +
-          "Change color: Right Click | Resize: Scroll wheel");
+          "*Modify* f(x) Oracle: Double Click | " +
+          "*Delete* the oracle: hold the click + Del, or sweep out of the frame (left or top) | " +
+          "*Change* color: Right Click | *Resize*: Scroll wheel");
   }
 
   /* L'aide au survol, branchée sur le circuit. Le circuit d'accueil a son qbit
@@ -1323,17 +1349,120 @@ function testeAjoutQbit() {
           survol(49, 91, "R.on_est_dans_une_fenetre = true;") === "");
     dans("R.on_est_dans_une_fenetre = false;");
 
-    verif("synchronise() pose le texte dans le title du canvas",
+  }
+
+  /* Le panneau HTML qui porte l'infobulle, et son délai. `millis` est remplacée
+     le temps du test : c'est elle que le module interroge, donc on maîtrise le
+     temps sans attendre. */
+  {
+    const { dans } = bacAjout();
+    /* Le faux createElement du bac range le nom de balise dans `id` et ne pose
+       pas `nodeName` : on le lui apprend, pour pouvoir dire <strong>. */
+    dans(`AjoutQbit._cree(); Selection = -1; mouseIsPressed = false;
+          typeSelectionne = -1;
+          tempsFaux = 10000; millis = function () { return tempsFaux; };
+          mouseX = 49; mouseY = 91;
+          (function(){ var brut = document.createElement;
+            document.createElement = function (t) {
+              var e = brut(t); e.nodeName = t.toUpperCase(); return e; }; })();`);
+
+    verif("au premier passage, le délai court et rien ne s'affiche",
+          dans(`(function(){ AjoutQbit.synchronise();
+                 var p = AjoutQbit._elements().panneau;
+                 return p ? p.style.display : "pas de panneau"; })()`) === "none");
+    verif("le panneau est posé dans <body>, transparent à la souris",
+          dans(`(function(){ var p = AjoutQbit._elements().panneau;
+                 return (document.body.children.indexOf(p) >= 0) &&
+                        (p.style.pointerEvents === "none") &&
+                        (p.style.position === "absolute"); })()`) === true);
+
+    verif("le délai passé, il s'affiche",
+          dans(`(function(){ tempsFaux += AjoutQbit._delai + 1;
+                 AjoutQbit.synchronise();
+                 return AjoutQbit._elements().panneau.style.display; })()`) === "block");
+    verif("avec une ligne par indication",
+          dans("AjoutQbit._elements().panneau.children.length") === 4);
+    verif("et les mots importants en gras, dans des <strong>",
           dans(`(function(){
-            mouseX = 49; mouseY = 91;
-            AjoutQbit.synchronise();
-            var t = AjoutQbit._elements().toile;
-            if (!t) return "pas de canvas";
-            if (t.title.indexOf("Modifier coefficients qBit") !== 0)
-              return "title = " + t.title;
-            mouseX = 400; mouseY = 400;
-            AjoutQbit.synchronise();
-            return t.title === "";
+            var l = AjoutQbit._elements().panneau.children[0];
+            return l.children.map(function (n) {
+              return n.nodeName + ":" + n.textContent; }).join(" ");
+          })()`) === "STRONG:Modifier SPAN: coefficients qBit : Double Clic",
+          dans(`AjoutQbit._elements().panneau.children[0].children.map(
+                  function (n) { return n.nodeName; }).join(" ")`));
+
+    verif("la souris partie, le panneau se referme",
+          dans(`(function(){ mouseX = 400; mouseY = 400;
+                 AjoutQbit.synchronise();
+                 return AjoutQbit._elements().panneau.style.display; })()`) === "none");
+    verif("la souris hors du canvas aussi",
+          dans(`(function(){ mouseX = 49; mouseY = 91;
+                 AjoutQbit.synchronise();   // le delai repart
+                 tempsFaux += AjoutQbit._delai + 1; AjoutQbit.synchronise();
+                 var avant = AjoutQbit._elements().panneau.style.display;
+                 mouseX = -5;
+                 tempsFaux += AjoutQbit._delai + 1; AjoutQbit.synchronise();
+                 return avant + " puis " +
+                        AjoutQbit._elements().panneau.style.display; })()`) ===
+          "block puis none");
+
+    verif("une ligne sans astérisque reste en texte simple",
+          dans(`(function(){
+            var d = AjoutQbit._ligneEnHtml("du texte sans gras");
+            return (d.children.length === 1) &&
+                   (d.children[0].nodeName === "SPAN");
+          })()`) === true);
+  }
+
+  /* Les fils. Ils ne répondent qu'au voisinage de leur petit rond, au milieu de
+     l'arête : c'est la seule zone où le clic droit et la molette agissent. */
+  {
+    const { dans } = bacAjout();
+    dans("AjoutQbit._cree(); Selection = -1; mouseIsPressed = false;");
+
+    verif("un fil n'annonce que la couleur et l'épaisseur",
+          dans(`AjoutQbit._indicationsArete().join(" | ")`) ===
+          "*Modifier* couleur : Clic droit | *Modifier* épaisseur du fil : Molette",
+          dans(`AjoutQbit._indicationsArete().join(" | ")`));
+    verif("et rien sur la suppression : Suppr ne connaît que les sommets",
+          dans(`AjoutQbit._indicationsArete().join(" ").indexOf("Suppr")`) === -1);
+    verif("traduit en anglais",
+          dans(`(function(){ langue = 1;
+                 var l = AjoutQbit._indicationsArete().join(" | ");
+                 langue = 0; return l; })()`) ===
+          "*Change* color: Right Click | *Change* the wire thickness: Scroll wheel");
+
+    // le petit rond du fil qui relie le qbit d'accueil à sa mesure
+    const rond = JSON.parse(dans(`(function(){
+      var a = G.TabSommets[0].aretes_sortantes[0];
+      return JSON.stringify([a.xfleche, a.yfleche]); })()`));
+    verif("le petit rond est bien au milieu du fil",
+          (rond[0] === 395) && (rond[1] === 91), rond.join(", "));
+
+    const survol = (x, y) => dans(`(function(){
+      mouseX = ${x}; mouseY = ${y}; return AjoutQbit._aideAuSurvol(); })()`);
+
+    verif("survoler le petit rond annonce ses deux gestes",
+          survol(rond[0], rond[1]).split("\n").length === 2,
+          survol(rond[0], rond[1]).replace(/\n/g, " | "));
+    verif("le fil lui-même, loin du rond, ne dit rien",
+          survol(150, 91) === "", "à 245 px du rond");
+    /* La zone sensible fait 20 px, alors que le rond gris apparaît dès 30 :
+       l'infobulle suit le geste, pas le dessin. */
+    verif("à 19 px du rond, ça répond encore",
+          survol(rond[0] + 19, rond[1]) !== "");
+    verif("à 21 px, non : c'est la zone de NumAreteQuiTouchePetitCercle",
+          survol(rond[0] + 21, rond[1]) === "");
+
+    verif("un sommet sous la souris passe avant le fil",
+          dans(`(function(){
+            var a = G.TabSommets[0].aretes_sortantes[0];
+            var xr = a.xfleche, yr = a.yfleche;   // avant de rien bouger
+            // on amene la mesure sur le petit rond : les deux se superposent
+            G.TabSommets[1].changePositionRayon(xr, yr);
+            mouseX = xr; mouseY = yr;
+            if (G.NumSommetQuiTouche() !== 1) return "la mesure n'est pas sous la souris";
+            return AjoutQbit._aideAuSurvol().indexOf("Mesure partielle") >= 0;
           })()`) === true);
   }
 

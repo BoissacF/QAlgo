@@ -111,7 +111,7 @@ depuis l'interface, sans toucher au code.
 | Modifier le `f(x)` d'un oracle | Double-clic |
 | Modifier le Φ d'une porte R<sub>Φ</sub> | Double-clic |
 | Mesure partielle | Double-clic sur une mesure |
-| Supprimer | Clic maintenu sur l'élément + touche `Suppr` |
+| Supprimer | Clic maintenu sur l'élément + touche `Suppr`, ou balayage hors du cadre par la gauche ou le haut |
 | Annuler, refaire | `Ctrl+Z`, `Ctrl+Y`, ou les boutons ↶ et ↷ |
 
 ## Les exemples fournis

@@ -50,8 +50,9 @@
  *    qu'on peut en faire : le double-clic quand il en a un — coefficients d'un
  *    qbit, Φ de RΦ, f(x) d'un oracle, matrice d'une porte créée, mesure
  *    partielle —, puis la suppression, la couleur au clic droit et la taille à
- *    la molette. Les indications s'empilent, une par ligne.
- *    Voir `indications()` et `aideAuSurvol()`.
+ *    la molette. Les indications s'empilent, une par ligne. Les fils répondent
+ *    aussi, au voisinage de leur petit rond : couleur et épaisseur.
+ *    Voir `indications()`, `indicationsArete()` et `aideAuSurvol()`.
  */
 
 var AjoutQbit = (function () {
@@ -78,11 +79,17 @@ var AjoutQbit = (function () {
     { type: 22, libelle: "|−⟩" },
   ];
 
+  var DELAI = 400;         // ms de survol avant que l'infobulle paraisse
+  var ECART_SOURIS = 18;   // décalage du panneau par rapport au curseur
+
   var zone = null;         // la ligne « + » + menu, dans la colonne du menu
   var bouton = null;       // le « + »
   var choix = null;        // le <select> des états
-  var toile = null;        // le canvas, pour y poser l'infobulle du survol
-  var dernierTitre = null; // ce qui y est déjà écrit, pour ne pas le réécrire
+  var toile = null;        // le canvas, dont le panneau suit la position
+  var panneau = null;      // l'infobulle du circuit, en HTML
+  var derniereAide = null; // le dernier texte calculé, pour relancer le délai
+  var aideAffichee = "";   // celui que le panneau montre, pour ne pas le refaire
+  var aideDepuis = 0;      // quand `derniereAide` est apparue
 
   // --- les textes, dans les deux langues --------------------------------
 
@@ -90,27 +97,32 @@ var AjoutQbit = (function () {
     var fr = {
       ajouter: "Ajouter un qbit : une ligne quantique de plus sous la dernière",
       etat: "État du qbit ajouté",
-      // les indications du survol, dans le style de la fenêtre d'aide
-      coeffs: "Modifier coefficients qBit : Double Clic",
-      phase: "Modifier Φ de RΦ : Double Clic",
-      oracle: "Modifier f(x) Oracle : Double Clic",
-      matrice: "Modifier la matrice de la porte : Double Clic",
-      mesurePartielle: "Mesure partielle : Double Clic",
-      supprimer: "Supprimer %s : clic maintenu + Suppr",
-      couleur: "Modifier couleur : Clic droit",
-      taille: "Modifier taille : Molette",
+      // les indications du survol, dans le style de la fenêtre d'aide ; les
+      // astérisques encadrent ce qui s'affiche en gras, voir ligneEnHtml()
+      coeffs: "*Modifier* coefficients qBit : Double Clic",
+      phase: "*Modifier* Φ de RΦ : Double Clic",
+      oracle: "*Modifier* f(x) Oracle : Double Clic",
+      matrice: "*Modifier* la matrice de la porte : Double Clic",
+      mesurePartielle: "*Mesure partielle* : Double Clic",
+      supprimer: "*Supprimer* %s : clic maintenu + Suppr, " +
+                 "ou balayage hors du cadre (gauche ou haut)",
+      couleur: "*Modifier* couleur : Clic droit",
+      taille: "*Modifier* taille : Molette",
+      epaisseur: "*Modifier* épaisseur du fil : Molette",
     };
     var en = {
       ajouter: "Add a qubit: one more quantum line below the last one",
       etat: "State of the added qubit",
-      coeffs: "Change qBit coefficients: Double Click",
-      phase: "Change Φ of RΦ: Double Click",
-      oracle: "Modify f(x) Oracle: Double Click",
-      matrice: "Change the gate matrix: Double Click",
-      mesurePartielle: "Partial measurement: Double Click",
-      supprimer: "Delete %s: hold the click + Del",
-      couleur: "Change color: Right Click",
-      taille: "Resize: Scroll wheel",
+      coeffs: "*Change* qBit coefficients: Double Click",
+      phase: "*Change* Φ of RΦ: Double Click",
+      oracle: "*Modify* f(x) Oracle: Double Click",
+      matrice: "*Change* the gate matrix: Double Click",
+      mesurePartielle: "*Partial measurement*: Double Click",
+      supprimer: "*Delete* %s: hold the click + Del, " +
+                 "or sweep out of the frame (left or top)",
+      couleur: "*Change* color: Right Click",
+      taille: "*Resize*: Scroll wheel",
+      epaisseur: "*Change* the wire thickness: Scroll wheel",
     };
     return (typeof langue !== "undefined" && langue === 1) ? en[cle] : fr[cle];
   }
@@ -363,17 +375,36 @@ var AjoutQbit = (function () {
     return lignes;
   }
 
-  /* Ce que le survol doit annoncer, ou "" s'il n'a rien à dire. Le texte est
-     ensuite posé dans le `title` du canvas et non peint dessus : c'est le
-     navigateur qui l'affiche, donc avec le même délai et la même allure que les
-     infobulles des boutons de la palette — c'est bien celles-là qu'il imite.
-     Une infobulle native accepte le multiligne, ce qui permet d'empiler les
-     indications sans rien dessiner sur le circuit.
+  /* Un fil n'a que deux gestes : la couleur et l'épaisseur. Il ne s'efface pas
+     par `Suppr` — `keyPressed()` ne connaît que les sommets — et la molette y
+     change une épaisseur de trait, de 1 à 9, et non un diamètre : d'où un
+     libellé à lui. */
+  function indicationsArete() {
+    return [texte("couleur"), texte("epaisseur")];
+  }
+
+  function largeurEcran() {
+    if ((typeof width !== "undefined") && (width > 0)) return width;
+    if ((typeof largeur !== "undefined") && (largeur > 0)) return largeur;
+    return 0;
+  }
+
+  /* La souris sortie du canvas y laisse ses dernières coordonnées : sans ce
+     contrôle, l'infobulle resterait affichée sur le dernier élément survolé
+     alors que le curseur est parti dans le menu. */
+  function dansLeCanvas() {
+    if (typeof mouseX === "undefined") return false;
+    var L = largeurEcran(), H = hauteurEcran();
+    if ((L <= 0) || (H <= 0)) return false;
+    return (mouseX >= 0) && (mouseY >= 0) && (mouseX <= L) && (mouseY <= H);
+  }
+
+  /* Ce que le survol doit annoncer, ou "" s'il n'a rien à dire.
 
      Rien n'est annoncé pendant un geste : un sommet tenu, un bouton de souris
      enfoncé, un élément de palette armé qui attend d'être posé, une sélection
-     en cours. L'infobulle est une aide au repos ; pendant une action, et de
-     toute façon, le navigateur ne montre pas d'infobulle bouton enfoncé. */
+     en cours. L'infobulle est une aide au repos ; pendant une action elle
+     serait du bruit. */
   function aideAuSurvol() {
     if (!circuitPret()) return "";
     if ((typeof SelectionCircuit !== "undefined") && SelectionCircuit.estActif())
@@ -383,27 +414,156 @@ var AjoutQbit = (function () {
       return "";
     if ((typeof typeSelectionne !== "undefined") && (typeSelectionne >= 0))
       return "";
+    if (!dansLeCanvas()) return "";
     if (typeof G.NumSommetQuiTouche !== "function") return "";
 
+    /* Le sommet d'abord, le fil ensuite : c'est l'ordre de `mousePressed()` et
+       de `mouseWheel()`, qui cherchent eux aussi un sommet avant une arête. Un
+       sommet posé sur un fil répond donc pour lui, et l'infobulle dit la même
+       chose que ce que fera le geste. */
     var num = G.NumSommetQuiTouche();
-    if (num < 0) return "";
-    var S = G.TabSommets[num];
-    if (!S) return "";
+    if (num >= 0) {
+      var S = G.TabSommets[num];
+      return S ? indications(S).join("\n") : "";
+    }
 
-    return indications(S).join("\n");
+    /* Une arête ne répond qu'au voisinage de son petit rond, au milieu du fil :
+       c'est là, et nulle part ailleurs, que le clic droit et la molette agissent
+       — `NumAreteQuiTouchePetitCercle()` ne regarde qu'un carré de 20 px autour
+       de `(xfleche, yfleche)`. On l'interroge plutôt que de refaire le calcul,
+       pour que l'infobulle et le geste aient exactement la même zone. */
+    if (typeof G.NumAreteQuiTouchePetitCercle !== "function") return "";
+    var fil = G.NumAreteQuiTouchePetitCercle();
+    if (!fil || !(fil[0] >= 0)) return "";
+
+    return indicationsArete().join("\n");
   }
 
-  function poseLaideAuSurvol() {
+  /* L'infobulle du circuit est un panneau HTML posé dans <body>, et non
+     l'attribut `title` du canvas comme dans la première version. Trois raisons
+     de l'avoir changé, la première décisive :
+
+       1. UN `title` NE PEUT PAS ÊTRE EN GRAS. C'est du texte brut : aucun mot ne
+          peut y être mis en avant, et c'est ce qui a imposé le changement.
+       2. Il n'y a qu'un `title` par élément, donc un seul pour tout le canvas :
+          passer d'un élément à un autre ne rafraîchissait pas le texte
+          sur-le-champ, le navigateur masquant l'infobulle au mouvement puis la
+          réaffichant après son délai. Le panneau, lui, suit le curseur.
+       3. Le délai natif, environ une seconde, n'est pas réglable. Ici c'est
+          `DELAI`.
+
+     Le panneau ne peut JAMAIS gêner : `pointer-events: none` le rend
+     transparent à la souris, donc il ne vole ni un clic ni un survol, alors
+     qu'il est posé au-dessus du circuit. C'est ce qui le distingue du « + »,
+     qui lui a dû quitter le canvas. */
+  function creePanneau() {
+    if (panneau) return true;
+    if ((typeof document === "undefined") || !document.createElement) return false;
+    if (!document.body || !document.body.appendChild) return false;
+
+    panneau = document.createElement("div");
+    panneau.id = "aideSurvolCircuit";
+    panneau.className = "bg-secondary text-white rounded px-2 py-1";
+    panneau.style.position = "absolute";
+    panneau.style.pointerEvents = "none";   // ne doit jamais prendre un clic
+    panneau.style.zIndex = "6";
+    panneau.style.fontSize = "12px";
+    panneau.style.lineHeight = "1.4";
+    panneau.style.whiteSpace = "nowrap";
+    panneau.style.boxShadow = "0 1px 4px rgba(0,0,0,.4)";
+    panneau.style.display = "none";
+    document.body.appendChild(panneau);
+    return true;
+  }
+
+  /* Une ligne d'indication, en HTML. Les textes portent leurs mots importants
+     entre astérisques — « *Modifier* couleur : Clic droit » — et les morceaux
+     de rang impair deviennent des <strong>. Déplacer le gras ne demande donc
+     que de déplacer deux astérisques dans `texte()`.
+
+     Rien n'est injecté en innerHTML : chaque morceau passe par `textContent`,
+     donc aucun caractère n'a à être échappé. */
+  function ligneEnHtml(ligne) {
+    var div = document.createElement("div");
+    var morceaux = String(ligne).split("*");
+    for (var i = 0; i < morceaux.length; i++) {
+      if (morceaux[i] === "") continue;
+      var noeud = document.createElement((i % 2 === 1) ? "strong" : "span");
+      noeud.textContent = morceaux[i];
+      div.appendChild(noeud);
+    }
+    return div;
+  }
+
+  function remplitLePanneau(aide) {
+    if (aide === aideAffichee) return;
+    panneau.innerHTML = "";
+    var lignes = aide.split("\n");
+    for (var i = 0; i < lignes.length; i++)
+      panneau.appendChild(ligneEnHtml(lignes[i]));
+    aideAffichee = aide;
+  }
+
+  /* Le panneau se pose sous le curseur, et se rabat de l'autre côté quand il
+     déborderait du canvas — en bas, c'est le cas le plus fréquent, le circuit
+     occupant toute la hauteur. */
+  function placeLePanneau() {
+    if (!toile || !toile.getBoundingClientRect || !document.body ||
+        !document.body.getBoundingClientRect) return;
+
+    var rToile = toile.getBoundingClientRect();
+    var rCorps = document.body.getBoundingClientRect();
+    var l = panneau.offsetWidth || 0;
+    var h = panneau.offsetHeight || 0;
+    var L = largeurEcran(), H = hauteurEcran();
+
+    var x = mouseX + ECART_SOURIS;
+    var y = mouseY + ECART_SOURIS;
+    if ((l > 0) && (x + l > L)) x = mouseX - ECART_SOURIS - l;
+    if ((h > 0) && (y + h > H)) y = mouseY - ECART_SOURIS - h;
+    if (x < 0) x = 0;
+    if (y < 0) y = 0;
+
+    panneau.style.left = Math.round(rToile.left - rCorps.left + x) + "px";
+    panneau.style.top = Math.round(rToile.top - rCorps.top + y) + "px";
+  }
+
+  function cacheLePanneau() {
+    if (panneau) panneau.style.display = "none";
+  }
+
+  function horloge() {
+    if (typeof millis === "function") return millis();
+    return Date.now();
+  }
+
+  /* Un délai avant l'affichage, comme une infobulle native : sans lui, le
+     panneau clignoterait au moindre passage de souris sur le circuit. Le
+     compteur repart dès que le texte change, c'est-à-dire dès qu'on survole un
+     autre élément. */
+  function montreLaide() {
     if (!toile) {
       var parent = document.getElementById("parentducanvas");
       if (!parent || !parent.querySelector) return;
       toile = parent.querySelector("canvas");
       if (!toile) return;
     }
+    if (!creePanneau()) return;
+
     var aide = aideAuSurvol();
-    if (aide === dernierTitre) return;
-    toile.title = aide;
-    dernierTitre = aide;
+
+    if (aide !== derniereAide) {
+      derniereAide = aide;
+      aideDepuis = horloge();
+      cacheLePanneau();
+      return;
+    }
+    if (aide === "") return;
+    if ((horloge() - aideDepuis) < DELAI) return;
+
+    remplitLePanneau(aide);
+    panneau.style.display = "block";
+    placeLePanneau();
   }
 
   // --- le bouton dans la palette ----------------------------------------
@@ -413,8 +573,9 @@ var AjoutQbit = (function () {
     bouton.title = texte("ajouter");
     bouton.setAttribute("aria-label", texte("ajouter"));
     choix.title = texte("etat");
-    // le titre déjà posé sur le canvas est dans l'ancienne langue
-    dernierTitre = null;
+    // le panneau montre encore l'ancienne langue : on le fait recalculer
+    derniereAide = null;
+    aideAffichee = "";
   }
 
   function cree() {
@@ -480,8 +641,8 @@ var AjoutQbit = (function () {
      du canvas a besoin d'être rafraîchie à chaque image, le bouton vivant dans
      le menu comme les autres. */
   function synchronise() {
-    if (!cree()) return;
-    poseLaideAuSurvol();
+    cree();
+    montreLaide();
   }
 
   /* En page, le module se place tout seul dès que la colonne du menu existe.
@@ -504,13 +665,17 @@ var AjoutQbit = (function () {
     _mesureDuneLigneVide: mesureDuneLigneVide,
     _aideAuSurvol: aideAuSurvol,
     _indications: indications,
+    _indicationsArete: indicationsArete,
     _doubleClic: texteDoubleClic,
+    _ligneEnHtml: ligneEnHtml,
     _position: position,
     _ecart: ecart,
     _cree: cree,
     _type: typeChoisi,
     _elements: function () {
-      return { zone: zone, bouton: bouton, choix: choix, toile: toile };
+      return { zone: zone, bouton: bouton, choix: choix, toile: toile,
+               panneau: panneau };
     },
+    _delai: DELAI,
   };
 })();
